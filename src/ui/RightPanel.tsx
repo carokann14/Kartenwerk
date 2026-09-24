@@ -1,0 +1,232 @@
+import React from 'react';
+import { CUTS, Cut } from '../lib/fonts';
+import { clamp, fmt1, fmtInt, fmtNum } from '../lib/util';
+import { areaRowIndex, groupMetrics } from '../data/derive';
+import { LAENDER } from '../geo/geo';
+import { LABEL_PRESETS, PRESETS } from '../model/defaults';
+import { refitAfterInset, refitFrame, setFokus, relayoutActive, removeVariant, resizeVariant, setOverride, setTextScale } from '../model/actions';
+import { setUI, update, useStore } from '../model/store';
+import type { Doc, Sel } from '../model/types';
+import { ColorModel, colorModel, legendTitleAuto, partyColor } from '../render/colorModel';
+import { activeVariant, layoutLabels, sourceText } from '../render/elements';
+import { INSET_DEFS, fokusLabel, geoOf, insetLabel } from '../render/scene';
+import { Check, Field, Icon, Note, NumInput, Section, Seg } from './common';
+
+// ---------- Ebenen ----------
+function Layers() {
+  const doc = useStore(s => s.doc!);
+  const sel = useStore(s => s.ui.sel);
+  const v = activeVariant(doc), L = doc.layers, T = doc.texts, g = geoOf(doc);
+  const is = (s: Sel) => JSON.stringify(s) === JSON.stringify(sel) || (s.kind === 'layer' && s.id === 'wk' && sel.kind === 'layer' && sel.id === 'labels');
+  const pick = (s: Sel) => () => setUI({ sel: s, mapMode: null });
+  const eye = (on: boolean, set: (v: boolean) => void, label: string) => (
+    <button className="eye" onClick={e => { e.stopPropagation(); set(!on); }} aria-label={label + (on ? ' ausblenden' : ' einblenden')} aria-pressed={on}>{on ? <Icon.eye /> : <Icon.eyeOff />}</button>
+  );
+  const tog = (on: boolean, set: (v: boolean) => void, lab: string, title: string) => (
+    <button className={'tog' + (on ? ' on' : '')} onClick={e => { e.stopPropagation(); set(!on); }} title={title} aria-label={title} aria-pressed={on}>{lab}</button>
+  );
+  const Row = ({ s, icon, name, extra, lvl = 0, hidden = false }: { s: Sel; icon: React.ReactNode; name: React.ReactNode; extra?: React.ReactNode; lvl?: number; hidden?: boolean }) => (
+    <div className={`lrow${lvl ? ' l' + lvl : ''}${is(s) ? ' sel' : ''}${hidden ? ' hidden' : ''}`} onClick={pick(s)} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter') pick(s)(); }}>
+      <span className="li" /><span className="li">{icon}</span><span className="ln">{name}</span><span className="lx">{extra}</span>
+    </div>
+  );
+  return (
+    <div className="layers">
+      <div className="rp-head"><h2>Ebenen</h2><span className="aside">{v.w} × {v.h}</span></div>
+      <Row s={{ kind: 'graphic' }} icon={<Icon.graphic />} name={<>Grafik <small>{v.preset}</small></>} />
+      <Row lvl={1} s={{ kind: 'el', id: 'title' }} icon={<Icon.text />} name="Titel" hidden={!T.title.visible} extra={eye(T.title.visible, on => update(d => { d.texts.title.visible = on; }), 'Titel')} />
+      <Row lvl={1} s={{ kind: 'el', id: 'subtitle' }} icon={<Icon.text />} name="Unterzeile" hidden={!T.subtitle.visible} extra={eye(T.subtitle.visible, on => update(d => { d.texts.subtitle.visible = on; }), 'Unterzeile')} />
+      <Row lvl={1} s={{ kind: 'el', id: 'source' }} icon={<Icon.text />} name="Quellenzeile" hidden={!T.source.visible} extra={<><span className="lock" title="Pflichtteil fest"><Icon.lock /></span>{eye(T.source.visible, on => update(d => { d.texts.source.visible = on; }), 'Quellenzeile')}</>} />
+      <Row lvl={1} s={{ kind: 'frame', id: 'main' }} icon={<Icon.frame />} name={<>Hauptkarte <small>{fokusLabel(doc)}</small></>} extra={v.locked.main ? <span className="lock" title="Ausschnitt gesperrt"><Icon.lock /></span> : null} />
+      <Row lvl={2} s={{ kind: 'layer', id: 'wk' }} icon={<Icon.layer />} name={g.meta.levelLabel || g.meta.label} extra={<>{tog(L.wkFill, on => update(d => { d.layers.wkFill = on; }), 'F', 'Fläche')}{tog(L.wkLines, on => update(d => { d.layers.wkLines = on; }), 'G', 'Grenze')}{tog(L.wkLabels, on => update(d => { d.layers.wkLabels = on; }), 'B', 'Beschriftung')}</>} />
+      <Row lvl={2} s={{ kind: 'layer', id: 'land' }} icon={<Icon.layer />} name="Ländergrenzen" hidden={!L.landLines} extra={eye(L.landLines, on => update(d => { d.layers.landLines = on; }), 'Ländergrenzen')} />
+      <Row lvl={2} s={{ kind: 'layer', id: 'water' }} icon={<Icon.layer />} name={<>Gewässer <small>Kontext</small></>} hidden={!L.lakes} extra={eye(L.lakes, on => update(d => { d.layers.lakes = on; }), 'Gewässer')} />
+      <Row lvl={2} s={{ kind: 'layer', id: 'neighbors' }} icon={<Icon.layer />} name={<>Nachbarstaaten <small>Kontext</small></>} hidden={!L.neighbors} extra={eye(L.neighbors, on => update(d => { d.layers.neighbors = on; }), 'Nachbarstaaten')} />
+      <Row lvl={1} s={{ kind: 'frame', id: 'inset' }} icon={<Icon.frame />} name={<>Inset „{insetLabel(doc)}“</>} hidden={!doc.inset.visible} extra={eye(doc.inset.visible, on => { update(d => { d.inset.visible = on; d.inset.autoHidden = false; }); refitAfterInset(); }, 'Inset')} />
+      <Row lvl={1} s={{ kind: 'el', id: 'legend' }} icon={<Icon.legend />} name="Legende" hidden={!doc.legend.visible} extra={eye(doc.legend.visible, on => update(d => { d.legend.visible = on; }), 'Legende')} />
+    </div>
+  );
+}
+
+// ---------- Eigenschaften ----------
+const Head = ({ t, sub }: { t: React.ReactNode; sub?: React.ReactNode }) => <><div className="rp-head"><h2>Eigenschaften</h2></div><h3 className="props-title">{t}</h3>{sub ? <p className="props-sub">{sub}</p> : null}</>;
+
+function OverrideUI({ doc, ids }: { doc: Doc; ids: string[] }) {
+  const keys = ids.map(id => doc.geoSet + ':' + id);
+  const ov = keys.map(k => doc.overrides[k]).filter(Boolean);
+  const cur = ov.length === ids.length && new Set(ov).size === 1 ? ov[0] : null;
+  const pal = [...new Set(['Union', 'SPD', 'AfD', 'GRÜNE', 'FDP', 'LINKE', 'BSW', 'FW'].map(p => partyColor(doc, p)).concat(['#16181B', '#6B7078', '#B8B3A7', '#FFFFFF']))];
+  return (
+    <Section title="Manuell einfärben" aside="überschreibt die Datenregel">
+      <div className="swatch-grid">
+        {pal.map(c => <button key={c} className={'swatch-btn' + (cur === c ? ' on' : '')} style={{ background: c }} onClick={() => setOverride(ids, c)} aria-label={'Farbe ' + c} />)}
+        <input type="color" value={cur || '#888888'} onChange={e => setOverride(ids, e.target.value.toUpperCase())} aria-label="Eigene Farbe" />
+      </div>
+      {ov.length ? <div className="override-note"><span className="chip warn">{ov.length} überschrieben</span><button className="btn small" onClick={() => setOverride(ids, null)}>Zurücksetzen</button></div>
+        : <p className="hint">Bleibt beim Ersetzen der Daten erhalten, weil sie an Kennung und Gebietsstand hängt.</p>}
+    </Section>
+  );
+}
+
+function AreaProps({ doc, ids, cm }: { doc: Doc; ids: string[]; cm: ColorModel }) {
+  const g = geoOf(doc);
+  if (ids.length > 1) return <>
+    <Head t={`${ids.length} Gebiete ausgewählt`} sub={ids.slice(0, 6).map(id => g.areas[g.byId.get(id)!]?.nr).join(', ') + (ids.length > 6 ? ' …' : '')} />
+    <p className="hint">Umschalt + Klick fügt hinzu oder entfernt.</p>
+    <button className="btn small" onClick={() => setFokus((ids.length === 1 ? { kind: 'area', id: ids[0] } : { kind: 'custom', ids: [...ids].sort((a, b) => +a - +b) }))}><Icon.target /> Auswahl als Fokus</button>
+    <OverrideUI doc={doc} ids={ids} />
+  </>;
+  const i = g.byId.get(ids[0]); if (i == null) return <Head t="Gebiet nicht im Gebietsstand" />;
+  const a = g.areas[i], ds = cm.dataset, grp = cm.group;
+  const r = ds && !cm.mismatch ? areaRowIndex(ds).get(a.id) : undefined;
+  let body: React.ReactNode = <p className="hint">Keine Daten für dieses Gebiet.</p>;
+  if (ds && r != null && grp) {
+    const m = groupMetrics(ds, grp)[r];
+    const col = (k: number) => ds.columns.find(c => c.id === grp.columns[k])!;
+    const nm = (k: number) => { const c = col(k); return c.short || c.label.split(' · ')[0]; };
+    const order = m.share.map((s, k) => ({ s, k })).filter(x => x.s != null).sort((x, y) => y.s! - x.s!).slice(0, 8);
+    const mx = order[0]?.s || 1;
+    body = <>
+      <dl className="kv">
+        {m.win >= 0 && <><dt>Stärkste</dt><dd>{nm(m.win)}</dd><dt>Anteil</dt><dd>{fmt1(m.winShare)} %</dd></>}
+        {m.second >= 0 && <><dt>Vorsprung auf {nm(m.second)}</dt><dd>{fmt1(m.margin)} Pkt.</dd></>}
+        {m.total != null && <><dt>Bezugsgröße</dt><dd>{fmtInt(m.total)}</dd></>}
+      </dl>
+      <div className="bars">{order.map(({ s, k }) => { const c = col(k); return <div key={k} className="bar"><span className="bn" title={c.label}>{nm(k)}</span><span className="bt"><i style={{ width: (100 * s! / mx).toFixed(1) + '%', background: c.party ? partyColor(doc, c.party) : '#8D939B' }} /></span><span className="bv">{fmt1(s)}</span></div>; })}</div>
+    </>;
+  } else if (ds && r != null) {
+    const cols = ds.columns.filter(c => c.role === 'value' || c.role === 'category' || c.role === 'label').slice(0, 14);
+    body = <dl className="kv">{cols.map(c => { const val = ds.rows[r][ds.columns.indexOf(c)]; return <React.Fragment key={c.id}><dt title={c.label}>{c.label}</dt><dd>{typeof val === 'number' ? fmtNum(val, 2) : val ?? '–'}</dd></React.Fragment>; })}</dl>;
+  }
+  return <>
+    <Head t={`${a.nr} · ${a.name}`} sub={`${LAENDER[a.bl]?.[0] || a.bl} · ${fmtInt(a.area)} km²${grp ? ' · ' + grp.label : ''}`} />
+    {body}
+    <OverrideUI doc={doc} ids={ids} />
+  </>;
+}
+
+function TextProps({ doc, id }: { doc: Doc; id: 'title' | 'subtitle' }) {
+  const t = doc.texts[id], v = activeVariant(doc);
+  return <>
+    <Head t={id === 'title' ? 'Titel' : 'Unterzeile'} sub="Zeilenumbruch mit Eingabetaste" />
+    <Field stack label="Text" htmlFor="p-text"><textarea id="p-text" rows={id === 'title' ? 2 : 4} value={t.text} onChange={e => { const val = e.target.value; update(d => { d.texts[id].text = val; }, { key: 'txt-' + id }); }} /></Field>
+    <Field label="Größe (px)"><NumInput min={8} max={200} value={t.size} onChange={n => update(d => { d.texts[id].size = n; }, { key: 'size-' + id })} ariaLabel="Schriftgröße" /></Field>
+    <Field label="Schnitt"><select value={t.cut} onChange={e => { const c = e.target.value as Cut; update(d => { d.texts[id].cut = c; }); }} aria-label="Schriftschnitt">{(['display', 'bold', 'text'] as Cut[]).map(c => <option key={c} value={c}>Merriweather · {CUTS[c].label}</option>)}</select></Field>
+    <Field label="Farbe"><Seg items={[['ink', 'Dunkel'], ['inkSoft', 'Grau']]} value={t.color} onChange={c => update(d => { d.texts[id].color = c; })} /></Field>
+    <Field label="Breite (px)"><NumInput min={100} max={v.w} value={Math.round(v.L[id].w)} onChange={n => update(d => { d.variants[d.active].L[id].w = n; }, { key: 'w-' + id })} ariaLabel="Breite des Textblocks" /></Field>
+    <p className="hint">Ziehen auf der Arbeitsfläche verschiebt den Block, Pfeiltasten verschieben um 1 px, mit Umschalt um 10 px.</p>
+  </>;
+}
+
+function FrameProps({ doc, id }: { doc: Doc; id: 'main' | 'inset' }) {
+  const ui = useStore(s => s.ui);
+  const v = activeVariant(doc), F = v.L[id], g = geoOf(doc);
+  const mpp = g.meta.grid / F.view.k;
+  return <>
+    <Head t={id === 'main' ? 'Hauptkarte' : `Inset „${insetLabel(doc)}“`} sub={id === 'main' ? 'Fokus: ' + fokusLabel(doc) : 'Detail-Lupe'} />
+    <div className="row-btns">
+      <button className={'btn' + (ui.mapMode === id ? ' primary' : '')} onClick={() => setUI({ mapMode: ui.mapMode === id ? null : id })}><Icon.target /> {ui.mapMode === id ? 'Kartenmodus beenden' : 'Kartenmodus'}</button>
+      <button className="btn" onClick={() => refitFrame(id)}><Icon.fit /> Einpassen</button>
+    </div>
+    <Check checked={v.locked[id]} onChange={on => update(d => { d.variants[d.active].locked[id] = on; })}>Ausschnitt sperren</Check>
+    <dl className="kv"><dt>Position</dt><dd>{Math.round(F.x)}, {Math.round(F.y)}</dd><dt>Größe</dt><dd>{Math.round(F.w)} × {Math.round(F.h)}</dd><dt>1 px entspricht</dt><dd>{mpp >= 1000 ? fmt1(mpp / 1000) + ' km' : Math.round(mpp) + ' m'}</dd><dt>Projektion</dt><dd>ETRS89 / UTM 32</dd></dl>
+    {id === 'inset' && <Field label="Gebiet"><select value={doc.inset.preset} onChange={e => { const p = e.target.value; update(d => { d.inset.preset = p; }); refitAfterInset(); }} aria-label="Gebiet der Detail-Lupe">{Object.entries(INSET_DEFS).map(([k, x]) => <option key={k} value={k} disabled={!x.pick(g).length}>{x.label}</option>)}</select></Field>}
+    <p className="hint">Rahmen ziehen verschiebt ihn, das Quadrat unten rechts ändert die Größe. Ein gesperrter Ausschnitt bleibt beim Wechsel des Fokus stehen.</p>
+  </>;
+}
+
+function LayerProps({ doc, id }: { doc: Doc; id: 'wk' | 'labels' | 'land' | 'water' | 'neighbors' }) {
+  const v = activeVariant(doc), st = doc.style, g = geoOf(doc);
+  const colW = (c: string, w: number, ck: 'wkLine' | 'landLine', wk: 'wkLineW' | 'landLineW', max: number) => (
+    <div className="row-btns"><input type="color" value={c} onChange={e => { const val = e.target.value.toUpperCase(); update(d => { d.style[ck] = val; }, { key: ck }); }} aria-label="Linienfarbe" /><NumInput min={0.1} max={max} step={0.1} value={w} onChange={n => update(d => { d.style[wk] = n; }, { key: wk })} ariaLabel="Linienstärke in Pixeln" /></div>
+  );
+  if (id === 'wk' || id === 'labels') {
+    const lb = doc.labels;
+    const hidden = doc.layers.wkLabels ? layoutLabels(doc, 'main').hidden + (doc.inset.visible ? layoutLabels(doc, 'inset').hidden : 0) : 0;
+    const moved = Object.keys(v.labelOffsets).length;
+    return <>
+      <Head t={g.meta.label} sub={g.meta.attribution.split(';')[0]} />
+      <Section title="Fläche"><Check checked={doc.layers.wkFill} onChange={on => update(d => { d.layers.wkFill = on; })}>Nach Daten einfärben</Check>
+        <Field label="Keine Daten"><input type="color" value={st.noData} onChange={e => { const val = e.target.value.toUpperCase(); update(d => { d.style.noData = val; }, { key: 'nd' }); }} aria-label="Farbe für Gebiete ohne Daten" /></Field></Section>
+      <Section title="Grenze"><Check checked={doc.layers.wkLines} onChange={on => update(d => { d.layers.wkLines = on; })}>Gebietsgrenzen</Check>
+        <Field label="Farbe · Stärke">{colW(st.wkLine, st.wkLineW, 'wkLine', 'wkLineW', 6)}</Field></Section>
+      <Section title="Beschriftung"><Check checked={doc.layers.wkLabels} onChange={on => update(d => { d.layers.wkLabels = on; })}>Beschriften</Check>
+        <Field label="Inhalt"><select value={lb.preset} onChange={e => { const k = e.target.value; update(d => { d.labels.preset = k; const tpl = LABEL_PRESETS[k].template; if (tpl != null) d.labels.template = tpl; }); }} aria-label="Inhalt der Beschriftung">{Object.entries(LABEL_PRESETS).map(([k, p]) => <option key={k} value={k}>{p.label}</option>)}</select></Field>
+        <Field stack htmlFor="p-tpl" label={<>Vorlage <span className="dim">· {'{nr} {name} {land} {partei} {anteil} {vorsprung} {wert}'}</span></>}><textarea id="p-tpl" rows={2} className="num" value={lb.template} onChange={e => { const val = e.target.value; update(d => { d.labels.template = val; d.labels.preset = 'eigene'; }, { key: 'tpl' }); }} /></Field>
+        <Field label="Größe (px)"><NumInput min={7} max={48} value={lb.size} onChange={n => update(d => { d.labels.size = n; }, { key: 'lsize' })} ariaLabel="Schriftgröße der Beschriftung" /></Field>
+        <Check checked={lb.halo} onChange={on => update(d => { d.labels.halo = on; })}>Weiße Kontur für Lesbarkeit</Check>
+        {doc.layers.wkLabels && <div className="meta-row"><span className={'chip ' + (hidden ? 'warn' : 'ok')}>{hidden} wegen Überlappung ausgeblendet</span>{moved > 0 && <span className="chip">{moved} verschoben</span>}</div>}
+        {moved > 0 && <button className="btn small" onClick={() => update(d => { d.variants[d.active].labelOffsets = {}; })}>Verschobene Beschriftungen zurücksetzen</button>}
+      </Section>
+    </>;
+  }
+  if (id === 'land') return <>
+    <Head t="Ländergrenzen" sub="aus den Gebieten abgeleitet" />
+    <Check checked={doc.layers.landLines} onChange={on => update(d => { d.layers.landLines = on; })}>Anzeigen</Check>
+    <Field label="Farbe · Stärke">{colW(st.landLine, st.landLineW, 'landLine', 'landLineW', 8)}</Field>
+  </>;
+  const w = id === 'water';
+  return <>
+    <Head t={w ? 'Gewässer' : 'Nachbarstaaten'} sub="Kontextebene · Natural Earth, gemeinfrei" />
+    <Check checked={doc.layers[w ? 'lakes' : 'neighbors']} onChange={on => update(d => { d.layers[w ? 'lakes' : 'neighbors'] = on; })}>Anzeigen</Check>
+    <Field label="Fläche"><input type="color" value={w ? st.water : st.neighbor} onChange={e => { const val = e.target.value.toUpperCase(); update(d => { if (w) d.style.water = val; else d.style.neighbor = val; }, { key: 'ctx-' + id }); }} aria-label="Flächenfarbe" /></Field>
+    {!w && <Field label="Grenze"><input type="color" value={st.neighborLine} onChange={e => { const val = e.target.value.toUpperCase(); update(d => { d.style.neighborLine = val; }, { key: 'nbl' }); }} aria-label="Grenzfarbe" /></Field>}
+  </>;
+}
+
+function GraphicProps({ doc }: { doc: Doc }) {
+  const v = activeVariant(doc), free = v.preset === 'Frei';
+  return <>
+    <Head t="Grafik" sub={`${PRESETS[v.preset]?.label || v.preset} · ${v.w} × ${v.h} px`} />
+    <Field label="Breite · Höhe"><div className="row-btns nowrap">
+      <NumInput min={200} max={6000} value={v.w} onChange={n => free && resizeVariant(clamp(n, 200, 6000), v.h)} ariaLabel="Breite" />
+      <NumInput min={200} max={6000} value={v.h} onChange={n => free && resizeVariant(v.w, clamp(n, 200, 6000))} ariaLabel="Höhe" />
+    </div></Field>
+    {!free && <p className="hint">Feste Maße der Voreinstellung. Für eigene Maße oben eine Variante „Freies Format“ anlegen.</p>}
+    <Field label="Hintergrund"><Seg items={[['white', 'Weiß'], ['transparent', 'Transparent']]} value={doc.background} onChange={b => update(d => { d.background = b; })} /></Field>
+    <Field label="Schriftgrößen"><div className="row-btns nowrap"><NumInput min={50} max={200} step={5} value={Math.round(v.ts * 100)} onChange={n => setTextScale(clamp(n, 50, 200) / 100)} ariaLabel="Schriftgrößen dieser Variante in Prozent" /><span className="hint">% in dieser Variante</span></div></Field>
+    <div className="row-btns">
+      <button className="btn small" onClick={relayoutActive}>Layout neu anordnen</button>
+      {doc.variants.length > 1 && <button className="btn small ghost danger" onClick={() => removeVariant(doc.active)}><Icon.trash /> Variante entfernen</button>}
+    </div>
+    <Section title="Bedienung">
+      <p className="hint">Klick auf ein Gebiet wählt es aus, <span className="kbd">Umschalt</span> + Klick ergänzt. <b>Doppelklick auf die Karte</b> startet den Kartenmodus. Titel, Legende und Rahmen lassen sich ziehen. <span className="kbd">Strg</span>+<span className="kbd">Z</span> macht rückgängig, <span className="kbd">Leertaste</span> + Ziehen verschiebt die Ansicht, <span className="kbd">Strg</span>+<span className="kbd">0</span> passt sie ein.</p>
+    </Section>
+  </>;
+}
+
+function Props() {
+  const doc = useStore(s => s.doc!);
+  const s = useStore(s => s.ui.sel);
+  const cm = colorModel(doc);
+  let body: React.ReactNode;
+  if (s.kind === 'area' && s.ids.length) body = <AreaProps doc={doc} ids={s.ids} cm={cm} />;
+  else if (s.kind === 'el' && (s.id === 'title' || s.id === 'subtitle')) body = <TextProps doc={doc} id={s.id} />;
+  else if (s.kind === 'el' && s.id === 'source') {
+    const t = doc.texts.source;
+    body = <>
+      <Head t="Quellenzeile" sub="wird aus den verwendeten Datensätzen erzeugt" />
+      <div className="card muted"><p className="hint ink2">{sourceText(doc)}</p></div>
+      <Field stack label="Eigener Zusatz" htmlFor="p-extra"><textarea id="p-extra" rows={2} value={t.extra} placeholder="z. B. Grafik: Name" onChange={e => { const val = e.target.value; update(d => { d.texts.source.extra = val; }, { key: 'src-extra' }); }} /></Field>
+      <Field label="Größe (px)"><NumInput min={8} max={40} value={t.size} onChange={n => update(d => { d.texts.source.size = n; }, { key: 'src-size' })} ariaLabel="Schriftgröße der Quellenzeile" /></Field>
+      <Note icon={<Icon.lock />}>Der Pflichtteil ist fest. Weil die Geometrien vereinfacht sind, steht der Hinweis „vereinfacht“ darin.</Note>
+    </>;
+  } else if (s.kind === 'el' && s.id === 'legend') {
+    const lg = doc.legend;
+    body = <>
+      <Head t="Legende" sub="erzeugt aus der Farbregel, bleibt verknüpft" />
+      <Field stack label="Titel" htmlFor="p-lt"><input type="text" id="p-lt" value={lg.title} placeholder={legendTitleAuto(doc, cm)} onChange={e => { const val = e.target.value; update(d => { d.legend.title = val; }, { key: 'lg-title' }); }} /></Field>
+      {(doc.color.mode === 'sieger' || doc.color.mode === 'kategorie') && <Field label="Anordnung"><Seg items={[['vertical', 'Untereinander'], ['horizontal', 'Nebeneinander']]} value={lg.orientation} onChange={o => update(d => { d.legend.orientation = o; })} /></Field>}
+      <Check checked={lg.counts} onChange={on => update(d => { d.legend.counts = on; })}>Anzahl der Gebiete zeigen</Check>
+      <Field label="Größe (px)"><NumInput min={9} max={40} value={lg.size} onChange={n => update(d => { d.legend.size = n; }, { key: 'lg-size' })} ariaLabel="Schriftgröße der Legende" /></Field>
+      <p className="hint">Leerer Titel = automatisch passend zur Färbung. Die Kästchen nutzen exakt die Kartenfarben.</p>
+    </>;
+  } else if (s.kind === 'frame') body = <FrameProps doc={doc} id={s.id} />;
+  else if (s.kind === 'layer') body = <LayerProps doc={doc} id={s.id} />;
+  else body = <GraphicProps doc={doc} />;
+  return <div className="props">{body}</div>;
+}
+
+export function RightPanel() {
+  return <aside className="rightpanel" aria-label="Ebenen und Eigenschaften"><Layers /><Props /></aside>;
+}

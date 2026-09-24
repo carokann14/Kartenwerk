@@ -1,0 +1,32 @@
+import fs from 'node:fs';
+const assets: Record<string, string> = {};
+for (const f of fs.readdirSync('public/data')) assets['data/' + f] = fs.readFileSync('public/data/' + f, 'utf8');
+(globalThis as any).window = { __KW_ASSETS__: assets };
+const { loadGeo, GEO } = await import('../src/geo/geo');
+const { readFile } = await import('../src/data/parse');
+const { defaultSettings, buildTable, suggestGeoSet, buildDataset } = await import('../src/data/pipeline');
+const { groupMetrics } = await import('../src/data/derive');
+await loadGeo();
+console.log('geo', Object.keys(GEO), GEO['btw-wk-2025'].areas.length);
+for (const f of ['public/beispiele/btw2021_kerg.csv', 'public/beispiele/btwkr25_umrechnung_btw21.csv']) {
+  const buf = fs.readFileSync(f);
+  const raw = await readFile(f.split('/').pop()!, buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.length));
+  const st = defaultSettings(raw);
+  const t = buildTable(raw, st);
+  const sug = suggestGeoSet(t);
+  st.geoSet = sug.id;
+  const ds = buildDataset(raw, st, t, 'Test');
+  console.log('\n==', f, '| preset', st.preset, '| enc', raw.encoding, 'delim', JSON.stringify(raw.delimiter), '| header', st.headerStart, st.headerRows);
+  console.log('cols', t.columns.length, t.columns.slice(0, 8).map(c => `${c.label}[${c.kind}/${c.role}${c.party ? '/' + c.party : ''}]`).join(' | '));
+  console.log('groups', t.groups.map(g => `${g.label}: ${g.columns.length} cols, total=${t.columns.find(c => c.id === g.total)?.label}`));
+  console.log('geo', sug);
+  const r = ds.report;
+  console.log('report', { total: r.total, exact: r.exact, byName: r.byName, amb: r.ambiguous, unk: r.unknown, dup: r.duplicate, summary: r.summary, missing: r.missing.length, nameMismatch: r.nameMismatch.length, nulls: r.nullCells, dashes: r.dashCells });
+  console.log('nameMismatch', r.nameMismatch.slice(0, 3));
+  const g = ds.groups.find(x => /Zweit/.test(x.label) && !/Vorp/.test(x.label))!;
+  const gm = groupMetrics(ds, g);
+  const wins: Record<string, number> = {};
+  gm.forEach(m => { const c = ds.columns.find(c => c.id === g.columns[m.win]); const k = c?.short || c?.label || '?'; wins[k] = (wins[k] || 0) + 1; });
+  console.log('Sieger Zweit', wins);
+  const row = ds.rowArea.indexOf('219'); console.log('WK219', GEO[st.geoSet].areas[GEO[st.geoSet].byId.get('219')!].name, gm[row].winShare?.toFixed(1), gm[row].margin?.toFixed(1));
+}
