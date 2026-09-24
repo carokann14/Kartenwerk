@@ -5,7 +5,15 @@ import path from 'node:path';
 const dir = 'preview';
 const assets = {};
 const add = (rel, bin) => { const p = path.join('public', rel); assets[rel.split(path.sep).join('/')] = bin ? fs.readFileSync(p).toString('base64') : fs.readFileSync(p, 'utf8'); };
-for (const f of fs.readdirSync('public/data')) add(path.join('data', f), false);
+// Vorschau (Artifact, höchstens 16 MB): nur Gebietsstand 01.01.2025 der Verwaltungsgrenzen, gröber vereinfacht
+// (npm run vg250:preview schreibt data-src/.tmp/preview/vg250-2025.json)
+const PREVIEW_VG = 'data-src/.tmp/preview/vg250-2025.json';
+for (const f of fs.readdirSync('public/data')) {
+  if (/^vg250-/.test(f) && f !== 'vg250-2025.json') continue;
+  if (f === 'vg250-2025.json' && fs.existsSync(PREVIEW_VG)) { assets['data/' + f] = fs.readFileSync(PREVIEW_VG, 'utf8'); continue; }
+  if (f === 'index.json') { const idx = JSON.parse(fs.readFileSync('public/data/index.json', 'utf8')); idx.sets = idx.sets.filter(x => !x.file || !/^vg250-/.test(x.file) || x.file === 'vg250-2025.json'); assets['data/index.json'] = JSON.stringify(idx); continue; }
+  add(path.join('data', f), false);
+}
 for (const f of fs.readdirSync('public/fonts')) add(path.join('fonts', f), true);
 for (const f of fs.readdirSync('public/beispiele')) add(path.join('beispiele', f), true);
 let html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');

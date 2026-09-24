@@ -19,6 +19,7 @@ export interface ColorModel {
   entries: LegendEntry[];     // Kategorien im Fokus (Sieger, Kategorie)
   counts: Record<string, number>;
   missing: number;            // Gebiete im Fokus ohne Wert
+  free: number;               // davon gemeindefreie Gebiete (unbewohnt, keine Wahl): nicht als „keine Daten“ gezählt
   hue: string;
   dataset: Dataset | null; group: Group | null;
   mismatch: string | null;    // Datensatz gehört zu anderem Gebietsstand
@@ -41,7 +42,7 @@ function compute(doc: Doc): ColorModel {
   const g = geoOf(doc), n = g.areas.length, rule = doc.color;
   const cm: ColorModel = {
     mode: rule.mode, fills: new Array(n).fill(doc.style.noData), cls: new Array(n).fill(-1), keys: new Array(n).fill(null),
-    breaks: [], unit: '', steps: 0, entries: [], counts: {}, missing: 0, hue: '#2F5D8A', dataset: null, group: null, mismatch: null,
+    breaks: [], unit: '', steps: 0, entries: [], counts: {}, missing: 0, free: 0, hue: '#2F5D8A', dataset: null, group: null, mismatch: null,
     valueOf: () => null, partyOfArea: () => null,
   };
   if (rule.mode === 'none') { cm.missing = 0; return cm; }
@@ -127,7 +128,8 @@ function compute(doc: Doc): ColorModel {
 }
 function finishEntries(doc: Doc, cm: ColorModel, info: (key: string) => { label: string; color: string }) {
   const F = fokusIdx(doc);
-  for (const i of F) { const k = cm.keys[i]; if (k) cm.counts[k] = (cm.counts[k] || 0) + 1; if (cm.cls[i] < 0) cm.missing++; }
+  const g = geoOf(doc);
+  for (const i of F) { const k = cm.keys[i]; if (k) cm.counts[k] = (cm.counts[k] || 0) + 1; if (cm.cls[i] < 0) { if (g.areas[i].free) cm.free++; else cm.missing++; } }
   cm.entries = Object.keys(cm.counts).sort((a, b) => cm.counts[b] - cm.counts[a]).map(k => ({ key: k, ...info(k), count: cm.counts[k] }));
 }
 export const fillOf = (doc: Doc, cm: ColorModel, i: number) => doc.overrides[doc.geoSet + ':' + geoOf(doc).areas[i].id] || cm.fills[i];

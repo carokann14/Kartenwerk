@@ -53,6 +53,7 @@ function compute(doc: Doc): LegModel | null {
   }
   for (const [k, ms] of markerGroups) more.push(mk('m:' + k, k, { kind: 'marker', marker: ms[0], color: ms[0].fill, count: ms.length, target: { type: 'markers', key: k } }));
   if (hasData && cm.missing) more.push(mk('nodata', 'keine Daten', { kind: 'nodata', color: doc.style.noData, hatch: ndHatch, count: cm.missing, target: { type: 'nodata' } }));
+  if (hasData && cm.free) more.push(mk('free', 'gemeindefreies Gebiet', { kind: 'fill', color: doc.style.noData, count: cm.free, target: { type: 'nodata' } }));
   for (const x of L.extra) {
     const hs = x.kind === 'hatch' ? doc.hatches.find(h => h.id === x.hatch) || null : null;
     more.push(mk('x:' + x.id, x.label, { label: x.label, kind: x.kind, color: x.color, hatch: hs, bg: hs?.bg ?? null, target: { type: 'extra', id: x.id }, removable: true }));

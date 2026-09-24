@@ -48,9 +48,7 @@ export function PanelElemente() {
         <p className="hint">Eine Schraffur liegt über der Datenfarbe oder auf eigener Fläche. Zuweisen: aus Daten (in der Schraffur), für „keine Daten“ oder von Hand (Gebiete auswählen).</p>
       </Section>
       <ElementsSection doc={doc} />
-      <Section title="Folgt in M2">
-        <div className="soon-list"><div className="soon-item">Pfeil und Verbindungslinie<span className="chip">Etappe 3</span></div></div>
-      </Section>
+
     </>
   );
 }

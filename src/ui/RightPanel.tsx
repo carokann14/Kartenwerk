@@ -2,7 +2,7 @@ import React from 'react';
 import { CUTS, Cut } from '../lib/fonts';
 import { clamp, fmt1, fmtInt, fmtNum } from '../lib/util';
 import { areaRowIndex, groupMetrics } from '../data/derive';
-import { LAENDER } from '../geo/geo';
+import { areaContext, areaTitle } from '../geo/geo';
 import { LABEL_PRESETS, PRESETS } from '../model/defaults';
 import { refitAfterInset, refitFrame, setFokus, relayoutActive, removeVariant, resizeVariant, setOverride, setTextScale } from '../model/actions';
 import { setUI, update, useStore } from '../model/store';
@@ -12,7 +12,7 @@ import { activeVariant, layoutLabels, sourceText } from '../render/elements';
 import { INSET_DEFS, fokusLabel, geoOf, insetLabel } from '../render/scene';
 import { Check, Field, Icon, Note, NumInput, Section, Seg } from './common';
 import { AreaHatch, HatchList, HatchProps, LegendProps } from './annotationsUI';
-import { AnnProps, MarkerIcon } from './elementsUI';
+import { AnnProps, ArrowIcon, MarkerIcon } from './elementsUI';
 import { elName } from '../render/annotations';
 
 // ---------- Ebenen ----------
@@ -43,12 +43,13 @@ function Layers() {
       <Row lvl={1} s={{ kind: 'frame', id: 'main' }} icon={<Icon.frame />} name={<>Hauptkarte <small>{fokusLabel(doc)}</small></>} extra={v.locked.main ? <span className="lock" title="Ausschnitt gesperrt"><Icon.lock /></span> : null} />
       <Row lvl={2} s={{ kind: 'layer', id: 'wk' }} icon={<Icon.layer />} name={g.meta.levelLabel || g.meta.label} extra={<>{tog(L.wkFill, on => update(d => { d.layers.wkFill = on; }), 'F', 'Fläche')}{tog(L.wkLines, on => update(d => { d.layers.wkLines = on; }), 'G', 'Grenze')}{tog(L.wkLabels, on => update(d => { d.layers.wkLabels = on; }), 'B', 'Beschriftung')}</>} />
       <Row lvl={2} s={{ kind: 'layer', id: 'hatches' }} icon={<Icon.layer />} name={<>Schraffuren <small>{doc.hatches.length}</small></>} hidden={!L.hatches} extra={eye(L.hatches, on => update(d => { d.layers.hatches = on; }), 'Schraffuren')} />
+      {Object.keys(g.byKr).length > 0 && g.meta.level !== 'krs' && <Row lvl={2} s={{ kind: 'layer', id: 'kr' }} icon={<Icon.layer />} name="Kreisgrenzen" hidden={!L.krLines} extra={eye(L.krLines, on => update(d => { d.layers.krLines = on; }), 'Kreisgrenzen')} />}
       <Row lvl={2} s={{ kind: 'layer', id: 'land' }} icon={<Icon.layer />} name="Ländergrenzen" hidden={!L.landLines} extra={eye(L.landLines, on => update(d => { d.layers.landLines = on; }), 'Ländergrenzen')} />
       <Row lvl={2} s={{ kind: 'layer', id: 'water' }} icon={<Icon.layer />} name={<>Gewässer <small>Kontext</small></>} hidden={!L.lakes} extra={eye(L.lakes, on => update(d => { d.layers.lakes = on; }), 'Gewässer')} />
       <Row lvl={2} s={{ kind: 'layer', id: 'neighbors' }} icon={<Icon.layer />} name={<>Nachbarstaaten <small>Kontext</small></>} hidden={!L.neighbors} extra={eye(L.neighbors, on => update(d => { d.layers.neighbors = on; }), 'Nachbarstaaten')} />
       <Row lvl={1} s={{ kind: 'frame', id: 'inset' }} icon={<Icon.frame />} name={<>Inset „{insetLabel(doc)}“</>} hidden={!doc.inset.visible} extra={eye(doc.inset.visible, on => { update(d => { d.inset.visible = on; d.inset.autoHidden = false; }); refitAfterInset(); }, 'Inset')} />
       <Row lvl={1} s={{ kind: 'el', id: 'legend' }} icon={<Icon.legend />} name="Legende" hidden={!doc.legend.visible} extra={eye(doc.legend.visible, on => update(d => { d.legend.visible = on; }), 'Legende')} />
-      {doc.els.map(el => <Row key={el.id} lvl={1} s={{ kind: 'ann', id: el.id }} icon={el.type === 'marker' ? <MarkerIcon m={el} s={14} /> : <Icon.text />} name={elName(el)} hidden={!!el.hidden} extra={eye(!el.hidden, on => update(d => { const x = d.els.find(q => q.id === el.id); if (x) x.hidden = !on; }), elName(el))} />)}
+      {doc.els.map(el => <Row key={el.id} lvl={1} s={{ kind: 'ann', id: el.id }} icon={el.type === 'marker' ? <MarkerIcon m={el} s={14} /> : el.type === 'arrow' ? <ArrowIcon /> : <Icon.text />} name={elName(el)} hidden={!!el.hidden} extra={eye(!el.hidden, on => update(d => { const x = d.els.find(q => q.id === el.id); if (x) x.hidden = !on; }), elName(el))} />)}
     </div>
   );
 }
@@ -76,9 +77,9 @@ function OverrideUI({ doc, ids }: { doc: Doc; ids: string[] }) {
 function AreaProps({ doc, ids, cm }: { doc: Doc; ids: string[]; cm: ColorModel }) {
   const g = geoOf(doc);
   if (ids.length > 1) return <>
-    <Head t={`${ids.length} Gebiete ausgewählt`} sub={ids.slice(0, 6).map(id => g.areas[g.byId.get(id)!]?.nr).join(', ') + (ids.length > 6 ? ' …' : '')} />
+    <Head t={`${ids.length} Gebiete ausgewählt`} sub={ids.slice(0, 6).map(id => { const a = g.areas[g.byId.get(id)!]; return a ? (g.meta.showNr ? a.nr : a.name) : id; }).join(', ') + (ids.length > 6 ? ' …' : '')} />
     <p className="hint">Umschalt + Klick fügt hinzu oder entfernt.</p>
-    <button className="btn small" onClick={() => setFokus((ids.length === 1 ? { kind: 'area', id: ids[0] } : { kind: 'custom', ids: [...ids].sort((a, b) => +a - +b) }))}><Icon.target /> Auswahl als Fokus</button>
+    <button className="btn small" onClick={() => setFokus((ids.length === 1 ? { kind: 'area', id: ids[0] } : { kind: 'custom', ids: [...ids].sort((a, b) => +a - +b || a.localeCompare(b)) }))}><Icon.target /> Auswahl als Fokus</button>
     <OverrideUI doc={doc} ids={ids} />
     <AreaHatch doc={doc} ids={ids} />
   </>;
@@ -105,7 +106,7 @@ function AreaProps({ doc, ids, cm }: { doc: Doc; ids: string[]; cm: ColorModel }
     body = <dl className="kv">{cols.map(c => { const val = ds.rows[r][ds.columns.indexOf(c)]; return <React.Fragment key={c.id}><dt title={c.label}>{c.label}</dt><dd>{typeof val === 'number' ? fmtNum(val, 2) : val ?? '–'}</dd></React.Fragment>; })}</dl>;
   }
   return <>
-    <Head t={`${a.nr} · ${a.name}`} sub={`${LAENDER[a.bl]?.[0] || a.bl} · ${fmtInt(a.area)} km²${grp ? ' · ' + grp.label : ''}`} />
+    <Head t={areaTitle(g, i)} sub={`${a.bez ? a.bez + ' · ' : ''}${areaContext(g, i)} · ${fmtInt(a.area)} km²${a.free ? ' · gemeindefrei' : ''}${grp ? ' · ' + grp.label : ''}`} />
     {body}
     <OverrideUI doc={doc} ids={ids} />
     <AreaHatch doc={doc} ids={ids} />
@@ -142,9 +143,9 @@ function FrameProps({ doc, id }: { doc: Doc; id: 'main' | 'inset' }) {
   </>;
 }
 
-function LayerProps({ doc, id }: { doc: Doc; id: 'wk' | 'labels' | 'land' | 'water' | 'neighbors' | 'hatches' }) {
+function LayerProps({ doc, id }: { doc: Doc; id: 'wk' | 'labels' | 'kr' | 'land' | 'water' | 'neighbors' | 'hatches' }) {
   const v = activeVariant(doc), st = doc.style, g = geoOf(doc);
-  const colW = (c: string, w: number, ck: 'wkLine' | 'landLine', wk: 'wkLineW' | 'landLineW', max: number) => (
+  const colW = (c: string, w: number, ck: 'wkLine' | 'krLine' | 'landLine', wk: 'wkLineW' | 'krLineW' | 'landLineW', max: number) => (
     <div className="row-btns"><input type="color" value={c} onChange={e => { const val = e.target.value.toUpperCase(); update(d => { d.style[ck] = val; }, { key: ck }); }} aria-label="Linienfarbe" /><NumInput min={0.1} max={max} step={0.1} value={w} onChange={n => update(d => { d.style[wk] = n; }, { key: wk })} ariaLabel="Linienstärke in Pixeln" /></div>
   );
   if (id === 'wk' || id === 'labels') {
@@ -152,7 +153,7 @@ function LayerProps({ doc, id }: { doc: Doc; id: 'wk' | 'labels' | 'land' | 'wat
     const hidden = doc.layers.wkLabels ? layoutLabels(doc, 'main').hidden + (doc.inset.visible ? layoutLabels(doc, 'inset').hidden : 0) : 0;
     const moved = Object.keys(v.labelOffsets).length;
     return <>
-      <Head t={g.meta.label} sub={g.meta.attribution.split(';')[0]} />
+      <Head t={g.meta.label} sub={`${g.meta.count.toLocaleString('de-DE')} Gebiete · ${g.meta.attribution.split(';')[0]}`} />
       <Section title="Fläche"><Check checked={doc.layers.wkFill} onChange={on => update(d => { d.layers.wkFill = on; })}>Nach Daten einfärben</Check>
         <Field label="Keine Daten"><input type="color" value={st.noData} onChange={e => { const val = e.target.value.toUpperCase(); update(d => { d.style.noData = val; }, { key: 'nd' }); }} aria-label="Farbe für Gebiete ohne Daten" /></Field></Section>
       <Section title="Grenze"><Check checked={doc.layers.wkLines} onChange={on => update(d => { d.layers.wkLines = on; })}>Gebietsgrenzen</Check>
@@ -170,6 +171,12 @@ function LayerProps({ doc, id }: { doc: Doc; id: 'wk' | 'labels' | 'land' | 'wat
   if (id === 'hatches') return <>
     <Head t="Schraffuren" sub="über den Flächen, im Export als echte Linien" />
     <HatchList doc={doc} />
+  </>;
+  if (id === 'kr') return <>
+    <Head t="Kreisgrenzen" sub="aus den Gemeinden abgeleitet, gleicher Gebietsstand" />
+    <Check checked={doc.layers.krLines} onChange={on => update(d => { d.layers.krLines = on; })}>Kräftiger zeichnen</Check>
+    <Field label="Farbe · Stärke">{colW(st.krLine, st.krLineW, 'krLine', 'krLineW', 6)}</Field>
+    <p className="hint">Ausgeschaltet erscheinen Kreisgrenzen wie die übrigen Gebietsgrenzen.</p>
   </>;
   if (id === 'land') return <>
     <Head t="Ländergrenzen" sub="aus den Gebieten abgeleitet" />

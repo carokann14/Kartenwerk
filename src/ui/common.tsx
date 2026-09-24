@@ -1,4 +1,5 @@
 import React from 'react';
+import { GEO_INDEX, GeoIndexEntry, LEVEL_ORDER } from '../geo/geo';
 
 const S = (d: React.ReactNode) => (p: { size?: number }) => (
   <svg viewBox="0 0 24 24" width={p.size || 15} height={p.size || 15} fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>
@@ -67,3 +68,15 @@ export function NumInput({ value, onChange, min, max, step, id, ariaLabel }: { v
   return <input id={id} aria-label={ariaLabel} type="number" value={txt} min={min} max={max} step={step} onChange={e => { setTxt(e.target.value); commit(e.target.value); }} />;
 }
 export const ratioIcon = (w: number, h: number) => { const s = 14 / Math.max(w, h); return <span className="ratio-ico"><i style={{ width: (w * s).toFixed(1) + 'px', height: (h * s).toFixed(1) + 'px' }} /></span>; };
+
+/** Auswahl eines Gebietsstands, gruppiert nach Ebene (Wahlkreise, Länder, Kreise, Gemeinden …) */
+export function GeoSelect({ value, onChange, label = 'Gebietsstand', filter }: { value: string; onChange: (id: string) => void; label?: string; filter?: (e: GeoIndexEntry) => boolean }) {
+  const list = GEO_INDEX.filter(e => !filter || filter(e));
+  const levels = [...new Set(list.map(e => e.level))].sort((a, b) => LEVEL_ORDER.indexOf(a) - LEVEL_ORDER.indexOf(b));
+  return (
+    <select value={value} onChange={e => onChange(e.target.value)} aria-label={label}>
+      {levels.map(l => { const L = list.filter(e => e.level === l).sort((a, b) => b.year - a.year); return (
+        <optgroup key={l} label={L[0].levelLabel}>{L.map(e => <option key={e.id} value={e.id}>{e.stand ? `${e.levelLabel} · ${e.stand}` : e.label}</option>)}</optgroup>); })}
+    </select>
+  );
+}

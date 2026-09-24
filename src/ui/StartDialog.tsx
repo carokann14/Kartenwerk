@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { EXAMPLES } from '../data/examples';
 import { GEO_INDEX } from '../geo/geo';
+import { GeoSelect } from './common';
 import { ProjectMeta, listLocal } from '../model/persist';
 import { openLocalProject, openProjectFile, removeLocalProject, startEmpty, startExample } from '../model/projectIO';
 import { setUI, useStore } from '../model/store';
@@ -33,11 +34,15 @@ export function StartDialog() {
             <button className="start-card primary" disabled={busy} onClick={async () => { setBusy(true); await startExample(0); setBusy(false); }}>
               <Icon.faerbung size={22} /><span><b>{busy ? 'Wird geladen …' : 'Beispiel: Stärkste Partei je Wahlkreis'}</b><span className="hint">{EXAMPLES[0].label}, Zweitstimmen. Fertig eingefärbt, zum Ausprobieren und als Vorlage.</span></span>
             </button>
+            <div className="row-btns start-more"><span className="hint">Weitere Beispiele:</span>
+              <button className="btn small" disabled={busy} onClick={async () => { setBusy(true); await startExample(1); setBusy(false); }}>nach Kreisen</button>
+              <button className="btn small" disabled={busy} onClick={async () => { setBusy(true); await startExample(2); setBusy(false); }}>nach Gemeinden</button>
+            </div>
             <div className="start-card">
               <Icon.gebiete size={22} />
               <span className="stack-8"><b>Leeres Projekt</b>
-                <select value={geo} onChange={e => setGeo(e.target.value)} aria-label="Gebietsstand für das neue Projekt">{GEO_INDEX.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}</select>
-                <span className="row-btns"><button className="btn primary small" onClick={() => startEmpty(geo)}>Anlegen und Daten importieren</button></span>
+                <GeoSelect value={geo} onChange={setGeo} label="Gebietsstand für das neue Projekt" />
+                <span className="row-btns"><button className="btn primary small" disabled={busy} onClick={async () => { setBusy(true); await startEmpty(geo); setBusy(false); }}>Anlegen und Daten importieren</button></span>
               </span>
             </div>
             <button className="start-card" onClick={() => fileRef.current?.click()}>

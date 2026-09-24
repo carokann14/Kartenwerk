@@ -1,6 +1,6 @@
 export type Cell = string | number | null;
 export type Role = 'id' | 'name' | 'value' | 'category' | 'label' | 'ignore';
-export type PresetId = 'auto' | 'bwl-kerg' | 'bwl-kerg2' | 'bwl-umrechnung' | 'allgemein';
+export type PresetId = 'auto' | 'bwl-kerg' | 'bwl-kerg2' | 'bwl-umrechnung' | 'bwl-kreis' | 'bwl-wbz' | 'allgemein';
 
 export interface Column { id: string; label: string; kind: 'number' | 'text'; role: Role; party: string | null; short: string | null }
 export interface Group { id: string; label: string; columns: string[]; total: string | null; parties: boolean }
@@ -27,6 +27,7 @@ export interface ImportSettings {
   rules: Record<string, string | null>;
   sourceTitle: string;
   attribution: string;
+  wbz?: { briefwahl: 'anteilig' | 'gemeinsam' };   // Wahlbezirksstatistik → Gemeinden
 }
 
 export type IssueKind = 'byName' | 'ambiguous' | 'unknown' | 'duplicate';
@@ -38,6 +39,7 @@ export interface MatchReport {
   nameMismatch: { row: number; areaId: string; dataName: string; geoName: string }[];
   issues: MatchIssue[];
   nullCells: number; dashCells: number;
+  included?: number;                // Gebiete, die in der Zeile eines anderen enthalten sind
 }
 
 export interface Dataset {
@@ -54,6 +56,8 @@ export interface Dataset {
   rowKey: string[];
   rowArea: (string | null)[];
   report: MatchReport;
+  joint?: Record<string, string>;   // Gebiete mit gemeinsamem Ergebnis (gleicher Schlüssel = eine Fläche)
+  alias?: Record<string, string>;   // Gebiet ohne eigene Zeile → Gebiet, dessen Zeile es enthält (z. B. „einschl. Bergewöhrden“)
 }
 
 export interface RawSheet { name: string; cells: Cell[][] }

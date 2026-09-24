@@ -10,11 +10,11 @@ import { ColorModel, colorModel, partyColor } from './colorModel';
 import { hatchPathD, rectRing } from './hatch';
 import { markerD } from './annotations';
 import { LegEntry, legendModel } from './legend';
-import { FrameId, frameSets, geoOf } from './scene';
+import { FrameId, frameSets, geoOf, jointOf } from './scene';
 
 export interface TextPrim { x: number; y: number; text: string; cut: Cut; size: number; color: string; anchor: 'start' | 'middle' | 'end'; halo?: boolean }
 export interface RectPrim { x: number; y: number; w: number; h: number; fill: string }
-export interface PathPrim { d: string; fill: string; stroke?: string; width?: number }
+export interface PathPrim { d: string; fill: string; stroke?: string; width?: number; dash?: string; cap?: 'round' | 'butt' }
 export interface Prims { texts: TextPrim[]; rects: RectPrim[]; paths?: PathPrim[]; box: { x: number; y: number; w: number; h: number } }
 
 export const activeVariant = (doc: Doc): Variant => doc.variants[doc.active];
@@ -30,7 +30,7 @@ export function sourceText(doc: Doc): string {
     const s = ds.settings;
     parts.push(`Daten: ${[s.attribution, s.sourceTitle].filter(Boolean).join(', ') || ds.fileName}.`);
   }
-  if (g) parts.push(`Geometrie: ${g.meta.attribution}, vereinfacht.`);
+  if (g) parts.push(`Geometrie: ${g.meta.stand ? `Gebietsstand ${g.meta.stand}, ` : ''}${g.meta.attribution}, vereinfacht.`);
   if (doc.layers.neighbors || doc.layers.lakes) parts.push('Nachbarstaaten und Gewässer: Natural Earth.');
   const gv = [...new Set(doc.els.filter(e => e.type === 'marker' && !e.hidden && e.place).map(e => (e as { place: { src: string } }).place.src))];
   if (gv.length) parts.push(`Ortslagen: ${gv.join('; ')}.`);
@@ -158,7 +158,7 @@ export function labelText(doc: Doc, cm: ColorModel, i: number): string[] {
   const v = cm.valueOf(i); if (v != null) wert = fmtNum(v, 1);
   if (cm.mode === 'kategorie') wert = cm.keys[i] || '';
   return (doc.labels.template || '')
-    .replace(/\{nr\}/g, String(a.nr)).replace(/\{name\}/g, a.name).replace(/\{land\}/g, LAENDER[a.bl]?.[1] || '')
+    .replace(/\{nr\}/g, g.meta.showNr ? String(a.nr) : a.id).replace(/\{name\}/g, a.name).replace(/\{land\}/g, LAENDER[a.bl]?.[1] || '')
     .replace(/\{partei\}/g, partei).replace(/\{anteil\}/g, anteil).replace(/\{vorsprung\}/g, vorsprung).replace(/\{wert\}/g, wert)
     .split('\n').map(s => s.trim()).filter(s => s.length);
 }
@@ -175,7 +175,14 @@ export function layoutLabels(doc: Doc, id: FrameId, v: Variant = activeVariant(d
     const lp = legendPrims(doc, v.L.legend, v.L.main.w, v.ts);
     if (lp) { const b = lp.box; obstacles.push([b.x - F.x - 6, b.y - F.y - 6, b.x - F.x + b.w + 6, b.y - F.y + b.h + 6]); }
   }
-  const cands = list.map(i => { const key = id + ':' + g.areas[i].id; const off = v.labelOffsets[key]; return { i, key, off, pri: off ? 1e12 : g.areas[i].area }; }).sort((a, b) => b.pri - a.pri);
+  // Gebiete, die im Maßstab kleiner als eine Zeile sind, bekommen keine automatische Beschriftung (wichtig bei Gemeinden)
+  const minA = (size * 1.6) ** 2 / (F.view.k * F.view.k) * g.meta.grid * g.meta.grid / 1e6;
+  const cands = list.map(i => { const key = id + ':' + g.areas[i].id; const off = v.labelOffsets[key]; return { i, key, off, pri: off ? 1e12 : g.areas[i].area }; })
+    .filter(c => c.off || c.pri >= minA || list.length < 400).sort((a, b) => b.pri - a.pri);
+  // gemeinsame Ergebnisse nur einmal beschriften (größtes Gebiet der Gruppe)
+  const J = jointOf(doc);
+  if (J) { const seen = new Set<string>(); const keep = cands.filter(c => { const j = J[g.areas[c.i].id]; if (!j || c.off) return true; if (seen.has(j)) return false; seen.add(j); return true; }); res.hidden += cands.length - keep.length; cands.length = 0; cands.push(...keep); }
+  res.hidden += list.length - cands.length;
   const placed: number[][] = [];
   const hit = (b: number[], L: number[][]) => L.some(o => b[0] < o[2] && b[2] > o[0] && b[1] < o[3] && b[3] > o[1]);
   for (const c of cands) {

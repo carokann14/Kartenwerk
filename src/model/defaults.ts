@@ -31,9 +31,9 @@ export function defaultDoc(geoSet = 'btw-wk-2025'): Doc {
     partyColors: { ...DEFAULT_PARTY_COLORS },
     overrides: {},
     fokus: { kind: 'de' }, umfeld: 'parent', umfeldStyle: 'fill', fokusOutline: false,
-    layers: { wkFill: true, wkLines: true, wkLabels: false, landLines: true, neighbors: true, lakes: true, hatches: true },
+    layers: { wkFill: true, wkLines: true, wkLabels: false, krLines: true, landLines: true, neighbors: true, lakes: true, hatches: true },
     style: {
-      wkLine: '#FFFFFF', wkLineW: 0.6, landLine: '#FFFFFF', landLineW: 1.8,
+      wkLine: '#FFFFFF', wkLineW: 0.6, krLine: '#FFFFFF', krLineW: 1.1, landLine: '#FFFFFF', landLineW: 1.8,
       umfeld: '#E2DDD2', noData: '#ECE8DF', neighbor: '#F0EEE9', neighborLine: '#D6D1C6', water: '#D6E4EC', fokusLine: '#16181B',
       ink: '#16181B', inkSoft: '#5A5F66', frameLine: '#16181B',
     },
@@ -70,6 +70,7 @@ export function normalizeDoc(d: Doc): Doc {
   const x = JSON.parse(JSON.stringify(d)) as Doc & Record<string, unknown>;
   x.legend = { ...defaultLegend(), ...(x.legend || {}) };
   x.layers = { ...defaultDoc(x.geoSet).layers, ...(x.layers || {}) };
+  x.style = { ...defaultDoc(x.geoSet).style, ...(x.style || {}) };
   x.categoryColors ||= {};
   if (!Array.isArray(x.hatches)) { x.hatches = [NODATA_HATCH()]; x.hatchRules = [{ id: 'r-nodata', hatch: 'h-nodata', source: 'nodata' }]; }
   x.hatchAssign ||= {};

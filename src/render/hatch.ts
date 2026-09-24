@@ -15,7 +15,7 @@ function ruleHits(doc: Doc, cm: ColorModel, r: HatchRule): (i: number) => boolea
   const g = geoOf(doc);
   if (r.source === 'nodata') {
     if (!cm.dataset || cm.mismatch || doc.color.mode === 'none') return () => false;
-    return i => cm.cls[i] < 0 && !doc.overrides[doc.geoSet + ':' + g.areas[i].id];
+    return i => cm.cls[i] < 0 && !g.areas[i].free && !doc.overrides[doc.geoSet + ':' + g.areas[i].id];
   }
   const ds = doc.datasets.find(d => d.id === r.dataset);
   if (!ds || ds.geoSet !== doc.geoSet) return () => false;

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { fmt1, fmtInt } from '../../lib/util';
 import { areaRowIndex, groupMetrics } from '../../data/derive';
 import { PRESET_LABELS } from '../../data/pipeline';
@@ -30,6 +30,10 @@ export function PanelDaten() {
   const { k, dir } = ui.tableSort;
   const sorted = [...rows].sort((a, b) => { const x = (a as Record<string, unknown>)[k], y = (b as Record<string, unknown>)[k]; if (x == null) return 1; if (y == null) return -1; return (typeof x === 'string' ? (x as string).localeCompare(y as string, 'de') : (x as number) - (y as number)) * dir; });
   const sel = new Set(ui.sel.kind === 'area' ? ui.sel.ids : []);
+  const [flt, setFlt] = useState(''), [lim, setLim] = useState(300);
+  const G = active ? GEO[active.geoSet] : g, showNr = !!G?.meta.showNr;
+  const fq = flt.trim().toLowerCase();
+  const shown = fq ? sorted.filter(r => r.name.toLowerCase().includes(fq) || r.id.startsWith(fq) || r.win.toLowerCase() === fq) : sorted;
   const th = (key: string, label: string, r?: boolean) => <th className={r ? 'r' : ''} onClick={() => setUI({ tableSort: { k: key, dir: ui.tableSort.k === key ? -dir : (['nr', 'name', 'win'].includes(key) ? 1 : -1) } })} aria-sort={ui.tableSort.k === key ? (dir > 0 ? 'ascending' : 'descending') : 'none'}>{label}{ui.tableSort.k === key ? (dir > 0 ? ' ↑' : ' ↓') : ''}</th>;
   return (
     <>
@@ -53,7 +57,7 @@ export function PanelDaten() {
               <div className="row-btns">
                 <button className="btn small" onClick={() => setUI({ wizard: { mode: 'replace', datasetId: d.id } })} title="Neue Version derselben Datei laden, Gestaltung bleibt"><Icon.refresh /> Daten ersetzen …</button>
                 <button className="btn small ghost" onClick={() => setUI({ tableDataset: d.id })}>Tabelle</button>
-                {other && <button className="btn small ghost" onClick={() => setGeoSet(d.geoSet)}>Karte auf {GEO[d.geoSet]?.meta.year}</button>}
+                {other && <button className="btn small ghost" onClick={() => setGeoSet(d.geoSet)} title={'Karte auf „' + GEO[d.geoSet]?.meta.label + '“ umstellen'}>Karte auf {GEO[d.geoSet]?.meta.levelLabel} {GEO[d.geoSet]?.meta.year}</button>}
                 <button className="btn small ghost danger" onClick={() => removeDataset(d.id)} aria-label={'Datensatz ' + d.name + ' entfernen'}><Icon.trash /></button>
               </div>
             </div>
@@ -63,15 +67,17 @@ export function PanelDaten() {
       {active && <Section title="Tabelle" aside={`${active.name} · nur lesen`}>
         {active.geoSet !== doc.geoSet && <Note kind="warn">Dieser Datensatz gehört zu „{GEO[active.geoSet].meta.label}“. Die Karte zeigt „{g.meta.label}“.</Note>}
         {grp && <p className="hint">Abgeleitet aus der Gruppe <b>{grp.label}</b>: stärkste Spalte, ihr Anteil und der Vorsprung auf Platz 2.</p>}
+        {rows.length > 60 && <div className="search"><Icon.search /><input type="text" value={flt} onChange={e => setFlt(e.target.value)} placeholder={showNr ? 'Name, Nummer oder Partei' : 'Name, Schlüssel oder Partei'} aria-label="Tabelle filtern" /></div>}
         <div className="dtable-wrap"><div className="dtable-scroll"><table className="dtable">
-          <thead><tr>{th('nr', 'Nr.', true)}{th('name', 'Gebiet')}{grp && th('win', 'Stärkste')}{grp && th('share', '%', true)}{grp && th('margin', 'Vorspr.', true)}</tr></thead>
-          <tbody>{sorted.map(r => (
+          <thead><tr>{th('nr', showNr ? 'Nr.' : 'Schlüssel', true)}{th('name', 'Gebiet')}{grp && th('win', 'Stärkste')}{grp && th('share', '%', true)}{grp && th('margin', 'Vorspr.', true)}</tr></thead>
+          <tbody>{shown.slice(0, lim).map(r => (
             <tr key={r.id} className={(sel.has(r.id) ? 'sel' : '') + (r.has ? '' : ' nodata')} onClick={() => setUI({ sel: { kind: 'area', ids: [r.id] } })}>
-              <td className="r num">{r.nr}</td><td className="nm" title={r.name}>{r.name}</td>
+              <td className="r num">{showNr ? r.nr : r.id}</td><td className="nm" title={r.name}>{r.name}</td>
               {grp && <td>{r.has ? <><span className="sw" style={{ background: r.party ? partyColor(doc, r.party) : fillOf(doc, cm, r.i) }} />{r.win}</> : <span className="hint">keine Daten</span>}</td>}
               {grp && <td className="r num">{fmt1(r.share)}</td>}{grp && <td className="r num">{fmt1(r.margin)}</td>}
             </tr>))}</tbody>
         </table></div></div>
+        {shown.length > lim && <button className="btn small ghost" onClick={() => setLim(lim + 1000)}>{shown.length - lim} weitere Zeilen zeigen</button>}
       </Section>}
     </>
   );

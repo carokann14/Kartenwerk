@@ -55,6 +55,10 @@ function Toast() {
   const t = useStore(s => s.ui.toast);
   return t ? <div className="toast" role="status" key={t.t}>{t.msg}</div> : null;
 }
+function Busy() {
+  const b = useStore(s => s.ui.busy);
+  return b ? <div className="busy" role="status"><span className="spinner" aria-hidden="true" />{b}</div> : null;
+}
 
 const isTyping = (e: KeyboardEvent) => { const t = e.target as HTMLElement; return !!t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable); };
 function useShortcuts() {
@@ -129,6 +133,7 @@ export function App() {
       {(start || !hasDoc) && <StartDialog />}
       {wizard && hasDoc && <ImportWizard />}
       <Toast />
+      <Busy />
     </div>
   );
 }

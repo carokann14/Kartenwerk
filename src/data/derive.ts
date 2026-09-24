@@ -39,6 +39,7 @@ export function areaRowIndex(ds: Dataset): Map<string, number> {
   const hit = rowIdxCache.get(ds); if (hit) return hit;
   const m = new Map<string, number>();
   ds.rowArea.forEach((a, i) => { if (a && !m.has(a)) m.set(a, i); });
+  if (ds.alias) for (const [a, host] of Object.entries(ds.alias)) { const r = m.get(host); if (r != null && !m.has(a)) m.set(a, r); }
   rowIdxCache.set(ds, m);
   return m;
 }

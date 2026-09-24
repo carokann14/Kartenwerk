@@ -1,7 +1,7 @@
 import type { Dataset } from '../data/types';
 import type { Cut } from '../lib/fonts';
 
-export type Fokus = { kind: 'de' } | { kind: 'land'; bl: string } | { kind: 'area'; id: string } | { kind: 'custom'; ids: string[] };
+export type Fokus = { kind: 'de' } | { kind: 'land'; bl: string } | { kind: 'kreis'; kr: string } | { kind: 'area'; id: string } | { kind: 'custom'; ids: string[] };
 export type Umfeld = 'none' | 'neighbors' | 'parent' | 'all';
 
 export type ColorRule =
@@ -36,8 +36,8 @@ export interface Doc {
   partyColors: Record<string, string>;
   overrides: Record<string, string>;   // "<geoSet>:<id>" → Farbe
   fokus: Fokus; umfeld: Umfeld; umfeldStyle: 'fill' | 'lines'; fokusOutline: boolean;
-  layers: { wkFill: boolean; wkLines: boolean; wkLabels: boolean; landLines: boolean; neighbors: boolean; lakes: boolean; hatches: boolean };
-  style: { wkLine: string; wkLineW: number; landLine: string; landLineW: number; umfeld: string; noData: string; neighbor: string; neighborLine: string; water: string; fokusLine: string; ink: string; inkSoft: string; frameLine: string };
+  layers: { wkFill: boolean; wkLines: boolean; wkLabels: boolean; krLines: boolean; landLines: boolean; neighbors: boolean; lakes: boolean; hatches: boolean };
+  style: { wkLine: string; wkLineW: number; krLine: string; krLineW: number; landLine: string; landLineW: number; umfeld: string; noData: string; neighbor: string; neighborLine: string; water: string; fokusLine: string; ink: string; inkSoft: string; frameLine: string };
   labels: { preset: string; template: string; size: number; halo: boolean };
   texts: { title: TextEl; subtitle: TextEl; source: { visible: boolean; extra: string; size: number; cut: Cut; color: 'ink' | 'inkSoft' } };
   legend: LegendSettings;
@@ -90,12 +90,25 @@ export interface TextBoxEl {
   bg: string | null; border: string | null; pad: number;
   leader: boolean;               // Führungslinie zum Ankerpunkt (nur an der Karte)
 }
-export type AnnEl = MarkerEl | TextBoxEl;
+export type ArrowEnd =
+  | { kind: 'map'; at: [number, number] }      // Kartenpunkt (Kartenraster)
+  | { kind: 'board'; at: [number, number] }    // Punkt der Fläche (Anteil an Breite und Höhe)
+  | { kind: 'el'; id: string }                 // verbunden mit Marker oder Textkasten
+  | { kind: 'area'; key: string };             // Mittelpunkt eines Gebiets, "<geoSet>:<id>"
+export interface ArrowEl {
+  id: string; type: 'arrow'; hidden?: boolean;
+  from: ArrowEnd; to: ArrowEnd;
+  bend: number;                                // Auslenkung der Mitte als Anteil der Länge, 0 = gerade
+  color: string; width: number;
+  head: 'end' | 'start' | 'both' | 'none'; headSize: number;
+  dash: boolean; gap: number;                  // Abstand zu verbundenen Elementen in px
+}
+export type AnnEl = MarkerEl | TextBoxEl | ArrowEl;
 export type Sel =
   | { kind: 'graphic' }
   | { kind: 'area'; ids: string[] }
   | { kind: 'el'; id: 'title' | 'subtitle' | 'source' | 'legend' }
   | { kind: 'frame'; id: 'main' | 'inset' }
-  | { kind: 'layer'; id: 'wk' | 'labels' | 'land' | 'water' | 'neighbors' | 'hatches' }
+  | { kind: 'layer'; id: 'wk' | 'labels' | 'kr' | 'land' | 'water' | 'neighbors' | 'hatches' }
   | { kind: 'hatch'; id: string }
   | { kind: 'ann'; id: string };

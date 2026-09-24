@@ -1,5 +1,5 @@
 // Welche Gebiete zeigt welcher Rahmen? Fokus, Umfeld, Insets, Grenzlinien
-import { GEO, GeoSet, LAENDER, Pt, bboxOfIds } from '../geo/geo';
+import { GEO, GeoSet, LAENDER, areaLabel, bboxOfIds } from '../geo/geo';
 import type { Doc, Fokus } from '../model/types';
 
 export const geoOf = (doc: Doc): GeoSet => GEO[doc.geoSet];
@@ -8,6 +8,7 @@ export function fokusIdx(doc: Doc, f: Fokus = doc.fokus): number[] {
   const g = geoOf(doc);
   if (f.kind === 'de') return g.all;
   if (f.kind === 'land') return g.byBl[f.bl] || [];
+  if (f.kind === 'kreis') return g.byKr[f.kr] || [];
   if (f.kind === 'area') { const i = g.byId.get(f.id); return i == null ? [] : [i]; }
   return f.ids.map(id => g.byId.get(id)).filter((x): x is number => x != null);
 }
@@ -15,14 +16,19 @@ export function fokusLabel(doc: Doc, f: Fokus = doc.fokus): string {
   const g = geoOf(doc);
   if (f.kind === 'de') return 'Deutschland';
   if (f.kind === 'land') return LAENDER[f.bl]?.[0] || f.bl;
-  if (f.kind === 'area') { const i = g.byId.get(f.id); return i == null ? f.id : `${g.areas[i].nr} ${g.areas[i].name}`; }
+  if (f.kind === 'kreis') return g.krName[f.kr] || 'Kreis ' + f.kr;
+  if (f.kind === 'area') { const i = g.byId.get(f.id); return i == null ? f.id : areaLabel(g, i); }
   return `${f.ids.length} Gebiete, frei kombiniert`;
 }
 function parentIdx(doc: Doc): number[] {
   const g = geoOf(doc), f = doc.fokus;
   if (f.kind === 'de') return [];
   if (f.kind === 'land') return g.all;
+  if (f.kind === 'kreis') return g.byBl[f.kr.slice(0, 2)] || g.all;
   const F = fokusIdx(doc);
+  // Gemeinden: Umfeld ist der Kreis, wenn alle Fokusgebiete darin liegen
+  const krs = new Set(F.map(i => g.areas[i].kr).filter(Boolean));
+  if (krs.size === 1 && F.every(i => g.areas[i].kr)) { const K = g.byKr[[...krs][0]!] || []; if (K.length > F.length) return K; }
   const bls = new Set(F.map(i => g.areas[i].bl));
   if (f.kind === 'area' || bls.size === 1) return g.byBl[[...bls][0]] || g.all;
   return g.all;
@@ -55,27 +61,41 @@ export function frameSets(doc: Doc, id: FrameId): FrameSets {
   const ids = insetIdx(doc), F = new Set(ids), g = geoOf(doc);
   return { F, U: new Set(g.all.filter(i => !F.has(i))), list: ids };
 }
-export interface Meshes { wk: Pt[][]; wkU: Pt[][]; land: Pt[][]; outline: Pt[][]; fokus: Pt[][]; linesMode: boolean }
+/** Gebiete mit gemeinsamem Ergebnis im Datensatz der Farbregel (z. B. gemeinsam ausgezählte Briefwahl) */
+export function jointOf(doc: Doc): Record<string, string> | null {
+  const id = (doc.color as { dataset?: string }).dataset; if (!id) return null;
+  const ds = doc.datasets.find(d => d.id === id);
+  return ds && ds.geoSet === doc.geoSet && ds.joint ? ds.joint : null;
+}
+/** Grenzlinien eines Rahmens als Bogen-Indizes (gezeichnet je nach Maßstab mit arcLines) */
+export interface Meshes { wk: number[]; wkU: number[]; kr: number[]; land: number[]; outline: number[]; fokus: number[]; linesMode: boolean }
 const meshCache = new Map<string, Meshes>();
 export function frameMeshes(doc: Doc, id: FrameId, sets: FrameSets = frameSets(doc, id)): Meshes {
   const linesMode = id === 'main' && doc.umfeldStyle === 'lines';
-  const key = [doc.geoSet, id, JSON.stringify(doc.fokus), doc.umfeld, linesMode, id === 'inset' ? doc.inset.preset : ''].join('|');
+  const J = jointOf(doc);
+  const key = [doc.geoSet, id, JSON.stringify(doc.fokus), doc.umfeld, linesMode, id === 'inset' ? doc.inset.preset : '', J ? (doc.color as { dataset?: string }).dataset : ''].join('|');
   const hit = meshCache.get(key); if (hit) return hit;
   const g = geoOf(doc), { F, U } = sets;
-  const vis = (i: number) => F.has(i) || U.has(i);
-  const wk: Pt[][] = [], wkU: Pt[][] = [], land: Pt[][] = [], outline: Pt[][] = [], fokus: Pt[][] = [];
+  const vis = (i: number) => i >= 0 && (F.has(i) || U.has(i));
+  const big = g.areas.length > 1500;
+  const wk: number[] = [], wkU: number[] = [], kr: number[] = [], land: number[] = [], outline: number[] = [], fokus: number[] = [];
   for (let ai = 0; ai < g.arcs.length; ai++) {
     const [a, b] = g.arcOwner[ai];
-    const va = vis(a), vb = b >= 0 && vis(b);
+    if (a < 0) continue;                       // Bogen gehört nicht zu dieser Ebene (z. B. Gemeindegrenze in einer Kreiskarte)
+    const va = vis(a), vb = vis(b);
     if (va && vb) {
-      if (g.areas[a].bl !== g.areas[b].bl) land.push(g.arcs[ai]);
-      else if (linesMode && (U.has(a) || U.has(b))) wkU.push(g.arcs[ai]);
-      else wk.push(g.arcs[ai]);
-    } else if (va || vb) outline.push(g.arcs[ai]);
+      const A = g.areas[a], B = g.areas[b];
+      if (J && J[A.id] && J[A.id] === J[B.id]) continue;   // gemeinsames Ergebnis: eine Fläche, keine innere Grenze
+      if (A.bl !== B.bl) land.push(ai);
+      else if (A.kr && B.kr && A.kr !== B.kr) kr.push(ai);
+      else if (big && U.has(a) && U.has(b)) continue;        // Gemeinden im Umfeld: nur Kreis- und Landesgrenzen, sonst zu unruhig
+      else if (linesMode && (U.has(a) || U.has(b))) wkU.push(ai);
+      else wk.push(ai);
+    } else if (va || vb) outline.push(ai);
     const fa = F.has(a), fb = b >= 0 && F.has(b);
-    if (fa !== fb) fokus.push(g.arcs[ai]);
+    if (fa !== fb) fokus.push(ai);
   }
-  const m = { wk, wkU, land, outline, fokus, linesMode };
+  const m = { wk, wkU, kr, land, outline, fokus, linesMode };
   if (meshCache.size > 40) meshCache.clear();
   meshCache.set(key, m);
   return m;

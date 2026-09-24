@@ -1,17 +1,17 @@
 import React, { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { create } from 'zustand';
-import { CONTEXT, GEO, bboxOfIds, linesD } from '../geo/geo';
+import { CONTEXT, GEO, areaContext, areaD, areaTitle, arcLines, bboxOfIds, linesD, lodTol } from '../geo/geo';
 import { CUTS, measureW } from '../lib/fonts';
 import { clamp, esc, fmt1, fmtNum } from '../lib/util';
 import { beginGesture, getDoc, getUI, setUI, toast, update, useStore } from '../model/store';
-import type { Doc, Variant } from '../model/types';
+import type { ArrowEl, ArrowEnd, Doc, Variant } from '../model/types';
 import { colorModel, fillOf } from '../render/colorModel';
 import { areaFill, hatchMap, patternSpec } from '../render/hatch';
 import { LabelItem, TextPrim, activeVariant, labelPrims, layoutLabels, legendPrims, textPrims } from '../render/elements';
 import { FrameId, frameMeshes, frameSets, geoOf, insetIdx, insetLabel } from '../render/scene';
 import { refitFrame, setFokus, setGeoSet } from '../model/actions';
-import { addMarker, addTextBox } from '../model/annotations';
-import { annItems } from '../render/annotations';
+import { addArrow, addMarker, addTextBox } from '../model/annotations';
+import { annItems, arrowRawEnds } from '../render/annotations';
 import { groupMetrics, areaRowIndex } from '../data/derive';
 import { LAENDER } from '../geo/geo';
 import { Icon } from './common';
@@ -24,9 +24,9 @@ export function textEl(t: TextPrim, key?: React.Key) {
   return <text key={key} x={+t.x.toFixed(1)} y={+t.y.toFixed(1)} fontFamily={CUTS[t.cut].family} fontSize={t.size} fill={t.color} textAnchor={t.anchor} {...halo} style={{ fontKerning: 'normal' }}>{t.text}</text>;
 }
 
-const AreaPaths = memo(function AreaPaths({ geoId, ids, fills, fill, u, pe }: { geoId: string; ids: number[]; fills?: string[]; fill?: string; u?: boolean; pe?: boolean }) {
+const AreaPaths = memo(function AreaPaths({ geoId, ids, fills, fill, u, pe, tol }: { geoId: string; ids: number[]; fills?: string[]; fill?: string; u?: boolean; pe?: boolean; tol: number }) {
   const g = GEO[geoId];
-  return <g>{ids.map((i, k) => <path key={i} data-i={i} data-u={u ? 1 : undefined} d={g.areas[i].d} fillRule="evenodd" fill={fills ? fills[k] : fill} pointerEvents={pe === false ? 'none' : undefined} />)}</g>;
+  return <g>{ids.map((i, k) => <path key={i} data-i={i} data-u={u ? 1 : undefined} d={areaD(g, i, tol)} fillRule="evenodd" fill={fills ? fills[k] : fill} pointerEvents={pe === false ? 'none' : undefined} />)}</g>;
 });
 const ContextLayer = memo(function ContextLayer({ neighbors, lakes, st, k }: { neighbors: boolean; lakes: boolean; st: Doc['style']; k: number }) {
   const nd = useMemo(() => CONTEXT.countries.map(c => c.d).join(''), []);
@@ -38,7 +38,9 @@ function MapFrame({ id }: { id: FrameId }) {
   const doc = useStore(s => s.doc!);
   const sel = useStore(s => s.ui.sel);
   const hover = useHover(s => s.i);
+  const zoom = useStore(s => s.ui.view.z);
   const v = activeVariant(doc), F = v.L[id], vw = F.view, st = doc.style, g = geoOf(doc);
+  const tol = lodTol(g, vw.k, zoom);
   const sets = useMemo(() => frameSets(doc, id), [doc.geoSet, doc.fokus, doc.umfeld, doc.inset.preset, id]); // eslint-disable-line
   const me = useMemo(() => frameMeshes(doc, id, sets), [sets, doc.umfeldStyle]); // eslint-disable-line
   const cm = colorModel(doc);
@@ -49,15 +51,16 @@ function MapFrame({ id }: { id: FrameId }) {
   const hatchLayers = useMemo(() => {
     if (!doc.layers.hatches) return [];
     const by = new Map<string, string[]>();
-    for (const i of Flist) { const h = hm.byArea[i]; if (h) { const L = by.get(h) || []; L.push(g.areas[i].d); by.set(h, L); } }
+    for (const i of Flist) { const h = hm.byArea[i]; if (h) { const L = by.get(h) || []; L.push(areaD(g, i, tol)); by.set(h, L); } }
     return [...by.entries()].map(([h, ds]) => ({ st: hm.styles.get(h)!, d: ds.join('') }));
-  }, [Flist, hm, doc.layers.hatches]); // eslint-disable-line
-  const md = useMemo(() => ({ wk: linesD(me.wk), wkU: linesD(me.wkU), land: linesD(me.land), outline: linesD(me.outline), fokus: linesD(me.fokus) }), [me]);
+  }, [Flist, hm, doc.layers.hatches, tol]); // eslint-disable-line
+  const krOn = doc.layers.krLines && me.kr.length > 0;
+  const md = useMemo(() => { const L = (x: number[]) => linesD(arcLines(g, x, tol)); return { wk: L(krOn ? me.wk : [...me.wk, ...me.kr]), wkU: L(me.wkU), kr: krOn ? L(me.kr) : '', land: L(me.land), outline: L(me.outline), fokus: L(me.fokus) }; }, [me, tol, krOn]); // eslint-disable-line
   const labels = useMemo(() => layoutLabels(doc, id), [doc, id]);
   const linesMode = me.linesMode;
   const k = vw.k;
   const selIds = sel.kind === 'area' ? sel.ids.map(x => g.byId.get(x)).filter((x): x is number => x != null && sets.F.has(x)) : [];
-  const selD = selIds.map(i => g.areas[i].d).join('');
+  const selD = selIds.map(i => areaD(g, i, tol)).join('');
   const lupe = id === 'main' && doc.inset.visible && doc.fokus.kind === 'de' ? (() => { const bb = bboxOfIds(g, insetIdx(doc)), p = 800; return { x: bb[0] - p, y: bb[1] - p, w: bb[2] - bb[0] + 2 * p, h: bb[3] - bb[1] + 2 * p }; })() : null;
   const capSize = Math.round(17 * v.ts);
   return (
@@ -67,8 +70,8 @@ function MapFrame({ id }: { id: FrameId }) {
       <g clipPath={`url(#clip-${id})`}>
         <g transform={`matrix(${k} 0 0 ${k} ${F.w / 2 - vw.cx * k} ${F.h / 2 - vw.cy * k})`}>
           <ContextLayer neighbors={doc.layers.neighbors} lakes={doc.layers.lakes} st={st} k={k} />
-          <AreaPaths geoId={doc.geoSet} ids={Ulist} fill={linesMode ? 'none' : st.umfeld} u pe={!linesMode} />
-          <AreaPaths geoId={doc.geoSet} ids={Flist} fills={fills} />
+          <AreaPaths geoId={doc.geoSet} ids={Ulist} fill={linesMode ? 'none' : st.umfeld} u pe={!linesMode} tol={tol} />
+          <AreaPaths geoId={doc.geoSet} ids={Flist} fills={fills} tol={tol} />
           {hatchLayers.length > 0 && <g pointerEvents="none">
             <defs>{hatchLayers.map(({ st: h }) => { const P = patternSpec(h, k); return (
               <pattern key={h.id} id={`hp-${id}-${h.id}`} patternUnits="userSpaceOnUse" width={P.s} height={P.s} patternTransform={`rotate(${P.ang})`}>
@@ -77,11 +80,12 @@ function MapFrame({ id }: { id: FrameId }) {
             {hatchLayers.map(({ st: h, d }) => <path key={h.id} d={d} fill={`url(#hp-${id}-${h.id})`} fillRule="evenodd" />)}
           </g>}
           {doc.layers.wkLines && <path d={md.wk} fill="none" stroke={st.wkLine} strokeWidth={st.wkLineW / k} strokeLinejoin="round" strokeLinecap="round" pointerEvents="none" />}
+          {krOn && <path d={md.kr} fill="none" stroke={st.krLine} strokeWidth={st.krLineW / k} strokeLinejoin="round" strokeLinecap="round" pointerEvents="none" />}
           {linesMode && <><path d={md.wkU} fill="none" stroke="#C8C2B6" strokeWidth={0.6 / k} strokeLinejoin="round" pointerEvents="none" /><path d={md.outline} fill="none" stroke="#B9B2A5" strokeWidth={0.8 / k} strokeLinejoin="round" pointerEvents="none" /></>}
           {doc.layers.landLines && <path d={md.land} fill="none" stroke={st.landLine} strokeWidth={st.landLineW / k} strokeLinejoin="round" strokeLinecap="round" pointerEvents="none" />}
           {id === 'main' && doc.fokusOutline && doc.fokus.kind !== 'de' && <path d={md.fokus} fill="none" stroke={st.fokusLine} strokeWidth={1.8 / k} strokeLinejoin="round" pointerEvents="none" />}
           {lupe && <rect x={lupe.x} y={lupe.y} width={lupe.w} height={lupe.h} fill="none" stroke={st.frameLine} strokeWidth={1.2 / k} pointerEvents="none" />}
-          {hover != null && sets.F.has(hover) && <path d={g.areas[hover].d} fill="none" stroke={st.ink} strokeWidth={1.4 / k} pointerEvents="none" />}
+          {hover != null && sets.F.has(hover) && <path d={areaD(g, hover, tol)} fill="none" stroke={st.ink} strokeWidth={1.4 / k} pointerEvents="none" />}
           {selD && <><path d={selD} fill="none" stroke="#FFFFFF" strokeWidth={4.2 / k} strokeLinejoin="round" pointerEvents="none" /><path d={selD} fill="none" stroke="#16181B" strokeWidth={1.8 / k} strokeLinejoin="round" pointerEvents="none" /></>}
         </g>
         <g className="lbls">{labels.items.map(it => <LabelG key={it.key} it={it} doc={doc} />)}</g>
@@ -121,7 +125,8 @@ function Annotations() {
   return <g>{items.map(it => (
     <g key={it.id + it.frame} data-ann={it.id} data-frame={it.frame}>
       {it.el.type === 'text' && <rect data-part="body" x={it.body[0]} y={it.body[1]} width={it.body[2] - it.body[0]} height={it.body[3] - it.body[1]} fill="#FFFFFF" fillOpacity={0} />}
-      {it.paths.map((q, k) => <path key={k} data-part="body" d={q.d} fill={q.fill} stroke={q.stroke} strokeWidth={q.width} strokeLinejoin="round" />)}
+      {it.arrow && <path data-part="body" d={it.arrow.d} fill="none" stroke="#FFFFFF" strokeOpacity={0} strokeWidth={14} />}
+      {it.paths.map((q, k) => <path key={k} data-part="body" d={q.d} fill={q.fill} stroke={q.stroke} strokeWidth={q.width} strokeLinejoin="round" strokeLinecap={q.cap} strokeDasharray={q.dash} />)}
       {it.el.type === 'marker' && <rect data-part="body" x={it.body[0]} y={it.body[1]} width={it.body[2] - it.body[0]} height={it.body[3] - it.body[1]} fill="#FFFFFF" fillOpacity={0} />}
       {it.texts.length > 0 && <g data-part={it.el.type === 'marker' ? 'label' : 'body'}>
         {it.label && <rect x={it.label[0]} y={it.label[1]} width={it.label[2] - it.label[0]} height={it.label[3] - it.label[1]} fill="#FFFFFF" fillOpacity={0} />}
@@ -142,8 +147,18 @@ function Overlay() {
   const out: React.ReactNode[] = [];
   const box = (b: { x: number; y: number; w: number; h: number }, key: string, dash: boolean, w = 1.5) => <rect key={key} x={b.x - 3 / z} y={b.y - 3 / z} width={b.w + 6 / z} height={b.h + 6 / z} fill="none" stroke={a} strokeWidth={w / z} strokeDasharray={dash ? `${5 / z} ${4 / z}` : undefined} />;
   if (ui.sel.kind === 'el') { const b = elementBox(doc, ui.sel.id); if (b) out.push(box(b, 'el', false)); }
+  const draft = useArrowDraft();
+  if (draft.a && draft.b) out.push(<line key="draft" x1={draft.a[0]} y1={draft.a[1]} x2={draft.b[0]} y2={draft.b[1]} stroke={a} strokeWidth={2 / z} strokeDasharray={`${6 / z} ${4 / z}`} />);
   if (ui.sel.kind === 'ann') {
     const sid = ui.sel.id;
+    const ar = annItems(doc, v).find(it => it.id === sid && it.arrow);
+    if (ar?.arrow) {
+      const g = ar.arrow, r = 5.5 / z, el = ar.el as ArrowEl;
+      const hd = (key: 'from' | 'to' | 'mid', p: [number, number], linked: boolean) => <circle key={key} data-arrow-handle={key} data-id={sid} cx={p[0]} cy={p[1]} r={key === 'mid' ? r * 0.85 : r} fill={linked ? a : 'var(--panel)'} stroke={a} strokeWidth={1.5 / z} style={{ pointerEvents: 'all', cursor: key === 'mid' ? 'grab' : 'crosshair' }} />;
+      out.push(<path key="ahl" d={g.d} fill="none" stroke={a} strokeWidth={1 / z} strokeDasharray={`${4 / z} ${3 / z}`} />);
+      out.push(hd('mid', g.mid, false), hd('from', g.p0, el.from.kind === 'el' || el.from.kind === 'area'), hd('to', g.p1, el.to.kind === 'el' || el.to.kind === 'area'));
+      return <svg id="overlay" width={v.w} height={v.h} viewBox={`0 0 ${v.w} ${v.h}`}>{out}</svg>;
+    }
     annItems(doc, v).filter(it => it.id === sid).forEach((it, k) => {
       out.push(box({ x: it.body[0], y: it.body[1], w: it.body[2] - it.body[0], h: it.body[3] - it.body[1] }, 'ab' + k, false));
       if (it.label) out.push(box({ x: it.label[0], y: it.label[1], w: it.label[2] - it.label[0], h: it.label[3] - it.label[1] }, 'al' + k, true, 1));
@@ -178,7 +193,7 @@ function Tooltip() {
     rows = <div className="tt-s">{cm.mode === 'kategorie' ? (cm.keys[h.i] || 'keine Daten') : v == null ? 'keine Daten' : fmtNum(v, 2)}</div>;
   }
   const ov = doc.overrides[doc.geoSet + ':' + a.id];
-  return <div className="tooltip" style={{ left: h.x, top: h.y }}><div className="tt-h">{a.nr} · {a.name}</div><div className="tt-s">{LAENDER[a.bl]?.[0]}{cm.group ? ' · ' + cm.group.label : ''}{(() => { const hm = hatchMap(doc), hh = doc.layers.hatches ? hm.byArea[h.i] : null; return hh ? ' · ' + (hm.styles.get(hh)?.name || '') : ''; })()}{ov ? ' · manuell eingefärbt' : ''}</div>{rows}</div>;
+  return <div className="tooltip" style={{ left: h.x, top: h.y }}><div className="tt-h">{areaTitle(g, h.i)}</div><div className="tt-s">{areaContext(g, h.i)}{a.free ? ' · gemeindefrei' : ''}{cm.group ? ' · ' + cm.group.label : ''}{(() => { const hm = hatchMap(doc), hh = doc.layers.hatches ? hm.byArea[h.i] : null; return hh ? ' · ' + (hm.styles.get(hh)?.name || '') : ''; })()}{ov ? ' · manuell eingefärbt' : ''}</div>{rows}</div>;
 }
 
 function MapModeBar({ wrap }: { wrap: React.RefObject<HTMLDivElement> }) {
@@ -212,8 +227,28 @@ export function zoomViewBy(f: number) {
   setUI({ view: { z: z1, x: cx - (cx - view.x) * z1 / view.z, y: cy - (cy - view.y) * z1 / view.z } });
 }
 
+// Vorschau beim Zeichnen eines Pfeils
+const useArrowDraft = create<{ a: [number, number] | null; b: [number, number] | null }>(() => ({ a: null, b: null }));
+/** Pfeil-Ende an der Zeigerposition: Marker oder Textkasten unter dem Zeiger, Gebietsmittelpunkt in der Nähe, sonst freier Punkt. */
+function snapEnd(d: Doc, clientX: number, clientY: number, a: number[], exclude: string | null): ArrowEnd {
+  const v = activeVariant(d);
+  for (const el of document.elementsFromPoint(clientX, clientY)) {
+    const ann = (el as Element).closest?.('[data-ann]') as SVGElement | null;
+    if (ann && ann.dataset.ann !== exclude && ann.dataset.frame !== 'inset') { const e = d.els.find(x => x.id === ann.dataset.ann); if (e && e.type !== 'arrow') return { kind: 'el', id: e.id }; }
+    const area = (el as Element).closest?.('path[data-i]') as SVGPathElement | null;
+    if (area && !area.dataset.u && area.closest('g.frame')?.getAttribute('data-frame') === 'main') {
+      const g = geoOf(d), ar = g.areas[+area.dataset.i!], F = v.L.main, w = F.view;
+      const px = F.x + (ar.label[0] - w.cx) * w.k + F.w / 2, py = F.y + (ar.label[1] - w.cy) * w.k + F.h / 2;
+      if (Math.hypot(px - a[0], py - a[1]) < 14 / Math.max(0.2, getUI().view.z)) return { kind: 'area', key: d.geoSet + ':' + ar.id };
+      break;
+    }
+  }
+  if (inFrameAt(v, 'main', a)) { const F = v.L.main, w = F.view; return { kind: 'map', at: [Math.round(w.cx + (a[0] - F.x - F.w / 2) / w.k), Math.round(w.cy + (a[1] - F.y - F.h / 2) / w.k)] }; }
+  return { kind: 'board', at: [clamp(a[0] / v.w, 0, 1), clamp(a[1] / v.h, 0, 1)] };
+}
 /** Werkzeug anwenden: Marker oder Textkasten an der Klickstelle anlegen */
-function placeTool(d: Doc, tool: 'marker' | 'text', a: number[]) {
+function placeTool(d: Doc, tool: 'marker' | 'text' | 'arrow', a: number[]) {
+  if (tool === 'arrow') return;
   const v = activeVariant(d);
   const fid: FrameId | null = d.inset.visible && inFrameAt(v, 'inset', a) ? 'inset' : inFrameAt(v, 'main', a) ? 'main' : null;
   const geo = fid ? (() => { const F = v.L[fid], w = F.view; return [w.cx + (a[0] - F.x - F.w / 2) / w.k, w.cy + (a[1] - F.y - F.h / 2) / w.k] as [number, number]; })() : null;
@@ -279,7 +314,17 @@ export function Canvas() {
     const base = { sx: e.clientX, sy: e.clientY, moved: false, shift: e.shiftKey, pid: e.pointerId };
     if (e.button === 1 || space.current) { e.preventDefault(); drag.current = { ...base, type: 'view', ox: u.view.x, oy: u.view.y }; wrap.current!.classList.add('dragging'); return; }
     if (e.button !== 0) return;
+    if (u.tool === 'arrow') { const from = snapEnd(d, e.clientX, e.clientY, a, null); useArrowDraft.setState({ a: [a[0], a[1]], b: [a[0], a[1]] }); drag.current = { ...base, type: 'arrowNew', from }; return; }
     if (u.tool) { placeTool(d, u.tool, a); return; }
+    const ah = t.closest('[data-arrow-handle]') as SVGElement | null;
+    if (ah) {
+      const id = ah.dataset.id!, which = ah.dataset.arrowHandle as 'from' | 'to' | 'mid', el = d.els.find(x => x.id === id);
+      if (el && el.type === 'arrow') {
+        if (which === 'mid') { const [A, B] = arrowRawEnds(d, activeVariant(d), el); drag.current = { ...base, type: 'arrowBend', id, A, B }; }
+        else drag.current = { ...base, type: 'arrowEnd', id, which };
+        return;
+      }
+    }
     const annEl = t.closest('[data-ann]') as SVGElement | null;
     if (annEl && !u.mapMode) {
       const id = annEl.dataset.ann!, part = (t.closest('[data-part]') as SVGElement | null)?.dataset.part || 'body', fr = annEl.dataset.frame as 'main' | 'inset' | 'board';
@@ -287,6 +332,7 @@ export function Canvas() {
       if (el) {
         setUI({ sel: { kind: 'ann', id } });
         const vv = activeVariant(d);
+        if (el.type === 'arrow') { drag.current = { ...base, type: 'none' }; return; }
         if (el.type === 'marker' && part === 'body') drag.current = { ...base, type: 'annAt', id, oat: [...el.at], k: vv.L[fr === 'inset' ? 'inset' : 'main'].view.k };
         else if (el.type === 'text' && el.anchor === 'board' && part === 'body' && e.altKey) drag.current = { ...base, type: 'annAt', id, oat: [...el.at], board: true };
         else { const dflt = el.type === 'text' && el.anchor === 'map' && el.leader ? annItems(d, vv).find(it => it.id === id) : null; const off = vv.ann[id] || (dflt ? [dflt.body[0] - dflt.anchor[0], dflt.body[1] - dflt.anchor[1]] : [0, 0]); drag.current = { ...base, type: 'annOff', id, o: [...off] }; }
@@ -335,7 +381,7 @@ export function Canvas() {
     }
     const dxs = e.clientX - dg.sx, dys = e.clientY - dg.sy;
     if (!dg.moved && Math.hypot(dxs, dys) < 3) return;
-    if (!dg.moved) { try { wrap.current!.setPointerCapture(dg.pid); } catch { /* egal */ } if (dg.type !== 'view' && dg.type !== 'area' && dg.type !== 'none') beginGesture(); useHover.setState({ i: null }); }
+    if (!dg.moved) { try { wrap.current!.setPointerCapture(dg.pid); } catch { /* egal */ } if (dg.type !== 'view' && dg.type !== 'area' && dg.type !== 'none' && dg.type !== 'arrowNew') beginGesture(); useHover.setState({ i: null }); }
     dg.moved = true;
     const z = getUI().view.z, dx = dxs / z, dy = dys / z;
     switch (dg.type) {
@@ -345,17 +391,34 @@ export function Canvas() {
       case 'frame': update(dd => { const F = dd.variants[dd.active].L[dg.id as FrameId]; F.x = Math.round((dg.ox as number) + dx); F.y = Math.round((dg.oy as number) + dy); }, { history: false }); break;
       case 'resize': update(dd => { const F = dd.variants[dd.active].L[dg.id as FrameId]; F.w = Math.max(80, Math.round((dg.ow as number) + dx)); F.h = Math.max(80, Math.round((dg.oh as number) + dy)); }, { history: false }); break;
       case 'annAt': {
-        if (dg.board) { const vv = activeVariant(getDoc()); const o = dg.oat as number[]; update(dd => { const el = dd.els.find(x => x.id === dg.id); if (el) el.at = [clamp(o[0] + dx / vv.w, 0, 1), clamp(o[1] + dy / vv.h, 0, 1)]; }, { history: false }); break; }
+        if (dg.board) { const vv = activeVariant(getDoc()); const o = dg.oat as number[]; update(dd => { const el = dd.els.find(x => x.id === dg.id); if (el && el.type === 'text') el.at = [clamp(o[0] + dx / vv.w, 0, 1), clamp(o[1] + dy / vv.h, 0, 1)]; }, { history: false }); break; }
         const o = dg.oat as number[], k = dg.k as number;
         update(dd => { const el = dd.els.find(x => x.id === dg.id); if (el && el.type === 'marker') { el.at = [Math.round(o[0] + dx / k), Math.round(o[1] + dy / k)]; el.place = null; } }, { history: false }); break;
+      }
+      case 'arrowNew': { const p = toArt(e); useArrowDraft.setState({ b: [p[0], p[1]] }); break; }
+      case 'arrowEnd': { const p = toArt(e); const d = getDoc(); const end = snapEnd(d, e.clientX, e.clientY, p, dg.id as string); update(dd => { const x = dd.els.find(q => q.id === dg.id); if (x && x.type === 'arrow') x[dg.which as 'from'] = end.kind === 'el' || end.kind === 'area' ? end : end; }, { history: false }); break; }
+      case 'arrowBend': {
+        const p = toArt(e), A = dg.A as number[], B = dg.B as number[], ddx = B[0] - A[0], ddy = B[1] - A[1], L = Math.hypot(ddx, ddy) || 1;
+        const cx = 2 * p[0] - (A[0] + B[0]) / 2, cy = 2 * p[1] - (A[1] + B[1]) / 2, mx = (A[0] + B[0]) / 2, my = (A[1] + B[1]) / 2;
+        let bend = ((cx - mx) * (-ddy / L) + (cy - my) * (ddx / L)) / L; if (Math.abs(bend) < 0.03) bend = 0;
+        update(dd => { const x = dd.els.find(q => q.id === dg.id); if (x && x.type === 'arrow') x.bend = Math.round(clamp(bend, -1.5, 1.5) * 100) / 100; }, { history: false }); break;
       }
       case 'annOff': { const o = dg.o as number[]; update(dd => { dd.variants[dd.active].ann[dg.id as string] = [Math.round(o[0] + dx), Math.round(o[1] + dy)]; }, { history: false }); break; }
       case 'label': { const o = dg.o as number[]; update(dd => { dd.variants[dd.active].labelOffsets[dg.key as string] = [Math.round(o[0] + dx), Math.round(o[1] + dy)]; }, { history: false }); break; }
     }
   };
-  const onPointerUp = () => {
+  const onPointerUp = (e?: React.PointerEvent) => {
     const dg = drag.current; drag.current = null;
     wrap.current?.classList.remove('dragging');
+    if (dg?.type === 'arrowNew') {
+      useArrowDraft.setState({ a: null, b: null });
+      const d = getDoc(), v = activeVariant(d);
+      if (!dg.moved || !e) { toast('Pfeil: vom Start zum Ziel ziehen'); return; }
+      const p = toArt(e), from = dg.from as ArrowEnd;
+      const to = snapEnd(d, e.clientX, e.clientY, p, from.kind === 'el' ? from.id : null);
+      if (JSON.stringify(to) === JSON.stringify(from)) { toast('Start und Ziel sind gleich'); return; }
+      void v; addArrow(from, to); return;
+    }
     if (!dg || dg.moved) return;
     const i = dg.type === 'area' ? dg.i as number : dg.type === 'map' ? dg.i as number | null : null;
     if (i != null) {
@@ -371,7 +434,8 @@ export function Canvas() {
       if (p && !p.dataset.u && u.mapMode === 'main') {
         const g = geoOf(d), ar = g.areas[+p.dataset.i!];
         if (d.fokus.kind === 'de') { setUI({ expanded: { ...u.expanded, [ar.bl]: true } }); setFokus({ kind: 'land', bl: ar.bl }); toast('Fokus: ' + LAENDER[ar.bl][0]); }
-        else if (d.fokus.kind === 'land' || d.fokus.kind === 'custom') { setFokus({ kind: 'area', id: ar.id }); toast('Fokus: ' + ar.name); }
+        else if (d.fokus.kind === 'land' && ar.kr && (g.byKr[ar.kr]?.length || 0) > 1) { setFokus({ kind: 'kreis', kr: ar.kr }); toast('Fokus: ' + (g.krName[ar.kr] || ar.kr)); }
+        else if (d.fokus.kind === 'land' || d.fokus.kind === 'kreis' || d.fokus.kind === 'custom') { setFokus({ kind: 'area', id: ar.id }); toast('Fokus: ' + ar.name); }
       }
       return;
     }
@@ -380,7 +444,7 @@ export function Canvas() {
 
   return (
     <section className={'canvaswrap' + (mapMode ? ' mapmode' : '') + (tool ? ' placing' : '')} id="canvas" ref={wrap} aria-label="Arbeitsfläche"
-      onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
+      onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={() => onPointerUp()}
       onPointerLeave={() => { if (!drag.current) useHover.setState({ i: null }); }} onDoubleClick={onDoubleClick}>
       <div className="stage" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.z})` }}>
         <div className={'artboard-shadow' + (doc.background === 'transparent' ? ' checker' : '')} style={{ width: v.w, height: v.h }} />
@@ -394,11 +458,11 @@ export function Canvas() {
         <Overlay />
       </div>
       <div className="canvas-tip"><span>Klick: auswählen</span><span>Doppelklick auf Karte: Kartenmodus</span><span>Leertaste + Ziehen: Ansicht verschieben</span></div>
-      {cm.mismatch && <div className="canvas-banner" role="status"><Icon.warn /> Die Farbregel nutzt Daten für „{GEO[cm.mismatch]?.meta.label}“, die Karte zeigt „{GEO[doc.geoSet].meta.label}“. Zuordnung über Nummern wäre falsch.
-        <button className="btn small" onClick={() => setGeoSet(cm.mismatch!)}>Karte auf {GEO[cm.mismatch]?.meta.year} umstellen</button></div>}
+      {cm.mismatch && <div className="canvas-banner" role="status"><Icon.warn /> Die Farbregel nutzt Daten für „{GEO[cm.mismatch]?.meta.label}“, die Karte zeigt „{GEO[doc.geoSet].meta.label}“. Daten passen nur zu ihrem Gebietsstand.
+        <button className="btn small" onClick={() => setGeoSet(cm.mismatch!)}>Karte auf „{GEO[cm.mismatch]?.meta.label}“ umstellen</button></div>}
       {!cm.dataset && doc.color.mode === 'none' && <div className="canvas-banner soft"><Icon.info /> Noch keine Daten. Importiere eine CSV- oder Excel-Datei im Schritt „Daten“.
         <button className="btn small primary" onClick={() => setUI({ wizard: { mode: 'new' } })}><Icon.upload /> Daten importieren</button></div>}
-      {tool && <div className="mapmode-bar tool-bar"><b>{tool === 'marker' ? 'Marker setzen' : 'Textkasten setzen'}</b><span style={{ opacity: .75 }}>{tool === 'marker' ? 'Klick in die Karte setzt den Marker' : 'Klick in die Karte hängt ihn an diesen Punkt, Klick daneben an die Fläche'}</span><button className="btn small" onClick={() => setUI({ tool: null })}>Abbrechen <span className="kbd kbd-inv">Esc</span></button></div>}
+      {tool && <div className="mapmode-bar tool-bar"><b>{tool === 'marker' ? 'Marker setzen' : tool === 'arrow' ? 'Pfeil zeichnen' : 'Textkasten setzen'}</b><span style={{ opacity: .75 }}>{tool === 'marker' ? 'Klick in die Karte setzt den Marker' : tool === 'arrow' ? 'Vom Start zum Ziel ziehen; über Markern, Textkästen und Gebietsmitten rastet das Ende ein' : 'Klick in die Karte hängt ihn an diesen Punkt, Klick daneben an die Fläche'}</span><button className="btn small" onClick={() => setUI({ tool: null })}>Abbrechen <span className="kbd kbd-inv">Esc</span></button></div>}
       <MapModeBar wrap={wrap} />
       <Tooltip />
       <div className="canvas-hud">

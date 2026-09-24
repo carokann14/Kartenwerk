@@ -25,26 +25,69 @@ export function detectDelimiter(text: string) {
 }
 export function parseCSV(text: string, delim: string): string[][] {
   const rows: string[][] = [];
-  let row: string[] = [], cell = '', q = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (q) {
-      if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+  const n = text.length;
+  let i = 0;
+  // schneller Weg für Zeilen ohne Anführungszeichen (große amtliche Dateien)
+  while (i < n) {
+    let e = text.indexOf('\n', i); if (e < 0) e = n;
+    let line = text.slice(i, e); if (line.endsWith('\r')) line = line.slice(0, -1);
+    if (line.indexOf('"') < 0) { rows.push(line.split(delim)); i = e + 1; continue; }
+    // Zeile mit Anführungszeichen: zeichenweise, auch über Zeilenumbrüche hinweg
+    const row: string[] = []; let cell = '', q = false, j = i;
+    for (; j < n; j++) {
+      const c = text[j];
+      if (q) { if (c === '"') { if (text[j + 1] === '"') { cell += '"'; j++; } else q = false; } else cell += c; }
+      else if (c === '"' && cell === '') q = true;
+      else if (c === delim) { row.push(cell); cell = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && text[j + 1] === '\n') j++; break; }
       else cell += c;
-    } else if (c === '"' && cell === '') q = true;
-    else if (c === delim) { row.push(cell); cell = ''; }
-    else if (c === '\n' || c === '\r') {
-      if (c === '\r' && text[i + 1] === '\n') i++;
-      row.push(cell); rows.push(row); row = []; cell = '';
-    } else cell += c;
+    }
+    row.push(cell); rows.push(row); i = j + 1;
   }
-  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
   // leere Endspalten entfernen
-  return rows.map(r => { let n = r.length; while (n > 0 && r[n - 1].trim() === '') n--; return r.slice(0, n).map(s => s.trim()); });
+  return rows.map(r => { let k = r.length; while (k > 0 && r[k - 1].trim() === '') k--; return r.slice(0, k).map(x => x.trim()); });
+}
+
+// ---------- ZIP (z. B. btw25_wbz.zip) ----------
+async function inflate(data: Uint8Array): Promise<ArrayBuffer> {
+  const DS = (globalThis as unknown as { DecompressionStream?: new (f: string) => TransformStream }).DecompressionStream;
+  if (!DS) throw new Error('Dieser Browser kann ZIP-Dateien nicht entpacken. Bitte die CSV-Datei vorher entpacken.');
+  return new Response(new Blob([data as BlobPart]).stream().pipeThrough(new DS('deflate-raw'))).arrayBuffer();
+}
+export async function unzipEntries(buf: ArrayBuffer): Promise<{ name: string; size: number; read: () => Promise<ArrayBuffer> }[]> {
+  const u = new Uint8Array(buf), dv = new DataView(buf);
+  let e = u.length - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('Die ZIP-Datei ist beschädigt.');
+  const n = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true);
+  const out: { name: string; size: number; read: () => Promise<ArrayBuffer> }[] = [];
+  for (let k = 0; k < n; k++) {
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), usize = dv.getUint32(p + 24, true);
+    const fl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), lho = dv.getUint32(p + 42, true);
+    const utf8 = (dv.getUint16(p + 8, true) & 0x800) !== 0;
+    const name = new TextDecoder(utf8 ? 'utf-8' : 'windows-1252').decode(u.subarray(p + 46, p + 46 + fl));
+    const read = async () => {
+      const lfl = dv.getUint16(lho + 26, true), lel = dv.getUint16(lho + 28, true), start = lho + 30 + lfl + lel;
+      const data = u.slice(start, start + csize);
+      if (method === 0) return data.buffer;
+      if (method === 8) return inflate(data);
+      throw new Error('Nicht unterstütztes Packverfahren in der ZIP-Datei.');
+    };
+    out.push({ name, size: usize, read });
+    p += 46 + fl + el + cl;
+  }
+  return out;
 }
 
 export async function readFile(name: string, buf: ArrayBuffer): Promise<RawInput> {
   const lower = name.toLowerCase();
+  if (lower.endsWith('.zip')) {
+    // Tabelle aus dem Archiv: bevorzugt „…ergebnis…“, sonst die größte CSV- oder Excel-Datei
+    const es = (await unzipEntries(buf)).filter(x => /\.(csv|txt|xlsx|xls|ods)$/i.test(x.name) && !/(^|\/)__MACOSX\//.test(x.name));
+    if (!es.length) throw new Error('In der ZIP-Datei steckt keine CSV- oder Excel-Datei.');
+    const pick = es.find(x => /ergebnis/i.test(x.name)) || es.sort((a, b) => b.size - a.size)[0];
+    const inner = await readFile(pick.name.split('/').pop()!, await pick.read());
+    return { ...inner, fileName: name + ' › ' + inner.fileName };
+  }
   if (/\.(xlsx|xlsm|xls|ods)$/.test(lower)) {
     const XLSX = await import('xlsx');
     const wb = XLSX.read(buf, { type: 'array' });

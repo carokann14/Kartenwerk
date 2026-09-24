@@ -5,7 +5,7 @@ import { defaultDoc, normalizeDoc } from './defaults';
 import { fitInset, fitMain, makeVariant, relayout } from './layout';
 import type { ColorRule, Doc, Fokus, Variant } from './types';
 import type { Dataset } from '../data/types';
-import { GEO } from '../geo/geo';
+import { GEO, ensureGeo, geoLabel } from '../geo/geo';
 import { saveLocal } from './persist';
 
 const refit = (d: Draft<Doc>, which: 'main' | 'inset' | 'both' = 'main') => {
@@ -18,12 +18,23 @@ const refit = (d: Draft<Doc>, which: 'main' | 'inset' | 'both' = 'main') => {
   });
 };
 
+/** Gebietsstände bei Bedarf nachladen (Gemeinden usw. werden erst geladen, wenn man sie braucht). */
+export async function loadGeoSets(ids: (string | null | undefined)[]): Promise<boolean> {
+  const need = [...new Set(ids.filter((x): x is string => !!x && !GEO[x]))];
+  if (!need.length) return true;
+  setUI({ busy: 'Lade ' + need.map(geoLabel).join(', ') + ' …' });
+  try { await ensureGeo(need); return true; }
+  catch (e) { toast('Geometrien konnten nicht geladen werden: ' + (e as Error).message); return false; }
+  finally { setUI({ busy: null }); }
+}
 export function newProject(geoSet = 'btw-wk-2025', name = 'Neues Projekt') {
   const d = defaultDoc(geoSet); d.name = name;
+  if (GEO[geoSet]?.meta.keyLen) d.inset.visible = false;   // Detail-Lupen sind für Wahlkreise gedacht
   d.variants = [makeVariant(d, '4:5')];
   setDoc(d); setUI({ start: false, sel: { kind: 'graphic' }, mapMode: null, step: 'gebiete', panelOpen: true });
 }
-export function openDoc(d0: Doc) {
+export async function openDoc(d0: Doc) {
+  await loadGeoSets([d0.geoSet, ...(d0.datasets || []).map(x => x.geoSet)]);
   if (!GEO[d0.geoSet]) throw new Error('Unbekannter Gebietsstand: ' + d0.geoSet);
   const d = normalizeDoc(d0);
   setDoc(d); setUI({ start: false, sel: { kind: 'graphic' }, mapMode: null });
@@ -37,8 +48,9 @@ export function setFokus(f: Fokus) {
     refit(d);
   });
 }
-export function setGeoSet(id: string) {
-  if (!GEO[id] || getDoc().geoSet === id) return;
+export async function setGeoSet(id: string) {
+  if (getDoc().geoSet === id) return;
+  if (!(await loadGeoSets([id])) || !GEO[id]) return;
   update(d => {
     d.geoSet = id; d.fokus = { kind: 'de' };
     for (const v of d.variants) v.labelOffsets = {};
@@ -64,12 +76,13 @@ export function addDataset(ds: Dataset, useIt = true) {
   update(d => {
     d.datasets.push(ds as Draft<Dataset>);
     if (useIt) {
-      if (d.geoSet !== ds.geoSet) { d.geoSet = ds.geoSet; d.fokus = { kind: 'de' }; }
+      if (d.geoSet !== ds.geoSet) { d.geoSet = ds.geoSet; d.fokus = { kind: 'de' }; if (GEO[ds.geoSet]?.meta.keyLen && d.inset.visible) d.inset.visible = false; }
       d.color = autoRule(ds);
       if (d.texts.title.text === 'Titel der Grafik' && ds.groups.some(g => g.parties)) {
-        d.texts.title.text = 'Stärkste Partei je Wahlkreis';
+        const SING: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Regierungsbezirk', krs: 'Kreis', vwg: 'Gemeindeverband', gem: 'Gemeinde' };
+        d.texts.title.text = 'Stärkste Partei je ' + (SING[GEO[ds.geoSet]?.meta.level] || 'Gebiet');
         const grp = ds.groups.find(g => g.parties && /Zweit/.test(g.label)) || ds.groups.find(g => g.parties);
-        d.texts.subtitle.text = `${grp ? grp.label + ', ' : ''}${ds.name}. Je kräftiger die Farbe, desto höher der Anteil der stärksten Partei.`;
+        d.texts.subtitle.text = `${grp && !ds.name.includes(grp.label) ? grp.label + ', ' : ''}${ds.name}. Je kräftiger die Farbe, desto höher der Anteil der stärksten Partei.`;
         d.name = d.name === 'Neues Projekt' ? ds.name : d.name;
       }
       const plain = current(d) as Doc;

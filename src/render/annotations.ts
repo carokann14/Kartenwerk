@@ -1,7 +1,8 @@
 // Marker und Textkästen: Formen, Platzierung je Variante, Primitive für Editor und Export
 import { capOffset, measureW, wrapText } from '../lib/fonts';
 import { clamp } from '../lib/util';
-import type { AnnEl, Doc, MarkerEl, MarkerShape, TextBoxEl, Variant } from '../model/types';
+import type { AnnEl, ArrowEl, ArrowEnd, Doc, MarkerEl, MarkerShape, TextBoxEl, Variant } from '../model/types';
+import { GEO } from '../geo/geo';
 import type { PathPrim, RectPrim, TextPrim } from './elements';
 
 export const SHAPE_LABEL: Record<MarkerShape, string> = { kreis: 'Kreis', quadrat: 'Quadrat', dreieck: 'Dreieck', raute: 'Raute', stern: 'Stern', pin: 'Stecknadel', eigen: 'Eigenes Symbol' };
@@ -81,6 +82,7 @@ export interface AnnItem {
   body: [number, number, number, number];            // Auswahl-Rahmen des Körpers (Marker bzw. Kasten)
   label: [number, number, number, number] | null;    // Rahmen der Beschriftung (Marker)
   anchor: [number, number];                          // Ankerpunkt auf der Grafik
+  arrow?: ArrowGeom;                                 // nur Pfeile: Geometrie für Griffe
 }
 const styleColor = (doc: Doc, c: string) => (c === 'ink' ? doc.style.ink : c === 'inkSoft' ? doc.style.inkSoft : c);
 function toBoard(v: Variant, id: 'main' | 'inset', at: [number, number]): [number, number] {
@@ -138,18 +140,87 @@ function textItem(doc: Doc, v: Variant, t: TextBoxEl): AnnItem | null {
   lines.forEach((l, k) => texts.push({ x: tx, y: y + pad + k * lh + lh / 2 + capOffset(t.cut, size), text: l, cut: t.cut, size, color: styleColor(doc, t.color), anchor: t.align }));
   return { id: t.id, el: t, frame: t.anchor === 'map' ? 'main' : 'board', paths, rects, texts, body: [x, y, x + w, y + h], label: null, anchor: A };
 }
-/** Alle sichtbaren Elemente einer Variante, in Stapelreihenfolge. */
+// ---------- Pfeile ----------
+export interface ArrowGeom { p0: [number, number]; p1: [number, number]; c: [number, number] | null; mid: [number, number]; d: string; heads: string[] }
+type EndInfo = { p: [number, number]; box?: [number, number, number, number]; r?: number };
+function resolveEnd(v: Variant, e: ArrowEnd, byId: Map<string, AnnItem>): EndInfo | null {
+  if (e.kind === 'map') return { p: toBoard(v, 'main', e.at) };
+  if (e.kind === 'board') return { p: [e.at[0] * v.w, e.at[1] * v.h] };
+  if (e.kind === 'area') {
+    const [gs, id] = [e.key.slice(0, e.key.indexOf(':')), e.key.slice(e.key.indexOf(':') + 1)];
+    const g = GEO[gs]; const i = g?.byId.get(id); if (!g || i == null) return null;
+    return { p: toBoard(v, 'main', g.areas[i].label) };
+  }
+  const it = byId.get(e.id); if (!it) return null;
+  if (it.el.type === 'marker') { const b = it.body; return { p: [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2], r: Math.max(b[2] - b[0], b[3] - b[1]) / 2 }; }
+  const b = it.body; return { p: [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2], box: b };
+}
+/** Punkt am Rand eines verbundenen Elements, in Richtung des Punkts q */
+function edgePoint(e: EndInfo, q: [number, number], gap: number): [number, number] {
+  const [px, py] = e.p, dx = q[0] - px, dy = q[1] - py, L = Math.hypot(dx, dy) || 1;
+  if (e.r != null) { const r = e.r + gap; return [px + dx / L * r, py + dy / L * r]; }
+  if (e.box) {
+    const hw = (e.box[2] - e.box[0]) / 2 + gap, hh = (e.box[3] - e.box[1]) / 2 + gap;
+    const t = Math.min(dx ? hw / Math.abs(dx) : Infinity, dy ? hh / Math.abs(dy) : Infinity);
+    return [px + dx * Math.min(t, 1), py + dy * Math.min(t, 1)];
+  }
+  return e.p;
+}
+export function arrowGeom(v: Variant, a: ArrowEl, byId: Map<string, AnnItem>): ArrowGeom | null {
+  const A = resolveEnd(v, a.from, byId), B = resolveEnd(v, a.to, byId);
+  if (!A || !B) return null;
+  const ts = v.ts, w = a.width * ts, gap = a.gap * ts;
+  const dx = B.p[0] - A.p[0], dy = B.p[1] - A.p[1], len = Math.hypot(dx, dy) || 1;
+  const c: [number, number] | null = a.bend ? [(A.p[0] + B.p[0]) / 2 - dy / len * a.bend * len, (A.p[1] + B.p[1]) / 2 + dx / len * a.bend * len] : null;
+  let p0 = edgePoint(A, c || B.p, gap), p1 = edgePoint(B, c || A.p, gap);
+  const headLen = (6 + w * 2.6) * a.headSize, heads: string[] = [];
+  const head = (tip: [number, number], from: [number, number]) => {
+    const ux = tip[0] - from[0], uy = tip[1] - from[1], L = Math.hypot(ux, uy) || 1, nx = ux / L, ny = uy / L, hw = headLen * 0.46;
+    const bx = tip[0] - nx * headLen, by = tip[1] - ny * headLen;
+    heads.push(`M${f1(tip[0])} ${f1(tip[1])}L${f1(bx - ny * hw)} ${f1(by + nx * hw)}L${f1(tip[0] - nx * headLen * 0.78)} ${f1(tip[1] - ny * headLen * 0.78)}L${f1(bx + ny * hw)} ${f1(by - nx * hw)}z`);
+    return [tip[0] - nx * headLen * 0.7, tip[1] - ny * headLen * 0.7] as [number, number];
+  };
+  const tangentEnd = c || p0, tangentStart = c || p1;
+  if (a.head === 'end' || a.head === 'both') p1 = head(p1, tangentEnd);
+  if (a.head === 'start' || a.head === 'both') p0 = head(p0, tangentStart);
+  const d = c ? `M${f1(p0[0])} ${f1(p0[1])}Q${f1(c[0])} ${f1(c[1])} ${f1(p1[0])} ${f1(p1[1])}` : `M${f1(p0[0])} ${f1(p0[1])}L${f1(p1[0])} ${f1(p1[1])}`;
+  const mid: [number, number] = c ? [0.25 * p0[0] + 0.5 * c[0] + 0.25 * p1[0], 0.25 * p0[1] + 0.5 * c[1] + 0.25 * p1[1]] : [(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2];
+  return { p0, p1, c, mid, d, heads };
+}
+function arrowItem(doc: Doc, v: Variant, a: ArrowEl, byId: Map<string, AnnItem>): AnnItem | null {
+  const g = arrowGeom(v, a, byId); if (!g) return null;
+  const w = a.width * v.ts;
+  const paths: PathPrim[] = [{ d: g.d, fill: 'none', stroke: a.color, width: +w.toFixed(2), cap: 'round', ...(a.dash ? { dash: `${f1(w * 3.2)} ${f1(w * 2.4)}` } : {}) }];
+  for (const h of g.heads) paths.push({ d: h, fill: a.color });
+  const xs = [g.p0[0], g.p1[0], g.mid[0]], ys = [g.p0[1], g.p1[1], g.mid[1]];
+  return { id: a.id, el: a, frame: 'board', paths, rects: [], texts: [], body: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)], label: null, anchor: g.p0, arrow: g };
+}
+/** Mittelpunkte beider Enden (vor dem Abstand zu Elementen), für das Biegen per Griff */
+export function arrowRawEnds(doc: Doc, v: Variant, a: ArrowEl): [[number, number], [number, number]] {
+  const byId = new Map(annItems(doc, v).filter(it => it.frame !== 'inset' && it.el.type !== 'arrow').map(it => [it.id, it]));
+  const A = resolveEnd(v, a.from, byId), B = resolveEnd(v, a.to, byId);
+  return [A?.p || [0, 0], B?.p || [0, 0]];
+}
+/** Alle sichtbaren Elemente einer Variante, in Stapelreihenfolge. Pfeile werden nach den übrigen Elementen berechnet. */
 export function annItems(doc: Doc, v: Variant): AnnItem[] {
+  const main = new Map<string, AnnItem>(), perEl = new Map<string, AnnItem[]>();
+  for (const el of doc.els) {
+    if (el.hidden || el.type === 'arrow') continue;
+    const list: AnnItem[] = [];
+    if (el.type === 'marker') {
+      const p = toBoard(v, 'main', el.at);
+      if (inFrame(v, 'main', p)) { const it = markerItem(doc, v, el, 'main', p, true); list.push(it); main.set(el.id, it); }
+      if (el.inset && doc.inset.visible) { const q = toBoard(v, 'inset', el.at); if (inFrame(v, 'inset', q)) list.push(markerItem(doc, v, el, 'inset', q, false)); }
+    } else { const it = textItem(doc, v, el); if (it) { list.push(it); main.set(el.id, it); } }
+    perEl.set(el.id, list);
+  }
   const out: AnnItem[] = [];
   for (const el of doc.els) {
     if (el.hidden) continue;
-    if (el.type === 'marker') {
-      const p = toBoard(v, 'main', el.at);
-      if (inFrame(v, 'main', p)) out.push(markerItem(doc, v, el, 'main', p, true));
-      if (el.inset && doc.inset.visible) { const q = toBoard(v, 'inset', el.at); if (inFrame(v, 'inset', q)) out.push(markerItem(doc, v, el, 'inset', q, false)); }
-    } else { const it = textItem(doc, v, el); if (it) out.push(it); }
+    if (el.type === 'arrow') { const it = arrowItem(doc, v, el, main); if (it) out.push(it); }
+    else out.push(...(perEl.get(el.id) || []));
   }
   return out;
 }
-export const elName = (el: AnnEl) => el.type === 'marker' ? (el.label.split('\n')[0] || el.place?.name.split(',')[0] || 'Marker') : (el.text.split('\n')[0].slice(0, 32) || 'Textkasten');
+export const elName = (el: AnnEl) => el.type === 'marker' ? (el.label.split('\n')[0] || el.place?.name.split(',')[0] || 'Marker') : el.type === 'text' ? (el.text.split('\n')[0].slice(0, 32) || 'Textkasten') : 'Pfeil';
 export { toBoard };

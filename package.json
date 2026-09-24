@@ -11,7 +11,10 @@
     "build:preview": "vite build --mode preview && node scripts/inline-preview.mjs",
     "geodata": "node scripts/build-geodata.mjs",
     "typecheck": "tsc --noEmit",
-    "orte": "esbuild scripts/build-orte.ts --bundle --platform=node --format=esm --packages=external --outfile=data-src/.tmp/build-orte.mjs --log-level=warning && node data-src/.tmp/build-orte.mjs"
+    "orte": "esbuild scripts/build-orte.ts --bundle --platform=node --format=esm --packages=external --outfile=data-src/.tmp/build-orte.mjs --log-level=warning && node data-src/.tmp/build-orte.mjs",
+    "vg250": "node scripts/build-vg250.mjs",
+    "vg250:preview": "VG_OUT=data-src/.tmp/preview VG_INTERVAL=100 node scripts/build-vg250.mjs 2025",
+    "beispiele": "esbuild scripts/build-examples.ts --bundle --platform=node --format=esm --outfile=data-src/.tmp/build-examples.mjs --log-level=warning && node data-src/.tmp/build-examples.mjs"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.3.0",

@@ -3,12 +3,12 @@ import { loadBinary } from '../lib/assets';
 import { fmtInt, norm } from '../lib/util';
 import { readFile } from '../data/parse';
 import { EXAMPLES } from '../data/examples';
-import { PRESET_LABELS, buildDataset, buildTable, defaultSettings, issueLabel, shortTitle, suggestGeoSet } from '../data/pipeline';
+import { PRESET_LABELS, wbzTitle, buildDataset, buildTable, defaultSettings, issueLabel, shortTitle, suggestGeoSetAsync } from '../data/pipeline';
 import type { Cell, Dataset, ImportSettings, PresetId, RawInput, Role } from '../data/types';
-import { GEO, GEO_INDEX } from '../geo/geo';
-import { addDataset, replaceDataset } from '../model/actions';
+import { GEO, areaContext, areaTitle } from '../geo/geo';
+import { addDataset, loadGeoSets, replaceDataset } from '../model/actions';
 import { getDoc, setUI, useStore } from '../model/store';
-import { Check, Field, Icon, Note, NumInput, Seg } from './common';
+import { Check, Field, GeoSelect, Icon, Note, NumInput, Seg } from './common';
 
 const STEPS = ['Datei', 'Aufbau', 'Spalten', 'Gebiete', 'Zuordnung'];
 const ROLE_LABEL: Record<Role, string> = { id: 'Kennung', name: 'Name', value: 'Wert', category: 'Kategorie', label: 'Beschriftung', ignore: 'ignorieren' };
@@ -27,7 +27,7 @@ export function ImportWizard() {
   const close = () => setUI({ wizard: null });
 
   const table = useMemo(() => (raw && st ? buildTable(raw, st) : null), [raw, st]);
-  const ds = useMemo(() => (raw && st && table && st.geoSet ? buildDataset(raw, st, table, name || raw.fileName, base?.id) : null), [raw, st, table, name, base]);
+  const ds = useMemo(() => (raw && st && table && st.geoSet && GEO[st.geoSet] ? buildDataset(raw, st, table, name || raw.fileName, base?.id) : null), [raw, st, table, name, base]);
 
   async function load(fileName: string, buf: ArrayBuffer) {
     setErr('');
@@ -42,14 +42,16 @@ export function ImportWizard() {
         s = b.preset === 'allgemein' ? { ...fresh, ...b, sheet: fresh.sheet } : { ...fresh, ...keep };
       } else s = defaultSettings(r);
       const t = buildTable(r, s);
-      if (!s.geoSet) { const sug = suggestGeoSet(t); s.geoSet = sug.id; setGeoReason(sug.reason); }
+      if (!s.geoSet) { const sug = await suggestGeoSetAsync(t, s, fileName); s.geoSet = sug.id; setGeoReason(sug.reason); }
+      if (!(await loadGeoSets([s.geoSet]))) return;
       setRaw(r); setSt(s); setName(base ? base.name : shortTitle(s.sourceTitle, fileName.replace(/\.[^.]+$/, '')));
       setStep(base ? 5 : 2);
     } catch (e) { setErr((e as Error).message || 'Die Datei konnte nicht gelesen werden.'); }
   }
   const onFile = async (f: File | undefined) => { if (f) await load(f.name, await f.arrayBuffer()); };
   const set = (patch: Partial<ImportSettings>) => setSt(s => (s ? { ...s, ...patch } : s));
-  const setPreset = (p: PresetId) => { if (!raw) return; const s = defaultSettings(raw, p, st?.sheet || 0); const t = buildTable(raw, s); const sug = suggestGeoSet(t); s.geoSet = sug.id; setGeoReason(sug.reason); setSt(s); };
+  const setPreset = async (p: PresetId) => { if (!raw) return; const s = defaultSettings(raw, p, st?.sheet || 0); const t = buildTable(raw, s); const sug = await suggestGeoSetAsync(t, s, raw.fileName); s.geoSet = sug.id; setGeoReason(sug.reason); if (await loadGeoSets([s.geoSet])) setSt(s); };
+  const setGeo = async (id: string) => { if (await loadGeoSets([id])) set({ geoSet: id }); };
 
   const finish = () => {
     if (!ds) return;
@@ -75,7 +77,7 @@ export function ImportWizard() {
             <div className="wiz-file"><Icon.file /> <b>{raw.fileName}</b><span className="chip">{raw.kind === 'xlsx' ? 'Excel' : `CSV · ${raw.encoding} · Trennzeichen „${raw.delimiter === '\t' ? 'Tab' : raw.delimiter}“`}</span><span className="chip accent">{PRESET_LABELS[st.preset]}</span>{table.german && <span className="chip">Zahlen im deutschen Format</span>}</div>
             {step === 2 && <StepStructure raw={raw} st={st} set={set} setPreset={setPreset} table={table} />}
             {step === 3 && <StepColumns st={st} set={set} table={table} />}
-            {step === 4 && <StepGeo st={st} set={set} reason={geoReason} name={name} setName={setName} table={table} />}
+            {step === 4 && <StepGeo st={st} set={set} setGeo={setGeo} reason={geoReason} name={name} setName={setName} table={table} />}
             {step === 5 && ds && <StepMatch st={st} set={set} ds={ds} base={base} />}
           </>}
         </div>
@@ -98,9 +100,9 @@ function StepFile({ onFile, fileRef, load, err, raw, base }: { onFile: (f: File 
         <div className={'dropzone' + (over ? ' over' : '')} onDragOver={e => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)} onDrop={e => { e.preventDefault(); setOver(false); onFile(e.dataTransfer.files[0]); }}>
           <Icon.upload size={28} />
           <p><b>CSV- oder Excel-Datei hierher ziehen</b></p>
-          <p className="hint">.csv, .txt, .tsv, .xlsx, .xls, .ods · Kodierung und Trennzeichen werden erkannt</p>
+          <p className="hint">.csv, .txt, .tsv, .xlsx, .xls, .ods, auch in einer .zip · Kodierung und Trennzeichen werden erkannt</p>
           <button className="btn primary" onClick={() => fileRef.current?.click()}>Datei auswählen …</button>
-          <input ref={fileRef} type="file" accept=".csv,.txt,.tsv,.xlsx,.xlsm,.xls,.ods" hidden onChange={e => onFile(e.target.files?.[0])} />
+          <input ref={fileRef} type="file" accept=".csv,.txt,.tsv,.xlsx,.xlsm,.xls,.ods,.zip" hidden onChange={e => onFile(e.target.files?.[0])} />
         </div>
         {err && <Note kind="err">{err}</Note>}
         {base && <Note>Die gespeicherte Zuordnung von „{base.name}“ wird wieder angewendet: Vorlage, Kopfzeilen, Spaltenrollen, Gebietsstand und deine Korrekturen. Layout und Gestaltung bleiben unverändert.</Note>}
@@ -139,6 +141,10 @@ function StepStructure({ raw, st, set, setPreset, table }: { raw: RawInput; st: 
         {raw.sheets.length > 1 && <Field label="Tabellenblatt"><select value={st.sheet} onChange={e => { const s = defaultSettings(raw, 'auto', +e.target.value); set({ ...s, geoSet: st.geoSet }); }}>{raw.sheets.map((s, i) => <option key={i} value={i}>{s.name}</option>)}</select></Field>}
         <Field label="Kopfzeilen"><div className="row-btns"><span className="hint">ab Zeile</span><NumInput value={st.headerStart + 1} min={1} max={200} onChange={v => set({ headerStart: v - 1 })} ariaLabel="Erste Kopfzeile" /><span className="hint">Anzahl</span><NumInput value={st.headerRows} min={1} max={4} onChange={v => set({ headerRows: v })} ariaLabel="Anzahl Kopfzeilen" /></div></Field>
         <Field label="Form"><Seg items={[['wide', 'Breitformat'], ['long', 'Langformat']]} value={st.format} onChange={v => set({ format: v, long: v === 'long' ? (L || { key: 0, name: 1, group: 2, sub: null, value: 3, kind: null, filterCol: null, filterValue: '' }) : L })} /></Field>
+        {st.preset === 'bwl-wbz' && <div className="card muted stack-8">
+          <Field label="Gemeinsame Briefwahl"><Seg items={[['anteilig', 'Anteilig verteilen'], ['gemeinsam', 'Als eine Fläche']]} value={st.wbz?.briefwahl || 'anteilig'} onChange={v => set({ wbz: { briefwahl: v }, sourceTitle: wbzTitle((st.sourceTitle.match(/(\d{4})/) || [''])[0], v) })} /></Field>
+          <p className="hint">Viele Ämter, Samt- und Verbandsgemeinden zählen die Briefwahl gemeinsam für mehrere Gemeinden aus. <b>Anteilig</b> verteilt diese Stimmen nach der Zahl der Wahlscheine je Gemeinde; die Werte sind dann teils geschätzt und in der Spalte „Briefwahl“ gekennzeichnet. <b>Als eine Fläche</b> zeigt nur amtliche Summen, die Gemeinden erscheinen dann zusammengefasst.</p>
+        </div>}
         {st.format === 'long' && L && <div className="card muted stack-8">
           <p className="hint">Im Langformat steht jeder Wert in einer eigenen Zeile. Die Tabelle wird so gedreht, dass jede Gruppe (z. B. Partei) eine Spalte wird.</p>
           <Field label="Kennung"><select value={L.key} onChange={e => setL({ key: +e.target.value })}>{opts}</select></Field>
@@ -185,14 +191,14 @@ function StepColumns({ st, set, table }: { st: ImportSettings; set: (p: Partial<
     </div>
   );
 }
-function StepGeo({ st, set, reason, name, setName, table }: { st: ImportSettings; set: (p: Partial<ImportSettings>) => void; reason: string; name: string; setName: (s: string) => void; table: ReturnType<typeof buildTable> }) {
+function StepGeo({ st, set, setGeo, reason, name, setName, table }: { st: ImportSettings; set: (p: Partial<ImportSettings>) => void; setGeo: (id: string) => void; reason: string; name: string; setName: (s: string) => void; table: ReturnType<typeof buildTable> }) {
   const idc = table.columns.find(c => c.role === 'id'), nmc = table.columns.find(c => c.role === 'name');
   return (
     <div className="wiz-grid">
       <div className="stack-12">
-        <Field label="Gebietsstand"><select value={st.geoSet} onChange={e => set({ geoSet: e.target.value })}>{GEO_INDEX.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}</select></Field>
+        <Field label="Gebietsstand"><GeoSelect value={st.geoSet} onChange={id => { void setGeo(id); }} /></Field>
         {reason && <Note kind="ok" icon={<Icon.check />}>Vorschlag: {reason}.</Note>}
-        <p className="hint">Zuordnung über <b>{idc ? `„${idc.label}“` : 'keine Kennung'}</b>{nmc ? <> und ergänzend über den Namen <b>„{nmc.label}“</b></> : ''}. Kennungen gelten nur zusammen mit dem Gebietsstand: Wahlkreis 219 von 2021 ist ein anderes Gebiet als 219 von 2025.</p>
+        <p className="hint">Zuordnung über <b>{idc ? `„${idc.label}“` : 'keine Kennung'}</b>{nmc ? <> und ergänzend über den Namen <b>„{nmc.label}“</b></> : ''}. Kennungen gelten nur zusammen mit dem Gebietsstand: Wahlkreis 219 von 2021 ist ein anderes Gebiet als 219 von 2025, und Gemeinden werden zusammengelegt. Gemeindeschlüssel werden mit 8 Stellen (AGS) oder 12 Stellen (Regionalschlüssel) erkannt, Kreise mit 5 Stellen.</p>
       </div>
       <div className="stack-12">
         <Field label="Name im Projekt" stack><input type="text" value={name} onChange={e => setName(e.target.value)} /></Field>
@@ -207,7 +213,10 @@ function StepMatch({ st, set, ds, base }: { st: ImportSettings; set: (p: Partial
   const g = GEO[st.geoSet], r = ds.report;
   const [showAll, setShowAll] = useState(false);
   const rule = (key: string, val: string | null | undefined) => { const rules = { ...st.rules }; if (val === undefined) delete rules[key]; else rules[key] = val; set({ rules }); };
-  const areaOpts = useMemo(() => g.all.map(i => <option key={i} value={g.areas[i].id}>{g.areas[i].nr} · {g.areas[i].name}</option>), [g]);
+  const big = g.areas.length > 1500;
+  const areaOpts = useMemo(() => big ? null : g.all.map(i => <option key={i} value={g.areas[i].id}>{areaTitle(g, i)}</option>), [g, big]);
+  const listOpts = useMemo(() => big ? g.all.map(i => <option key={i} value={`${g.areas[i].name} · ${areaContext(g, i)} · ${g.areas[i].id}`} />) : null, [g, big]);
+  const fromList = (key: string, v: string) => { const id = v.split(' · ').pop()!; if (g.byId.has(id)) rule(key, id); };
   const open = r.issues.filter(x => x.kind !== 'byName');
   const ruled = Object.keys(st.rules).length;
   const diff = base ? (() => {
@@ -225,6 +234,7 @@ function StepMatch({ st, set, ds, base }: { st: ImportSettings; set: (p: Partial
         <div className={'stat' + (r.duplicate ? ' err' : '')}><b>{r.duplicate}</b><span>⧉ doppelt</span></div>
         <div className={'stat' + (r.missing.length ? ' warn' : '')}><b>{r.missing.length}</b><span>Gebiete ohne Daten</span></div>
       </div>
+      {!!r.included && <Note kind="ok" icon={<Icon.check />}><b>{r.included}</b> Gemeinden ohne eigenen Wahlbezirk sind im Ergebnis einer Nachbargemeinde enthalten („einschl. …“) und erscheinen mit ihr als eine Fläche.</Note>}
       {diff && <Note kind="ok" icon={<Icon.refresh />}>Gegenüber dem bisherigen Stand: <b>{diff.changed}</b> Gebiete mit geänderten Werten, <b>{diff.added}</b> neu, <b>{diff.removed}</b> nicht mehr enthalten.</Note>}
       <div className="wiz-grid">
         <div className="stack-8">
@@ -233,7 +243,7 @@ function StepMatch({ st, set, ds, base }: { st: ImportSettings; set: (p: Partial
           <p className="hint">{fmtInt(r.dashCells)} Zellen mit „–“ · {fmtInt(r.nullCells)} leere oder als fehlend markierte Zellen (etwa Parteien, die nicht angetreten sind). Fehlend ist nie 0: Diese Gebiete erscheinen als „keine Daten“.</p>
           {r.nameMismatch.length > 0 && <details className="card muted"><summary>{r.nameMismatch.length} Namen weichen ab, die Kennung ist eindeutig</summary>
             <ul className="plain">{r.nameMismatch.slice(0, 20).map(m => <li key={m.row}><span className="num">{m.areaId}</span> Datei: „{m.dataName}“ · Karte: „{m.geoName}“</li>)}</ul></details>}
-          {r.missing.length > 0 && <details className="card muted"><summary>{r.missing.length} Gebiete ohne Daten</summary><p className="hint">{r.missing.slice(0, 60).map(id => { const i = g.byId.get(id)!; return `${g.areas[i].nr} ${g.areas[i].name}`; }).join(' · ')}{r.missing.length > 60 ? ' …' : ''}</p></details>}
+          {r.missing.length > 0 && <details className="card muted"><summary>{r.missing.length} Gebiete ohne Daten</summary><p className="hint">{r.missing.slice(0, 60).map(id => areaTitle(g, g.byId.get(id)!)).join(' · ')}{r.missing.length > 60 ? ' …' : ''}</p></details>}
         </div>
         <div className="stack-8">
           <h3 className="wiz-h">Zu prüfen {ruled > 0 && <span className="chip">{ruled} Korrekturen gespeichert</span>}</h3>
@@ -244,11 +254,14 @@ function StepMatch({ st, set, ds, base }: { st: ImportSettings; set: (p: Partial
                 <span className="chip tiny">{issueLabel[x.kind]}</span><span className="nm" title={x.name}>{x.name || x.key}</span>
                 <select value={st.rules[x.key] === null ? '__ignore' : st.rules[x.key] ?? x.chosen ?? ''} onChange={e => rule(x.key, e.target.value === '__ignore' ? null : e.target.value === '' ? undefined : e.target.value)} aria-label={'Gebiet für ' + x.name}>
                   <option value="">– wählen –</option><option value="__ignore">Zeile ignorieren</option>
-                  {x.candidates.length > 0 && <optgroup label="Vorschläge">{x.candidates.map(id => { const i = g.byId.get(id)!; return <option key={'c' + id} value={id}>{g.areas[i].nr} · {g.areas[i].name}</option>; })}</optgroup>}
-                  <optgroup label="Alle Gebiete">{areaOpts}</optgroup>
+                  {x.candidates.length > 0 && <optgroup label="Vorschläge">{x.candidates.map(id => { const i = g.byId.get(id)!; return <option key={'c' + id} value={id}>{areaTitle(g, i)}{big ? ' · ' + areaContext(g, i) : ''}</option>; })}</optgroup>}
+                  {areaOpts ? <optgroup label="Alle Gebiete">{areaOpts}</optgroup>
+                    : (() => { const cur = st.rules[x.key]; return cur && !x.candidates.includes(cur) && g.byId.has(cur) ? <option value={cur}>{areaTitle(g, g.byId.get(cur)!)}</option> : null; })()}
                 </select>
+                {big && <input className="issue-find" list="kw-area-list" placeholder="anderes Gebiet suchen …" aria-label={'Anderes Gebiet für ' + x.name} onChange={e => fromList(x.key, e.target.value)} />}
               </div>))}
           </div>
+          {listOpts && <datalist id="kw-area-list">{listOpts}</datalist>}
           {r.byName > 0 && <button className="btn small ghost" onClick={() => setShowAll(!showAll)}>{showAll ? 'Nur offene zeigen' : `Auch ${r.byName} Zuordnungen über den Namen prüfen`}</button>}
           <p className="hint">Korrekturen werden als Regeln gespeichert und bei „Daten ersetzen“ wieder angewendet.</p>
         </div>

@@ -4,9 +4,10 @@ import { CUTS } from '../lib/fonts';
 import { fmtInt } from '../lib/util';
 import { gridToLonLat, lonLatToGrid } from '../geo/proj';
 import { Ort, loadOrte, orteAttribution, orteReady, searchOrte, shortName } from '../geo/orte';
-import { addMarker, addTextBox, applyMarkerStyleToAll, duplicateEl, moveElOrder, removeEl, resetElOffset, updateEl } from '../model/annotations';
+import { addMarker, addTextBox, applyMarkerStyleToAll, detachArrowEnd, duplicateEl, moveElOrder, removeEl, resetElOffset, reverseArrow, updateEl } from '../model/annotations';
+import { GEO } from '../geo/geo';
 import { getDoc, setUI, toast, update, useStore } from '../model/store';
-import type { Doc, MarkerEl, MarkerShape, TextBoxEl } from '../model/types';
+import type { ArrowEl, ArrowEnd, Doc, MarkerEl, MarkerShape, TextBoxEl } from '../model/types';
 import { SHAPE_LABEL, elName, markerD, parseSymbol } from '../render/annotations';
 import { activeVariant } from '../render/elements';
 import { Check, Field, Icon, Note, NumInput, Section, Seg } from './common';
@@ -47,6 +48,7 @@ export function ElementsSection({ doc }: { doc: Doc }) {
   const tool = useStore(s => s.ui.tool);
   const markers = doc.els.filter((e): e is MarkerEl => e.type === 'marker');
   const texts = doc.els.filter((e): e is TextBoxEl => e.type === 'text');
+  const arrows = doc.els.filter((e): e is ArrowEl => e.type === 'arrow');
   return (
     <>
       <Section title="Ortsmarker" aside={markers.length ? `${markers.length} gesetzt` : undefined}>
@@ -56,6 +58,13 @@ export function ElementsSection({ doc }: { doc: Doc }) {
         </div>
         <p className="hint">Ortssuche über das Gemeindeverzeichnis (10.749 Gemeinden, Mittelpunktkoordinaten). Marker hängen an der Karte und wandern beim Zoomen und in jeder Variante mit.</p>
         {markers.length > 0 && <ElList doc={doc} list={markers} />}
+      </Section>
+      <Section title="Pfeile" aside={arrows.length ? `${arrows.length}` : undefined}>
+        <div className="row-btns">
+          <button className={'btn small' + (tool === 'arrow' ? ' on' : '')} onClick={() => setUI({ tool: tool === 'arrow' ? null : 'arrow', mapMode: null })}><ArrowIcon /> Pfeil zeichnen</button>
+        </div>
+        <p className="hint">Vom Start zum Ziel ziehen. Über einem Marker, einem Textkasten oder nahe der Mitte eines Gebiets rastet das Ende ein und bleibt verbunden, auch wenn du das Element verschiebst.</p>
+        {arrows.length > 0 && <ElList doc={doc} list={arrows} />}
       </Section>
       <Section title="Textkästen" aside={texts.length ? `${texts.length}` : undefined}>
         <div className="row-btns">
@@ -68,11 +77,11 @@ export function ElementsSection({ doc }: { doc: Doc }) {
     </>
   );
 }
-function ElList({ doc, list }: { doc: Doc; list: (MarkerEl | TextBoxEl)[] }) {
+function ElList({ doc, list }: { doc: Doc; list: (MarkerEl | TextBoxEl | ArrowEl)[] }) {
   const sel = useStore(s => s.ui.sel);
   return <div className="el-list">{list.map(e => (
     <button key={e.id} className={'el-row' + (sel.kind === 'ann' && sel.id === e.id ? ' on' : '') + (e.hidden ? ' off' : '')} onClick={() => setUI({ sel: { kind: 'ann', id: e.id } })}>
-      {e.type === 'marker' ? <MarkerIcon m={e} /> : <Icon.text />}<span>{elName(e)}</span>
+      {e.type === 'marker' ? <MarkerIcon m={e} /> : e.type === 'arrow' ? <ArrowIcon /> : <Icon.text />}<span>{elName(e)}{e.type === 'arrow' ? ' · ' + arrowDesc(doc, e) : ''}</span>
     </button>))}{void doc}</div>;
 }
 
@@ -91,7 +100,7 @@ export function AnnProps({ doc, id }: { doc: Doc; id: string }) {
       <button className="btn small ghost danger" onClick={() => removeEl(id)} title="Entf"><Icon.trash /> Löschen</button>
     </div>
   </>;
-  return el.type === 'marker' ? <MarkerProps doc={doc} m={el} moved={moved} common={common} /> : <TextBoxProps doc={doc} t={el} moved={moved} common={common} />;
+  return el.type === 'marker' ? <MarkerProps doc={doc} m={el} moved={moved} common={common} /> : el.type === 'text' ? <TextBoxProps doc={doc} t={el} moved={moved} common={common} /> : <ArrowProps doc={doc} a={el} common={common} />;
 }
 function MarkerProps({ doc, m, moved, common }: { doc: Doc; m: MarkerEl; moved: boolean; common: React.ReactNode }) {
   const [lon, lat] = gridToLonLat(m.at);
@@ -180,5 +189,39 @@ function convertAnchor(t: TextBoxEl, a: TextBoxEl['anchor']) {
     const gx = w.cx + (bx - F.x - F.w / 2) / w.k, gy = w.cy + (by - F.y - F.h / 2) / w.k;
     update(dd => { const e = dd.els.find(x => x.id === t.id); if (e && e.type === 'text') { e.anchor = 'map'; e.at = [gx, gy]; } dd.variants[dd.active].ann[t.id] = [0, 0]; });
   }
+}
+export function ArrowIcon() { return <svg viewBox="0 0 24 24" width={15} height={15} fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 18C8 9 13 7 19 6" /><path d="m14.5 3.8 4.8 2.1-2.4 4.6" /></svg>; }
+function endDesc(doc: Doc, e: ArrowEnd): string {
+  if (e.kind === 'el') { const x = doc.els.find(q => q.id === e.id); return x ? elName(x) : 'fehlt'; }
+  if (e.kind === 'area') { const i = e.key.indexOf(':'), g = GEO[e.key.slice(0, i)], k = g?.byId.get(e.key.slice(i + 1)); return k != null ? g.areas[k].name : 'Gebiet'; }
+  return e.kind === 'map' ? 'Kartenpunkt' : 'Punkt der Fläche';
+}
+export const arrowDesc = (doc: Doc, a: ArrowEl) => `${endDesc(doc, a.from)} → ${endDesc(doc, a.to)}`;
+function ArrowProps({ doc, a, common }: { doc: Doc; a: ArrowEl; common: React.ReactNode }) {
+  const linked = (e: ArrowEnd) => e.kind === 'el' || e.kind === 'area';
+  const endRow = (which: 'from' | 'to', label: string) => (
+    <Field label={label}><div className="row-btns nowrap"><span className={'chip' + (linked(a[which]) ? ' accent' : '')}>{endDesc(doc, a[which])}</span>{linked(a[which]) && <button className="btn small ghost" onClick={() => detachArrowEnd(a.id, which)}>lösen</button>}</div></Field>
+  );
+  return <>
+    <div className="rp-head"><h2>Eigenschaften</h2></div>
+    <h3 className="props-title">Pfeil</h3>
+    <p className="props-sub">{arrowDesc(doc, a)}</p>
+    <Section title="Verbindung">
+      {endRow('from', 'Start')}
+      {endRow('to', 'Ziel')}
+      <button className="btn small" onClick={() => reverseArrow(a.id)}>Richtung umkehren</button>
+      <p className="hint">Die Kreise an den Enden ziehen: Über einem Marker, Textkasten oder einer Gebietsmitte rastet das Ende ein. Der Kreis in der Mitte biegt den Pfeil.</p>
+    </Section>
+    <Section title="Form">
+      <Field label="Verlauf"><Seg items={[['gerade', 'Gerade'], ['gebogen', 'Gebogen']]} value={a.bend ? 'gebogen' : 'gerade'} onChange={v => updateEl(a.id, { bend: v === 'gerade' ? 0 : 0.22 })} /></Field>
+      {a.bend !== 0 && <Field label="Biegung"><input type="range" min={-100} max={100} value={Math.round(a.bend * 100)} onChange={e => updateEl(a.id, { bend: +e.target.value / 100 || 0.01 }, 'bend')} aria-label="Biegung" /></Field>}
+      <Field label="Spitze"><Seg items={[['end', 'Ziel'], ['start', 'Start'], ['both', 'Beide'], ['none', 'Keine']]} value={a.head} onChange={h => updateEl(a.id, { head: h })} /></Field>
+      {a.head !== 'none' && <Field label="Spitzengröße"><NumInput min={0.4} max={4} step={0.1} value={a.headSize} onChange={x => updateEl(a.id, { headSize: x }, 'hs')} ariaLabel="Größe der Spitze (Faktor)" /></Field>}
+      <Field label="Farbe · Stärke"><div className="row-btns nowrap"><input type="color" value={a.color} onChange={e => updateEl(a.id, { color: e.target.value.toUpperCase() }, 'color')} aria-label="Farbe" /><NumInput min={0.5} max={20} step={0.5} value={a.width} onChange={x => updateEl(a.id, { width: x }, 'w')} ariaLabel="Strichstärke" /></div></Field>
+      <Check checked={a.dash} onChange={on => updateEl(a.id, { dash: on })}>Gestrichelt</Check>
+      <Field label="Abstand (px)"><NumInput min={0} max={40} value={a.gap} onChange={x => updateEl(a.id, { gap: x }, 'gap')} ariaLabel="Abstand zu verbundenen Elementen" /></Field>
+    </Section>
+    {common}
+  </>;
 }
 export { Note };

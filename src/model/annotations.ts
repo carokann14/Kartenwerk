@@ -2,7 +2,8 @@
 import { uid } from '../lib/util';
 import { HATCH_PRESETS } from './defaults';
 import { getDoc, setUI, toast, update } from './store';
-import type { AnnEl, Doc, HatchRule, HatchStyle, LegendExtra, MarkerEl, TextBoxEl } from './types';
+import type { AnnEl, ArrowEl, ArrowEnd, Doc, HatchRule, HatchStyle, LegendExtra, MarkerEl, TextBoxEl } from './types';
+import { GEO } from '../geo/geo';
 
 // ---------- Schraffuren ----------
 export function addHatch(preset?: number, assignTo?: string[]): string {
@@ -101,7 +102,7 @@ export function addTextBox(anchor: TextBoxEl['anchor'], at: [number, number]) {
   setUI({ sel: { kind: 'ann', id: t.id }, tool: null });
   return t.id;
 }
-export function updateEl(id: string, patch: Partial<MarkerEl> | Partial<TextBoxEl>, key?: string) {
+export function updateEl(id: string, patch: Partial<MarkerEl> | Partial<TextBoxEl> | Partial<ArrowEl>, key?: string) {
   update(d => { const e = d.els.find(x => x.id === id); if (e) Object.assign(e, patch); }, { key: key ? 'el-' + id + key : undefined });
 }
 /** Aussehen auf alle Marker übertragen (Legende, Serien) */
@@ -112,18 +113,58 @@ export function applyMarkerStyleToAll(id: string) {
   });
   toast('Aussehen auf alle Marker übertragen');
 }
+/** Ein verbundenes Pfeil-Ende an der aktuellen Stelle des Elements lösen (freier Punkt). */
+function freeEndFor(d: Doc, end: ArrowEnd): ArrowEnd {
+  if (end.kind === 'el') {
+    const e = d.els.find(x => x.id === end.id);
+    if (e?.type === 'marker') return { kind: 'map', at: [...e.at] as [number, number] };
+    if (e?.type === 'text') return e.anchor === 'map' ? { kind: 'map', at: [...e.at] as [number, number] } : { kind: 'board', at: [...e.at] as [number, number] };
+  }
+  if (end.kind === 'area') {
+    const i = end.key.indexOf(':'), g = GEO[end.key.slice(0, i)], k = g?.byId.get(end.key.slice(i + 1));
+    if (g && k != null) return { kind: 'map', at: [...g.areas[k].label] as [number, number] };
+  }
+  return end;
+}
 export function removeEl(id: string) {
-  update(d => { d.els = d.els.filter(e => e.id !== id); for (const v of d.variants) delete v.ann[id]; });
+  update(d => {
+    for (const a of d.els) if (a.type === 'arrow') { if (a.from.kind === 'el' && a.from.id === id) a.from = freeEndFor(d as Doc, a.from); if (a.to.kind === 'el' && a.to.id === id) a.to = freeEndFor(d as Doc, a.to); }
+    d.els = d.els.filter(e => e.id !== id); for (const v of d.variants) delete v.ann[id];
+  });
   setUI({ sel: { kind: 'graphic' } });
 }
 export function duplicateEl(id: string) {
   const e = getDoc().els.find(x => x.id === id); if (!e) return;
-  const copy: AnnEl = JSON.parse(JSON.stringify(e)); copy.id = uid(e.type === 'marker' ? 'm' : 't');
+  const copy: AnnEl = JSON.parse(JSON.stringify(e)); copy.id = uid(e.type === 'marker' ? 'm' : e.type === 'text' ? 't' : 'a');
+  const shift = (end: ArrowEnd): ArrowEnd => end.kind === 'map' ? { kind: 'map', at: [end.at[0] + 1500, end.at[1] + 1500] } : end.kind === 'board' ? { kind: 'board', at: [Math.min(0.97, end.at[0] + 0.03), Math.min(0.97, end.at[1] + 0.03)] } : end;
   if (copy.type === 'marker') copy.at = [copy.at[0] + 1500, copy.at[1] + 1500];
+  else if (copy.type === 'arrow') { copy.from = shift(copy.from); copy.to = shift(copy.to); }
   else if (copy.anchor === 'board') copy.at = [Math.min(0.95, copy.at[0] + 0.03), Math.min(0.95, copy.at[1] + 0.03)];
   else copy.at = [copy.at[0] + 1500, copy.at[1] + 1500];
   update(d => { d.els.push(copy); });
   setUI({ sel: { kind: 'ann', id: copy.id } });
+}
+
+// ---------- Pfeile ----------
+export const ARROW_DEFAULT: Omit<ArrowEl, 'id' | 'from' | 'to'> = { type: 'arrow', bend: 0.18, color: '#16181B', width: 2, head: 'end', headSize: 1, dash: false, gap: 4 };
+export function addArrow(from: ArrowEnd, to: ArrowEnd) {
+  const d0 = getDoc();
+  const last = [...d0.els].reverse().find((e): e is ArrowEl => e.type === 'arrow');
+  const base = last ? { ...ARROW_DEFAULT, bend: last.bend, color: last.color, width: last.width, head: last.head, headSize: last.headSize, dash: last.dash, gap: last.gap } : ARROW_DEFAULT;
+  const a: ArrowEl = { ...base, id: uid('a'), from, to };
+  // Pfeile liegen unter Markern und Textkästen
+  update(d => { d.els.unshift(a); });
+  setUI({ sel: { kind: 'ann', id: a.id }, tool: null });
+  return a.id;
+}
+export function setArrowEnd(id: string, which: 'from' | 'to', end: ArrowEnd) {
+  update(d => { const a = d.els.find(x => x.id === id); if (a && a.type === 'arrow') a[which] = end; });
+}
+export function detachArrowEnd(id: string, which: 'from' | 'to') {
+  update(d => { const a = d.els.find(x => x.id === id); if (a && a.type === 'arrow') a[which] = freeEndFor(d as Doc, a[which]); });
+}
+export function reverseArrow(id: string) {
+  update(d => { const a = d.els.find(x => x.id === id); if (a && a.type === 'arrow') { [a.from, a.to] = [a.to, a.from]; a.bend = -a.bend; } });
 }
 export function moveElOrder(id: string, dir: -1 | 1) {
   update(d => { const k = d.els.findIndex(e => e.id === id), j = k + dir; if (k < 0 || j < 0 || j >= d.els.length) return; [d.els[k], d.els[j]] = [d.els[j], d.els[k]]; });
