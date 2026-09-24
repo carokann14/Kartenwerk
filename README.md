@@ -4,7 +4,7 @@ Karten zur deutschen Politik für Social Media. Daten aus CSV oder Excel importi
 
 Kartenwerk läuft komplett im Browser. Deine Dateien werden nirgendwohin hochgeladen, es gibt keinen Server, kein Konto, keine Cookies und keine Anfragen an Dritte.
 
-**Stand: M1 · Pilot „Stärkste Partei je Bundestagswahlkreis“**
+**Stand: M2 · Etappe 2 (Schraffuren, bearbeitbare Legende, Ortsmarker und Textkästen)**
 
 ## Was M1 kann
 
@@ -16,11 +16,15 @@ Kartenwerk läuft komplett im Browser. Deine Dateien werden nirgendwohin hochgel
   - „Daten ersetzen“ lädt eine neue Fassung derselben Datei, Layout und Gestaltung bleiben.
 - **Färbung:** Sieger + Stärke, Stärkste Partei, Parteianteil, Zahlenwert, Kategorie. Parteifarben je Projekt änderbar, einzelne Gebiete manuell überschreibbar.
 - **Elemente:** Titel, Unterzeile, Quellenzeile (Pflichtteil automatisch), Legende, Detail-Lupe (Berlin, Hamburg, München, Köln, Frankfurt, Bremen), Beschriftungen mit Vorlagen und Kollisionsprüfung.
+- **Schraffuren:** schräg, gegenläufig, Kreuz, waagrecht, senkrecht, Punkte; Farbe, Stärke und Abstand einstellbar, über der Datenfarbe oder auf eigener Fläche. Zuweisung aus Daten (Spalte hat einen Wert bzw. liegt über oder unter einer Schwelle), für alle Gebiete ohne Daten oder von Hand. Im Canva-SVG echte Linien und Punkte.
+- **Legende bearbeiten:** Texte ändern, Einträge ausblenden und sortieren, Farben von Parteien und Kategorien ändern, eigene Einträge (Fläche, Schraffur, Linie), Anordnung untereinander, nebeneinander oder als Raster.
+- **Ortsmarker:** Ortssuche über das amtliche Gemeindeverzeichnis (10.749 Gemeinden), Klick in die Karte oder Koordinaten. Formen Kreis, Quadrat, Dreieck, Raute, Stern, Stecknadel oder eigenes einfarbiges SVG-Symbol; Beschriftung mit Position, verschiebbar mit Führungslinie; Marker mit gleichem Legendentext bilden einen Legendeneintrag.
+- **Textkästen:** an einen Kartenpunkt gehängt (mit Führungslinie) oder frei auf der Fläche; Umbruchbreite, Ausrichtung, Hintergrund und Rahmen.
 - **Formate:** 4:5, 1:1, 9:16, 16:9, LinkedIn und frei. Jede Variante hat ihr eigenes Layout.
 - **Export:** Canva-SVG mit Prüfbericht (SVG 1.1, Text als Pfade, keine Transparenz, unter 3 MB) und PNG in beliebiger Breite, auch mit transparentem Hintergrund.
 - **Speichern:** Jedes Projekt wird laufend im Browser gesichert. Zusätzlich lässt es sich als Projektdatei (`.kartenwerk.json`) speichern und wieder öffnen.
 
-Folgt in M2: Ortsmarker, Textkästen, Pfeile, Schraffuren. M3: Gemeinden und Kreise, Veränderung zwischen zwei Wahlen. M4: eigene Geodaten und Landtagswahlkreise.
+Folgt in M2: Pfeile mit Verankerung (Etappe 3). M3: Gemeinden und Kreise, Veränderung zwischen zwei Wahlen. M4: eigene Geodaten und Landtagswahlkreise.
 
 ## Einrichten auf GitHub Pages (einmalig)
 
@@ -71,6 +75,7 @@ npm run dev            # Entwicklungsserver
 npm run build          # Typprüfung und Build nach docs/ (GitHub Pages)
 npm run build:preview  # eine einzelne HTML-Datei mit eingebetteten Daten
 npm run geodata        # Geodaten neu aufbereiten (Quelldateien in data-src/, siehe DATENLIZENZEN.md)
+npm run orte           # Ortsliste aus dem Gemeindeverzeichnis (data-src/AuszugGV….xlsx)
 ```
 
 Bekannte Einschränkung: Excel wird mit SheetJS 0.18.5 gelesen, der letzten Fassung auf npm. Sie hat bekannte Schwachstellen bei präparierten Dateien (CVE-2023-30533, CVE-2024-22363). Weil alles lokal im Browser läuft, ist das Risiko gering. Excel-Dateien aus unbekannten Quellen besser vorher als CSV speichern. Das Update auf 0.20 folgt, sobald es sich hier einbinden lässt.

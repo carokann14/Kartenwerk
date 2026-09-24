@@ -13,6 +13,7 @@ export interface UI {
   start: boolean;            // Startdialog
   toast: { msg: string; t: number } | null;
   saveState: 'saved' | 'saving' | 'error' | 'idle';
+  tool: null | 'marker' | 'text';   // Setzen per Klick in die Grafik
 }
 interface State {
   doc: Doc | null; ui: UI; past: Doc[]; future: Doc[]; lastKey: string; lastAt: number;
@@ -22,7 +23,7 @@ export const useStore = create<State>(() => ({
   ui: {
     step: 'gebiete', panelOpen: true, sel: { kind: 'graphic' }, mapMode: null, view: { x: 0, y: 0, z: 0.5 }, hover: null, menu: null,
     expanded: {}, search: '', tableSort: { k: 'nr', dir: 1 }, tableDataset: null, exportProfile: 'svg', pngWidth: null,
-    wizard: null, start: true, toast: null, saveState: 'idle',
+    wizard: null, start: true, toast: null, saveState: 'idle', tool: null,
   },
   past: [], future: [], lastKey: '', lastAt: 0,
 }));

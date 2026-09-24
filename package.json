@@ -10,7 +10,8 @@
     "build": "tsc --noEmit && vite build",
     "build:preview": "vite build --mode preview && node scripts/inline-preview.mjs",
     "geodata": "node scripts/build-geodata.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "orte": "esbuild scripts/build-orte.ts --bundle --platform=node --format=esm --packages=external --outfile=data-src/.tmp/build-orte.mjs --log-level=warning && node data-src/.tmp/build-orte.mjs"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.3.0",
@@ -27,6 +28,7 @@
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.0",
+    "esbuild": "^0.21.5",
     "mapshaper": "^0.6.0",
     "polylabel": "^1.1.0",
     "typescript": "^5.9.0",

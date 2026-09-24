@@ -1,7 +1,7 @@
 // Fachliche Aktionen auf dem Dokument
 import { current, Draft } from 'immer';
 import { getDoc, getUI, setDoc, setUI, toast, update } from './store';
-import { defaultDoc } from './defaults';
+import { defaultDoc, normalizeDoc } from './defaults';
 import { fitInset, fitMain, makeVariant, relayout } from './layout';
 import type { ColorRule, Doc, Fokus, Variant } from './types';
 import type { Dataset } from '../data/types';
@@ -23,8 +23,9 @@ export function newProject(geoSet = 'btw-wk-2025', name = 'Neues Projekt') {
   d.variants = [makeVariant(d, '4:5')];
   setDoc(d); setUI({ start: false, sel: { kind: 'graphic' }, mapMode: null, step: 'gebiete', panelOpen: true });
 }
-export function openDoc(d: Doc) {
-  if (!GEO[d.geoSet]) throw new Error('Unbekannter Gebietsstand: ' + d.geoSet);
+export function openDoc(d0: Doc) {
+  if (!GEO[d0.geoSet]) throw new Error('Unbekannter Gebietsstand: ' + d0.geoSet);
+  const d = normalizeDoc(d0);
   setDoc(d); setUI({ start: false, sel: { kind: 'graphic' }, mapMode: null });
 }
 export function setFokus(f: Fokus) {

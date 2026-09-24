@@ -10,6 +10,7 @@ import { RightPanel } from './ui/RightPanel';
 import { StartDialog } from './ui/StartDialog';
 import { TopBar } from './ui/TopBar';
 import { saveProjectFile } from './model/projectIO';
+import { duplicateEl, removeEl } from './model/annotations';
 import { PanelDaten } from './ui/panels/Daten';
 import { PanelElemente } from './ui/panels/Elemente';
 import { PanelExport } from './ui/panels/Export';
@@ -67,6 +68,7 @@ function useShortcuts() {
       if (mod && e.key === '0') { e.preventDefault(); fitViewToCanvas(); return; }
       if (isTyping(e)) return;
       if (e.key === 'Escape') {
+        if (u.tool) { setUI({ tool: null }); return; }
         if (u.menu) { setUI({ menu: null }); return; }
         if (u.mapMode) { setUI({ mapMode: null }); return; }
         setUI({ sel: { kind: 'graphic' } }); return;
@@ -78,6 +80,15 @@ function useShortcuts() {
         update(d => { const L = d.variants[d.active].L[id]; L.x += dx; L.y += dy; }, { key: 'nudge-' + id });
         return;
       }
+      if (e.key.startsWith('Arrow') && u.sel.kind === 'ann' && !u.mapMode) {
+        e.preventDefault();
+        const st = e.shiftKey ? 10 : 1, id = u.sel.id;
+        const dx = e.key === 'ArrowLeft' ? -st : e.key === 'ArrowRight' ? st : 0, dy = e.key === 'ArrowUp' ? -st : e.key === 'ArrowDown' ? st : 0;
+        update(d => { const V = d.variants[d.active]; const o = V.ann[id] || [0, 0]; V.ann[id] = [o[0] + dx, o[1] + dy]; }, { key: 'nudge-' + id });
+        return;
+      }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && u.sel.kind === 'ann') { e.preventDefault(); removeEl(u.sel.id); return; }
+      if (mod && key === 'd' && u.sel.kind === 'ann') { e.preventDefault(); duplicateEl(u.sel.id); return; }
       if ((e.key === 'Delete' || e.key === 'Backspace') && u.sel.kind === 'area') {
         const d = getDoc(); const ids = u.sel.ids.filter(id => d.overrides[d.geoSet + ':' + id]);
         if (ids.length) { e.preventDefault(); setOverride(ids, null); }

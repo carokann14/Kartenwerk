@@ -4,6 +4,8 @@ import { refitAfterInset } from '../../model/actions';
 import { setUI, update, useStore } from '../../model/store';
 import { INSET_DEFS, geoOf } from '../../render/scene';
 import { Check, Field, Icon, Note, Section } from '../common';
+import { HatchList } from '../annotationsUI';
+import { ElementsSection } from '../elementsUI';
 
 type ElId = 'title' | 'subtitle' | 'source' | 'legend';
 
@@ -41,8 +43,13 @@ export function PanelElemente() {
         <p className="hint">Überlappende Beschriftungen werden ausgeblendet, kleinere Flächen zuerst. Ziehen verschiebt eine Beschriftung, ab etwas Abstand erscheint eine Führungslinie. Vorlage und Größe unter „Ebenen › Gebiete“.</p>
         <button className="btn small" onClick={() => setUI({ sel: { kind: 'layer', id: 'labels' } })}><Icon.layer /> Beschriftung einstellen</button>
       </Section>
-      <Section title="Folgen in M2">
-        <div className="soon-list">{['Ortsmarker', 'Textkasten', 'Pfeil und Verbindungslinie', 'Schraffur und Muster', 'Eigene Flächenfarben als Ebene'].map(x => <div key={x} className="soon-item">{x}<span className="chip">M2</span></div>)}</div>
+      <Section title="Schraffuren" aside={doc.hatches.length ? `${doc.hatches.length} im Projekt` : undefined}>
+        <HatchList doc={doc} />
+        <p className="hint">Eine Schraffur liegt über der Datenfarbe oder auf eigener Fläche. Zuweisen: aus Daten (in der Schraffur), für „keine Daten“ oder von Hand (Gebiete auswählen).</p>
+      </Section>
+      <ElementsSection doc={doc} />
+      <Section title="Folgt in M2">
+        <div className="soon-list"><div className="soon-item">Pfeil und Verbindungslinie<span className="chip">Etappe 3</span></div></div>
       </Section>
     </>
   );

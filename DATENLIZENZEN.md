@@ -13,6 +13,10 @@ Bezug: bundeswahlleiterin.de, *Bundestagswahl › Wahlkreiseinteilung › Downlo
 
 Lizenztext dl-de/by-2-0: https://www.govdata.de/dl-de/by-2-0
 
+## Ortsliste für Marker
+
+`public/data/orte.json` stammt aus dem Gemeindeverzeichnis-Informationssystem GV-ISys des Statistischen Bundesamts (Auszug „Alle politisch selbständigen Gemeinden“, Gebietsstand 30.09.2026): Name, Gemeindeschlüssel, Einwohnerzahl und geografischer Mittelpunkt, umgerechnet nach ETRS89 / UTM 32. © Statistisches Bundesamt (Destatis), 2026; Vervielfältigung und Verbreitung mit Quellenangabe gestattet. Die Quellenzeile nennt das Gemeindeverzeichnis, sobald ein Marker aus der Ortssuche verwendet wird.
+
 ## Kontext: Nachbarstaaten und Gewässer
 
 `public/data/context.json` stammt aus Natural Earth (1:10 Mio., Länder und Seen), gemeinfrei (public domain). Quelle: https://www.naturalearthdata.com

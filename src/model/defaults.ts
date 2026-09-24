@@ -1,5 +1,5 @@
 import { DEFAULT_PARTY_COLORS } from '../data/parties';
-import type { Doc } from './types';
+import type { Doc, HatchStyle, LegendSettings } from './types';
 import { uid } from '../lib/util';
 
 export const PRESETS: Record<string, { w: number; h: number; label: string }> = {
@@ -31,7 +31,7 @@ export function defaultDoc(geoSet = 'btw-wk-2025'): Doc {
     partyColors: { ...DEFAULT_PARTY_COLORS },
     overrides: {},
     fokus: { kind: 'de' }, umfeld: 'parent', umfeldStyle: 'fill', fokusOutline: false,
-    layers: { wkFill: true, wkLines: true, wkLabels: false, landLines: true, neighbors: true, lakes: true },
+    layers: { wkFill: true, wkLines: true, wkLabels: false, landLines: true, neighbors: true, lakes: true, hatches: true },
     style: {
       wkLine: '#FFFFFF', wkLineW: 0.6, landLine: '#FFFFFF', landLineW: 1.8,
       umfeld: '#E2DDD2', noData: '#ECE8DF', neighbor: '#F0EEE9', neighborLine: '#D6D1C6', water: '#D6E4EC', fokusLine: '#16181B',
@@ -43,10 +43,38 @@ export function defaultDoc(geoSet = 'btw-wk-2025'): Doc {
       subtitle: { text: 'Unterzeile: Was zeigt die Karte, welche Wahl, welcher Stand?', visible: true, size: 24, cut: 'text', color: 'inkSoft' },
       source: { visible: true, extra: '', size: 13, cut: 'text', color: 'inkSoft' },
     },
-    legend: { visible: true, title: '', orientation: 'vertical', counts: true, size: 20 },
+    legend: defaultLegend(),
+    categoryColors: {},
+    hatches: [NODATA_HATCH()],
+    hatchAssign: {},
+    hatchRules: [{ id: 'r-nodata', hatch: 'h-nodata', source: 'nodata' }],
+    els: [],
     inset: { visible: true, preset: 'berlin', autoHidden: false },
     background: 'white',
     variants: [],
     active: 0,
   };
+}
+
+export const NODATA_HATCH = (): HatchStyle => ({ id: 'h-nodata', name: 'Keine Daten', pattern: 'diag', color: '#B3AC9F', width: 0.8, spacing: 5, bg: null });
+export const HATCH_PRESETS: Omit<HatchStyle, 'id'>[] = [
+  { name: 'Schraffur', pattern: 'diag', color: '#16181B', width: 1.2, spacing: 6, bg: null },
+  { name: 'Gegenläufig', pattern: 'diag2', color: '#16181B', width: 1.2, spacing: 6, bg: null },
+  { name: 'Kreuz', pattern: 'kreuz', color: '#16181B', width: 0.9, spacing: 7, bg: null },
+  { name: 'Punkte', pattern: 'punkte', color: '#16181B', width: 1.6, spacing: 6, bg: null },
+];
+export const defaultLegend = (): LegendSettings => ({ visible: true, title: '', orientation: 'vertical', cols: 2, counts: true, size: 20, labels: {}, hidden: [], order: [], extra: [], caption: null });
+
+/** Ältere Projekte auf den aktuellen Stand bringen (fehlende Felder mit Vorgaben füllen). */
+export function normalizeDoc(d: Doc): Doc {
+  const x = JSON.parse(JSON.stringify(d)) as Doc & Record<string, unknown>;
+  x.legend = { ...defaultLegend(), ...(x.legend || {}) };
+  x.layers = { ...defaultDoc(x.geoSet).layers, ...(x.layers || {}) };
+  x.categoryColors ||= {};
+  if (!Array.isArray(x.hatches)) { x.hatches = [NODATA_HATCH()]; x.hatchRules = [{ id: 'r-nodata', hatch: 'h-nodata', source: 'nodata' }]; }
+  x.hatchAssign ||= {};
+  x.hatchRules ||= [];
+  x.els ||= [];
+  for (const v of x.variants) v.ann ||= {};
+  return x;
 }

@@ -6,9 +6,12 @@ import { clamp, esc, fmt1, fmtNum } from '../lib/util';
 import { beginGesture, getDoc, getUI, setUI, toast, update, useStore } from '../model/store';
 import type { Doc, Variant } from '../model/types';
 import { colorModel, fillOf } from '../render/colorModel';
+import { areaFill, hatchMap, patternSpec } from '../render/hatch';
 import { LabelItem, TextPrim, activeVariant, labelPrims, layoutLabels, legendPrims, textPrims } from '../render/elements';
 import { FrameId, frameMeshes, frameSets, geoOf, insetIdx, insetLabel } from '../render/scene';
 import { refitFrame, setFokus, setGeoSet } from '../model/actions';
+import { addMarker, addTextBox } from '../model/annotations';
+import { annItems } from '../render/annotations';
 import { groupMetrics, areaRowIndex } from '../data/derive';
 import { LAENDER } from '../geo/geo';
 import { Icon } from './common';
@@ -41,7 +44,14 @@ function MapFrame({ id }: { id: FrameId }) {
   const cm = colorModel(doc);
   const Flist = useMemo(() => [...sets.F], [sets]);
   const Ulist = useMemo(() => [...sets.U], [sets]);
-  const fills = useMemo(() => Flist.map(i => doc.layers.wkFill ? fillOf(doc, cm, i) : st.umfeld), [Flist, cm, doc.overrides, doc.layers.wkFill, st.umfeld]); // eslint-disable-line
+  const hm = hatchMap(doc);
+  const fills = useMemo(() => Flist.map(i => doc.layers.wkFill ? areaFill(doc, cm, i) : st.umfeld), [Flist, cm, doc.overrides, doc.layers.wkFill, st.umfeld, hm]); // eslint-disable-line
+  const hatchLayers = useMemo(() => {
+    if (!doc.layers.hatches) return [];
+    const by = new Map<string, string[]>();
+    for (const i of Flist) { const h = hm.byArea[i]; if (h) { const L = by.get(h) || []; L.push(g.areas[i].d); by.set(h, L); } }
+    return [...by.entries()].map(([h, ds]) => ({ st: hm.styles.get(h)!, d: ds.join('') }));
+  }, [Flist, hm, doc.layers.hatches]); // eslint-disable-line
   const md = useMemo(() => ({ wk: linesD(me.wk), wkU: linesD(me.wkU), land: linesD(me.land), outline: linesD(me.outline), fokus: linesD(me.fokus) }), [me]);
   const labels = useMemo(() => layoutLabels(doc, id), [doc, id]);
   const linesMode = me.linesMode;
@@ -59,6 +69,13 @@ function MapFrame({ id }: { id: FrameId }) {
           <ContextLayer neighbors={doc.layers.neighbors} lakes={doc.layers.lakes} st={st} k={k} />
           <AreaPaths geoId={doc.geoSet} ids={Ulist} fill={linesMode ? 'none' : st.umfeld} u pe={!linesMode} />
           <AreaPaths geoId={doc.geoSet} ids={Flist} fills={fills} />
+          {hatchLayers.length > 0 && <g pointerEvents="none">
+            <defs>{hatchLayers.map(({ st: h }) => { const P = patternSpec(h, k); return (
+              <pattern key={h.id} id={`hp-${id}-${h.id}`} patternUnits="userSpaceOnUse" width={P.s} height={P.s} patternTransform={`rotate(${P.ang})`}>
+                {P.dot ? <circle cx={P.s / 2} cy={P.s / 2} r={P.dot} fill={h.color} /> : P.lines.map((d, j) => <path key={j} d={d} stroke={h.color} strokeWidth={P.w} fill="none" />)}
+              </pattern>); })}</defs>
+            {hatchLayers.map(({ st: h, d }) => <path key={h.id} d={d} fill={`url(#hp-${id}-${h.id})`} fillRule="evenodd" />)}
+          </g>}
           {doc.layers.wkLines && <path d={md.wk} fill="none" stroke={st.wkLine} strokeWidth={st.wkLineW / k} strokeLinejoin="round" strokeLinecap="round" pointerEvents="none" />}
           {linesMode && <><path d={md.wkU} fill="none" stroke="#C8C2B6" strokeWidth={0.6 / k} strokeLinejoin="round" pointerEvents="none" /><path d={md.outline} fill="none" stroke="#B9B2A5" strokeWidth={0.8 / k} strokeLinejoin="round" pointerEvents="none" /></>}
           {doc.layers.landLines && <path d={md.land} fill="none" stroke={st.landLine} strokeWidth={st.landLineW / k} strokeLinejoin="round" strokeLinecap="round" pointerEvents="none" />}
@@ -95,8 +112,22 @@ function Elements() {
     if (p) items.push(<g key={kind} data-el={kind}>{p.texts.map((t, k) => textEl(t, k))}<rect x={p.box.x} y={p.box.y} width={p.box.w} height={p.box.h} fill="#FFFFFF" fillOpacity={0} /></g>);
   }
   const lp = legendPrims(doc);
-  if (lp) items.push(<g key="legend" data-el="legend">{lp.rects.map((r, k) => <rect key={'r' + k} x={+r.x.toFixed(1)} y={+r.y.toFixed(1)} width={+r.w.toFixed(1)} height={+r.h.toFixed(1)} fill={r.fill} />)}{lp.texts.map((t, k) => textEl(t, 't' + k))}<rect x={lp.box.x} y={lp.box.y} width={lp.box.w} height={lp.box.h} fill="#FFFFFF" fillOpacity={0} /></g>);
+  if (lp) items.push(<g key="legend" data-el="legend">{lp.rects.map((r, k) => <rect key={'r' + k} x={+r.x.toFixed(1)} y={+r.y.toFixed(1)} width={+r.w.toFixed(1)} height={+r.h.toFixed(1)} fill={r.fill} />)}{(lp.paths || []).map((q, k) => <path key={'p' + k} d={q.d} fill={q.fill} stroke={q.stroke} strokeWidth={q.width} />)}{lp.texts.map((t, k) => textEl(t, 't' + k))}<rect x={lp.box.x} y={lp.box.y} width={lp.box.w} height={lp.box.h} fill="#FFFFFF" fillOpacity={0} /></g>);
   return <g>{items}</g>;
+}
+function Annotations() {
+  const doc = useStore(s => s.doc!);
+  const items = annItems(doc, activeVariant(doc));
+  return <g>{items.map(it => (
+    <g key={it.id + it.frame} data-ann={it.id} data-frame={it.frame}>
+      {it.el.type === 'text' && <rect data-part="body" x={it.body[0]} y={it.body[1]} width={it.body[2] - it.body[0]} height={it.body[3] - it.body[1]} fill="#FFFFFF" fillOpacity={0} />}
+      {it.paths.map((q, k) => <path key={k} data-part="body" d={q.d} fill={q.fill} stroke={q.stroke} strokeWidth={q.width} strokeLinejoin="round" />)}
+      {it.el.type === 'marker' && <rect data-part="body" x={it.body[0]} y={it.body[1]} width={it.body[2] - it.body[0]} height={it.body[3] - it.body[1]} fill="#FFFFFF" fillOpacity={0} />}
+      {it.texts.length > 0 && <g data-part={it.el.type === 'marker' ? 'label' : 'body'}>
+        {it.label && <rect x={it.label[0]} y={it.label[1]} width={it.label[2] - it.label[0]} height={it.label[3] - it.label[1]} fill="#FFFFFF" fillOpacity={0} />}
+        {it.texts.map((t, k) => textEl(t, k))}
+      </g>}
+    </g>))}</g>;
 }
 function elementBox(doc: Doc, id: string) {
   const v = activeVariant(doc);
@@ -111,6 +142,13 @@ function Overlay() {
   const out: React.ReactNode[] = [];
   const box = (b: { x: number; y: number; w: number; h: number }, key: string, dash: boolean, w = 1.5) => <rect key={key} x={b.x - 3 / z} y={b.y - 3 / z} width={b.w + 6 / z} height={b.h + 6 / z} fill="none" stroke={a} strokeWidth={w / z} strokeDasharray={dash ? `${5 / z} ${4 / z}` : undefined} />;
   if (ui.sel.kind === 'el') { const b = elementBox(doc, ui.sel.id); if (b) out.push(box(b, 'el', false)); }
+  if (ui.sel.kind === 'ann') {
+    const sid = ui.sel.id;
+    annItems(doc, v).filter(it => it.id === sid).forEach((it, k) => {
+      out.push(box({ x: it.body[0], y: it.body[1], w: it.body[2] - it.body[0], h: it.body[3] - it.body[1] }, 'ab' + k, false));
+      if (it.label) out.push(box({ x: it.label[0], y: it.label[1], w: it.label[2] - it.label[0], h: it.label[3] - it.label[1] }, 'al' + k, true, 1));
+    });
+  }
   if (ui.sel.kind === 'frame' || ui.mapMode) {
     const id = ui.mapMode || (ui.sel.kind === 'frame' ? ui.sel.id : 'main');
     const b = elementBox(doc, id);
@@ -140,7 +178,7 @@ function Tooltip() {
     rows = <div className="tt-s">{cm.mode === 'kategorie' ? (cm.keys[h.i] || 'keine Daten') : v == null ? 'keine Daten' : fmtNum(v, 2)}</div>;
   }
   const ov = doc.overrides[doc.geoSet + ':' + a.id];
-  return <div className="tooltip" style={{ left: h.x, top: h.y }}><div className="tt-h">{a.nr} · {a.name}</div><div className="tt-s">{LAENDER[a.bl]?.[0]}{cm.group ? ' · ' + cm.group.label : ''}{ov ? ' · manuell eingefärbt' : ''}</div>{rows}</div>;
+  return <div className="tooltip" style={{ left: h.x, top: h.y }}><div className="tt-h">{a.nr} · {a.name}</div><div className="tt-s">{LAENDER[a.bl]?.[0]}{cm.group ? ' · ' + cm.group.label : ''}{(() => { const hm = hatchMap(doc), hh = doc.layers.hatches ? hm.byArea[h.i] : null; return hh ? ' · ' + (hm.styles.get(hh)?.name || '') : ''; })()}{ov ? ' · manuell eingefärbt' : ''}</div>{rows}</div>;
 }
 
 function MapModeBar({ wrap }: { wrap: React.RefObject<HTMLDivElement> }) {
@@ -174,11 +212,21 @@ export function zoomViewBy(f: number) {
   setUI({ view: { z: z1, x: cx - (cx - view.x) * z1 / view.z, y: cy - (cy - view.y) * z1 / view.z } });
 }
 
+/** Werkzeug anwenden: Marker oder Textkasten an der Klickstelle anlegen */
+function placeTool(d: Doc, tool: 'marker' | 'text', a: number[]) {
+  const v = activeVariant(d);
+  const fid: FrameId | null = d.inset.visible && inFrameAt(v, 'inset', a) ? 'inset' : inFrameAt(v, 'main', a) ? 'main' : null;
+  const geo = fid ? (() => { const F = v.L[fid], w = F.view; return [w.cx + (a[0] - F.x - F.w / 2) / w.k, w.cy + (a[1] - F.y - F.h / 2) / w.k] as [number, number]; })() : null;
+  if (tool === 'marker') { if (!geo) { toast('Marker bitte in die Karte setzen'); return; } addMarker(geo); return; }
+  if (geo && fid === 'main') addTextBox('map', geo); else addTextBox('board', [clamp(a[0] / v.w, 0, 1), clamp(a[1] / v.h, 0, 1)]);
+}
+const inFrameAt = (v: Variant, id: FrameId, [ax, ay]: number[]) => { const F = v.L[id]; return ax >= F.x && ay >= F.y && ax <= F.x + F.w && ay <= F.y + F.h; };
 export function Canvas() {
   const doc = useStore(s => s.doc!);
   const view = useStore(s => s.ui.view);
   const mapMode = useStore(s => s.ui.mapMode);
   const panelOpen = useStore(s => s.ui.panelOpen);
+  const tool = useStore(s => s.ui.tool);
   const wrap = useRef<HTMLDivElement>(null);
   const drag = useRef<Drag | null>(null);
   const space = useRef(false);
@@ -231,6 +279,20 @@ export function Canvas() {
     const base = { sx: e.clientX, sy: e.clientY, moved: false, shift: e.shiftKey, pid: e.pointerId };
     if (e.button === 1 || space.current) { e.preventDefault(); drag.current = { ...base, type: 'view', ox: u.view.x, oy: u.view.y }; wrap.current!.classList.add('dragging'); return; }
     if (e.button !== 0) return;
+    if (u.tool) { placeTool(d, u.tool, a); return; }
+    const annEl = t.closest('[data-ann]') as SVGElement | null;
+    if (annEl && !u.mapMode) {
+      const id = annEl.dataset.ann!, part = (t.closest('[data-part]') as SVGElement | null)?.dataset.part || 'body', fr = annEl.dataset.frame as 'main' | 'inset' | 'board';
+      const el = d.els.find(x => x.id === id);
+      if (el) {
+        setUI({ sel: { kind: 'ann', id } });
+        const vv = activeVariant(d);
+        if (el.type === 'marker' && part === 'body') drag.current = { ...base, type: 'annAt', id, oat: [...el.at], k: vv.L[fr === 'inset' ? 'inset' : 'main'].view.k };
+        else if (el.type === 'text' && el.anchor === 'board' && part === 'body' && e.altKey) drag.current = { ...base, type: 'annAt', id, oat: [...el.at], board: true };
+        else { const dflt = el.type === 'text' && el.anchor === 'map' && el.leader ? annItems(d, vv).find(it => it.id === id) : null; const off = vv.ann[id] || (dflt ? [dflt.body[0] - dflt.anchor[0], dflt.body[1] - dflt.anchor[1]] : [0, 0]); drag.current = { ...base, type: 'annOff', id, o: [...off] }; }
+        return;
+      }
+    }
     const areaEl = t.closest('path[data-i]') as SVGPathElement | null;
     const areaI = areaEl && !areaEl.dataset.u ? +areaEl.dataset.i! : null;
     if (u.mapMode && inFrame(d, u.mapMode, a) && !t.closest('g.lbl')) {
@@ -282,6 +344,12 @@ export function Canvas() {
       case 'el': update(dd => { const L = dd.variants[dd.active].L[dg.id as 'title']; L.x = Math.round((dg.ox as number) + dx); L.y = Math.round((dg.oy as number) + dy); }, { history: false }); break;
       case 'frame': update(dd => { const F = dd.variants[dd.active].L[dg.id as FrameId]; F.x = Math.round((dg.ox as number) + dx); F.y = Math.round((dg.oy as number) + dy); }, { history: false }); break;
       case 'resize': update(dd => { const F = dd.variants[dd.active].L[dg.id as FrameId]; F.w = Math.max(80, Math.round((dg.ow as number) + dx)); F.h = Math.max(80, Math.round((dg.oh as number) + dy)); }, { history: false }); break;
+      case 'annAt': {
+        if (dg.board) { const vv = activeVariant(getDoc()); const o = dg.oat as number[]; update(dd => { const el = dd.els.find(x => x.id === dg.id); if (el) el.at = [clamp(o[0] + dx / vv.w, 0, 1), clamp(o[1] + dy / vv.h, 0, 1)]; }, { history: false }); break; }
+        const o = dg.oat as number[], k = dg.k as number;
+        update(dd => { const el = dd.els.find(x => x.id === dg.id); if (el && el.type === 'marker') { el.at = [Math.round(o[0] + dx / k), Math.round(o[1] + dy / k)]; el.place = null; } }, { history: false }); break;
+      }
+      case 'annOff': { const o = dg.o as number[]; update(dd => { dd.variants[dd.active].ann[dg.id as string] = [Math.round(o[0] + dx), Math.round(o[1] + dy)]; }, { history: false }); break; }
       case 'label': { const o = dg.o as number[]; update(dd => { dd.variants[dd.active].labelOffsets[dg.key as string] = [Math.round(o[0] + dx), Math.round(o[1] + dy)]; }, { history: false }); break; }
     }
   };
@@ -311,7 +379,7 @@ export function Canvas() {
   };
 
   return (
-    <section className={'canvaswrap' + (mapMode ? ' mapmode' : '')} id="canvas" ref={wrap} aria-label="Arbeitsfläche"
+    <section className={'canvaswrap' + (mapMode ? ' mapmode' : '') + (tool ? ' placing' : '')} id="canvas" ref={wrap} aria-label="Arbeitsfläche"
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
       onPointerLeave={() => { if (!drag.current) useHover.setState({ i: null }); }} onDoubleClick={onDoubleClick}>
       <div className="stage" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.z})` }}>
@@ -321,6 +389,7 @@ export function Canvas() {
           <MapFrame id="main" />
           {doc.inset.visible && <MapFrame id="inset" />}
           <Elements />
+          <Annotations />
         </svg>
         <Overlay />
       </div>
@@ -329,6 +398,7 @@ export function Canvas() {
         <button className="btn small" onClick={() => setGeoSet(cm.mismatch!)}>Karte auf {GEO[cm.mismatch]?.meta.year} umstellen</button></div>}
       {!cm.dataset && doc.color.mode === 'none' && <div className="canvas-banner soft"><Icon.info /> Noch keine Daten. Importiere eine CSV- oder Excel-Datei im Schritt „Daten“.
         <button className="btn small primary" onClick={() => setUI({ wizard: { mode: 'new' } })}><Icon.upload /> Daten importieren</button></div>}
+      {tool && <div className="mapmode-bar tool-bar"><b>{tool === 'marker' ? 'Marker setzen' : 'Textkasten setzen'}</b><span style={{ opacity: .75 }}>{tool === 'marker' ? 'Klick in die Karte setzt den Marker' : 'Klick in die Karte hängt ihn an diesen Punkt, Klick daneben an die Fläche'}</span><button className="btn small" onClick={() => setUI({ tool: null })}>Abbrechen <span className="kbd kbd-inv">Esc</span></button></div>}
       <MapModeBar wrap={wrap} />
       <Tooltip />
       <div className="canvas-hud">

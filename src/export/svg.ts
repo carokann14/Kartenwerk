@@ -4,7 +4,9 @@ import { textPathD, measureW } from '../lib/fonts';
 import { esc, svgId } from '../lib/util';
 import type { BBox } from '../lib/util';
 import type { Doc } from '../model/types';
-import { colorModel, fillOf } from '../render/colorModel';
+import { colorModel } from '../render/colorModel';
+import { areaFill, hatchMap, hatchPathD } from '../render/hatch';
+import { annItems, elName } from '../render/annotations';
 import { activeVariant, labelPrims, layoutLabels, legendPrims, Prims, TextPrim, textPrims } from '../render/elements';
 import { FrameId, frameMeshes, frameSets, insetIdx, insetLabel } from '../render/scene';
 
@@ -79,7 +81,8 @@ export function textToPath(t: TextPrim) {
   if (t.halo) s += `<path d="${d}" fill="none" stroke="#FFFFFF" stroke-width="${(t.size * 0.24).toFixed(2)}" stroke-linejoin="round"/>`;
   return s + `<path d="${d}" fill="${t.color}"/>`;
 }
-const primsToPaths = (p: Prims) => p.rects.map(r => `<rect x="${r.x.toFixed(1)}" y="${r.y.toFixed(1)}" width="${r.w.toFixed(1)}" height="${r.h.toFixed(1)}" fill="${r.fill}"/>`).join('') + p.texts.map(textToPath).join('');
+const primsToPaths = (p: Prims) => p.rects.map(r => `<rect x="${r.x.toFixed(1)}" y="${r.y.toFixed(1)}" width="${r.w.toFixed(1)}" height="${r.h.toFixed(1)}" fill="${r.fill}"/>`).join('')
+  + (p.paths || []).map(q => `<path d="${q.d}" fill="${q.fill}"${q.stroke ? ` stroke="${q.stroke}" stroke-width="${q.width ?? 1}" stroke-linejoin="round"` : ''}/>`).join('') + p.texts.map(textToPath).join('');
 
 function exportFrame(doc: Doc, id: FrameId) {
   const v = activeVariant(doc), F = v.L[id], vw = F.view, st = doc.style, g = GEO[doc.geoSet];
@@ -87,14 +90,15 @@ function exportFrame(doc: Doc, id: FrameId) {
   const R: BBox = [F.x, F.y, F.x + F.w, F.y + F.h];
   const toA = ([gx, gy]: Pt) => [F.x + (gx - vw.cx) * vw.k + F.w / 2, F.y + (gy - vw.cy) * vw.k + F.h / 2];
   const tol = 0.35;
-  const polyOut = (polys: Poly[], bb: BBox) => {
+  const polyRings = (polys: Poly[], bb: BBox) => {
     const a = toA([bb[0], bb[1]]), b = toA([bb[2], bb[3]]);
-    if (b[0] < R[0] || a[0] > R[2] || b[1] < R[1] || a[1] > R[3]) return '';
-    const inside = a[0] >= R[0] && a[1] >= R[1] && b[0] <= R[2] && b[1] <= R[3];
     const rings: number[][][] = [];
+    if (b[0] < R[0] || a[0] > R[2] || b[1] < R[1] || a[1] > R[3]) return rings;
+    const inside = a[0] >= R[0] && a[1] >= R[1] && b[0] <= R[2] && b[1] <= R[3];
     for (const poly of polys) for (const ring of poly) { let r = simplifyPx(ring.map(toA), tol, true); if (!inside) r = clipPoly(r, R); if (r.length >= 3) rings.push(r); }
-    return relD(rings, true);
+    return rings;
   };
+  const polyOut = (polys: Poly[], bb: BBox) => relD(polyRings(polys, bb), true);
   const lineOut = (lines: Pt[][]) => { const segs: number[][][] = []; for (const l of lines) { const r = simplifyPx(l.map(toA), tol, false); for (const sg of clipLine(r, R)) if (sg.length >= 2) segs.push(sg); } return relD(segs, false); };
   const sets = frameSets(doc, id), me = frameMeshes(doc, id, sets);
   let s = `<g id="${id === 'main' ? 'Hauptkarte' : 'Inset-' + svgId(insetLabel(doc))}">`;
@@ -103,8 +107,24 @@ function exportFrame(doc: Doc, id: FrameId) {
   if (doc.layers.lakes) { s += `<g id="${id}-Gewaesser">`; for (const c of CONTEXT.lakes) { const d = polyOut(c.polys, c.bbox); if (d) s += `<path d="${d}" fill="${st.water}" fill-rule="evenodd"/>`; } s += `</g>`; }
   if (!me.linesMode && sets.U.size) { s += `<g id="${id}-Umfeld">`; for (const i of sets.U) { const a = g.areas[i]; const d = polyOut(a.polys, a.bbox); if (d) s += `<path d="${d}" fill="${st.umfeld}" fill-rule="evenodd"/>`; } s += `</g>`; }
   s += `<g id="${id}-Gebiete">`;
-  for (const i of sets.F) { const a = g.areas[i]; const d = polyOut(a.polys, a.bbox); if (d) s += `<path id="${id}-${svgId(g.meta.level)}-${a.id}" d="${d}" fill="${doc.layers.wkFill ? fillOf(doc, cm, i) : st.umfeld}" fill-rule="evenodd"/>`; }
-  s += `</g><g id="${id}-Grenzen">`;
+  const hm = hatchMap(doc), hatchRings = new Map<string, number[][][]>();
+  for (const i of sets.F) {
+    const a = g.areas[i]; const rings = polyRings(a.polys, a.bbox); if (!rings.length) continue;
+    s += `<path id="${id}-${svgId(g.meta.level)}-${a.id}" d="${relD(rings, true)}" fill="${doc.layers.wkFill ? areaFill(doc, cm, i) : st.umfeld}" fill-rule="evenodd"/>`;
+    const h = doc.layers.hatches ? hm.byArea[i] : null;
+    if (h) { const L = hatchRings.get(h) || []; L.push(...rings); hatchRings.set(h, L); }
+  }
+  s += `</g>`;
+  if (hatchRings.size) {
+    s += `<g id="${id}-Schraffuren">`;
+    for (const [h, rings] of hatchRings) {
+      const hs = hm.styles.get(h)!; const d = hatchPathD(hs, rings); if (!d) continue;
+      s += hs.pattern === 'punkte' ? `<path id="${id}-Schraffur-${svgId(hs.name)}" d="${d}" fill="${hs.color}"/>`
+        : `<path id="${id}-Schraffur-${svgId(hs.name)}" d="${d}" fill="none" stroke="${hs.color}" stroke-width="${hs.width}" stroke-linecap="butt"/>`;
+    }
+    s += `</g>`;
+  }
+  s += `<g id="${id}-Grenzen">`;
   const ln = (lines: Pt[][], color: string, w: number, name: string) => { const d = lineOut(lines); return d ? `<path id="${id}-${name}" d="${d}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"/>` : ''; };
   if (doc.layers.wkLines) s += ln(me.wk, st.wkLine, st.wkLineW, 'Gebietsgrenzen');
   if (me.linesMode) { s += ln(me.wkU, '#C8C2B6', 0.6, 'Umfeldgrenzen'); s += ln(me.outline, '#B9B2A5', 0.8, 'Umfeldumriss'); }
@@ -140,6 +160,12 @@ export function buildExportSvg(doc: Doc, transparent = doc.background === 'trans
   if (doc.inset.visible) s += exportFrame(doc, 'inset');
   const lp = legendPrims(doc); if (lp) s += `<g id="Legende">${primsToPaths(lp)}</g>`;
   for (const [kind, name] of [['title', 'Titel'], ['subtitle', 'Unterzeile'], ['source', 'Quelle']] as const) { const p = textPrims(doc, kind); if (p) s += `<g id="${name}">${primsToPaths(p)}</g>`; }
+  const items = annItems(doc, v);
+  if (items.length) {
+    s += `<g id="Marker-und-Texte">`;
+    for (const it of items) s += `<g id="${svgId((it.el.type === 'marker' ? 'Marker-' : 'Text-') + elName(it.el)) || it.id}">${primsToPaths({ texts: it.texts, rects: it.rects, paths: it.paths, box: { x: 0, y: 0, w: 0, h: 0 } })}</g>`;
+    s += `</g>`;
+  }
   return s + `</svg>`;
 }
 export interface SvgReport { bytes: number; colors: number; paths: number; checks: { ok: boolean; label: string }[] }

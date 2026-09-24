@@ -6,12 +6,16 @@ import { areaRowIndex, groupMetrics } from '../data/derive';
 import { GEO, LAENDER } from '../geo/geo';
 import { LH } from '../model/defaults';
 import type { Doc, Variant } from '../model/types';
-import { ColorModel, colorModel, legendTitleAuto, partyColor } from './colorModel';
+import { ColorModel, colorModel, partyColor } from './colorModel';
+import { hatchPathD, rectRing } from './hatch';
+import { markerD } from './annotations';
+import { LegEntry, legendModel } from './legend';
 import { FrameId, frameSets, geoOf } from './scene';
 
 export interface TextPrim { x: number; y: number; text: string; cut: Cut; size: number; color: string; anchor: 'start' | 'middle' | 'end'; halo?: boolean }
 export interface RectPrim { x: number; y: number; w: number; h: number; fill: string }
-export interface Prims { texts: TextPrim[]; rects: RectPrim[]; box: { x: number; y: number; w: number; h: number } }
+export interface PathPrim { d: string; fill: string; stroke?: string; width?: number }
+export interface Prims { texts: TextPrim[]; rects: RectPrim[]; paths?: PathPrim[]; box: { x: number; y: number; w: number; h: number } }
 
 export const activeVariant = (doc: Doc): Variant => doc.variants[doc.active];
 const styleColor = (doc: Doc, c: string) => (c in doc.style ? String((doc.style as unknown as Record<string, string>)[c]) : c);
@@ -28,6 +32,8 @@ export function sourceText(doc: Doc): string {
   }
   if (g) parts.push(`Geometrie: ${g.meta.attribution}, vereinfacht.`);
   if (doc.layers.neighbors || doc.layers.lakes) parts.push('Nachbarstaaten und Gewässer: Natural Earth.');
+  const gv = [...new Set(doc.els.filter(e => e.type === 'marker' && !e.hidden && e.place).map(e => (e as { place: { src: string } }).place.src))];
+  if (gv.length) parts.push(`Ortslagen: ${gv.join('; ')}.`);
   if (doc.texts.source.extra.trim()) parts.push(doc.texts.source.extra.trim());
   return parts.join(' ');
 }
@@ -49,11 +55,11 @@ export function textPrims(doc: Doc, kind: 'title' | 'subtitle' | 'source', v: Va
 
 // ---------- Legende ----------
 export function legendPrims(doc: Doc, P: { x: number; y: number } = activeVariant(doc).L.legend, mainW = activeVariant(doc).L.main.w, ts = activeVariant(doc).ts): Prims | null {
-  if (!doc.legend.visible || doc.color.mode === 'none') return null;
+  if (!doc.legend.visible) return null;
+  const M = legendModel(doc); if (!M) return null;
   const cm = colorModel(doc), c = doc.color;
-  if (cm.mismatch || !cm.dataset) return null;
   const base = +(doc.legend.size * ts).toFixed(2), small = Math.round(base * 0.74), ink = doc.style.ink, soft = doc.style.inkSoft;
-  const texts: TextPrim[] = [], rects: RectPrim[] = [];
+  const texts: TextPrim[] = [], rects: RectPrim[] = [], paths: PathPrim[] = [];
   let y = 0, maxX = 0;
   const T = (x: number, yy: number, text: string, cut: Cut, size: number, color: string, anchor: TextPrim['anchor'] = 'start') => {
     texts.push({ x: P.x + x, y: P.y + yy, text, cut, size, color, anchor });
@@ -61,59 +67,77 @@ export function legendPrims(doc: Doc, P: { x: number; y: number } = activeVarian
     maxX = Math.max(maxX, anchor === 'start' ? x + w : anchor === 'middle' ? x + w / 2 : x);
   };
   const R = (x: number, yy: number, w: number, h: number, fill: string) => { rects.push({ x: P.x + x, y: P.y + yy, w, h, fill }); maxX = Math.max(maxX, x + w); };
-  const title = doc.legend.title || legendTitleAuto(doc, cm);
-  for (const tl of wrapText(title, 'bold', base, Math.max(220, 300 * ts))) { T(0, y + base * 0.95, tl, 'bold', base, ink); y += base * 1.3; }
-  y += base * 0.25;
-  const count = (k: string) => doc.legend.counts && cm.counts[k] ? ` (${cm.counts[k]})` : '';
-  const scale = (n: number, sw: number, gap: number, yy: number) => cm.breaks.forEach((b, k) => { if (k < n - 1) T((k + 1) * (sw + gap) - gap / 2, yy, fmtBreak(b), 'text', small, soft, 'middle'); });
-  if (c.mode === 'siegerStaerke') {
-    const n = cm.steps, sw = Math.round(base * 2.35), sh = Math.round(base * 1.1), gap = 2;
-    scale(n, sw, gap, y + small * 0.9); y += small * 1.45;
-    for (const e of cm.entries) {
-      for (let s = 0; s < n; s++) R(s * (sw + gap), y, sw, sh, mixWhite(e.color, STEP_T[n][s]));
-      T(n * (sw + gap) + base * 0.55, y + sh / 2 + capOffset('text', base * 0.92), e.label + count(e.key), 'text', base * 0.92, ink);
-      y += sh + base * 0.42;
+  const lbl = (e: LegEntry) => e.label + (doc.legend.counts && e.count != null && e.kind !== 'line' && e.kind !== 'marker' ? ` (${e.count})` : '');
+  /** Kästchen eines Eintrags: Fläche, Schraffur oder Linie */
+  const swatch = (e: LegEntry, x: number, yy: number, w: number, h: number) => {
+    const ax = P.x + x, ay = P.y + yy;
+    if (e.kind === 'line') { rects.push({ x: ax, y: ay + h / 2 - 1.25, w, h: 2.5, fill: e.color }); maxX = Math.max(maxX, x + w); return; }
+    if (e.kind === 'marker' && e.marker) { const m = e.marker, sz = Math.min(w, h) * (m.shape === 'pin' ? 0.62 : 0.86); paths.push({ d: markerD(m, ax + w / 2, m.shape === 'pin' ? ay + h * 0.98 : ay + h / 2, sz), fill: m.fill, ...(m.strokeW > 0 && m.stroke.toUpperCase() !== '#FFFFFF' ? { stroke: m.stroke, width: Math.min(1, m.strokeW) } : {}) }); maxX = Math.max(maxX, x + w); return; }
+    const fill = e.kind === 'nodata' ? e.color : e.kind === 'hatch' ? (e.bg || '#FFFFFF') : e.color;
+    R(x, yy, w, h, fill);
+    if (e.hatch && (e.kind === 'hatch' || e.kind === 'nodata')) {
+      const d = hatchPathD(e.hatch, [rectRing(ax, ay, w, h)]);
+      if (d) paths.push(e.hatch.pattern === 'punkte' ? { d, fill: e.hatch.color } : { d, fill: 'none', stroke: e.hatch.color, width: e.hatch.width });
+      if (e.kind === 'hatch' && !e.bg) paths.push({ d: `M${ax} ${ay}h${w}v${h}h${-w}z`, fill: 'none', stroke: '#C9C3B8', width: 0.8 });
     }
-    y -= base * 0.42;
-    T(0, y + small * 1.5, c.basis === 'anteil' ? 'Anteil der stärksten Partei in %' : 'Vorsprung auf Platz 2 in Prozentpunkten', 'text', small, soft);
-    y += small * 1.8;
-  } else if (c.mode === 'sieger' || c.mode === 'kategorie') {
-    const sw = Math.round(base * 1.15);
-    if (doc.legend.orientation === 'horizontal') {
+  };
+  for (const tl of wrapText(M.title, 'bold', base, Math.max(220, 300 * ts))) { T(0, y + base * 0.95, tl, 'bold', base, ink); y += base * 1.3; }
+  y += base * 0.25;
+  const scale = (n: number, sw: number, gap: number, yy: number) => cm.breaks.forEach((b, k) => { if (k < n - 1) T((k + 1) * (sw + gap) - gap / 2, yy, fmtBreak(b), 'text', small, soft, 'middle'); });
+  const rows = M.rows.filter(e => !e.hidden), more = M.more.filter(e => !e.hidden);
+  /** Einfache Einträge untereinander, nebeneinander oder im Raster */
+  const list = (items: LegEntry[], sw: number, size: number, color: string, orient: 'vertical' | 'horizontal' | 'grid') => {
+    if (!items.length) return;
+    const tw = (e: LegEntry) => sw + base * 0.5 + measureW(lbl(e), 'text', size);
+    if (orient === 'horizontal') {
       let x = 0; const maxW = Math.max(260, mainW * 0.8);
-      for (const e of cm.entries) {
-        const lab = e.label + count(e.key);
-        const w = sw + base * 0.45 + measureW(lab, 'text', base * 0.92) + base * 1.1;
+      for (const e of items) {
+        const w = tw(e) + base * 1.1;
         if (x > 0 && x + w > maxW) { x = 0; y += sw + base * 0.5; }
-        R(x, y, sw, sw, e.color); T(x + sw + base * 0.45, y + sw / 2 + capOffset('text', base * 0.92), lab, 'text', base * 0.92, ink);
+        swatch(e, x, y, sw, sw); T(x + sw + base * 0.5, y + sw / 2 + capOffset('text', size), lbl(e), 'text', size, color);
         x += w;
       }
       y += sw;
+    } else if (orient === 'grid') {
+      const cols = Math.max(1, Math.min(6, doc.legend.cols || 2)), colW: number[] = [];
+      items.forEach((e, k) => { const cI = k % cols; colW[cI] = Math.max(colW[cI] || 0, tw(e) + base * 1.1); });
+      items.forEach((e, k) => {
+        const cI = k % cols, x = colW.slice(0, cI).reduce((a, b) => a + b, 0);
+        if (cI === 0 && k > 0) y += sw + base * 0.42;
+        swatch(e, x, y, sw, sw); T(x + sw + base * 0.5, y + sw / 2 + capOffset('text', size), lbl(e), 'text', size, color);
+      });
+      y += sw;
     } else {
-      for (const e of cm.entries) {
-        R(0, y, sw, sw, e.color); T(sw + base * 0.55, y + sw / 2 + capOffset('text', base * 0.92), e.label + count(e.key), 'text', base * 0.92, ink);
-        y += sw + base * 0.42;
-      }
+      for (const e of items) { swatch(e, 0, y, sw, sw); T(sw + base * 0.55, y + sw / 2 + capOffset('text', size), lbl(e), 'text', size, color); y += sw + base * 0.42; }
       y -= base * 0.42;
     }
+  };
+  if (M.main === 'matrix' && c.mode === 'siegerStaerke') {
+    const n = cm.steps, sw = Math.round(base * 2.35), sh = Math.round(base * 1.1), gap = 2;
+    scale(n, sw, gap, y + small * 0.9); y += small * 1.45;
+    for (const e of rows) {
+      for (let s2 = 0; s2 < n; s2++) R(s2 * (sw + gap), y, sw, sh, mixWhite(e.color, STEP_T[n][s2]));
+      T(n * (sw + gap) + base * 0.55, y + sh / 2 + capOffset('text', base * 0.92), lbl(e), 'text', base * 0.92, ink);
+      y += sh + base * 0.42;
+    }
+    y -= base * 0.42;
+  } else if (M.main === 'list') {
+    list(rows, Math.round(base * 1.15), base * 0.92, ink, doc.legend.orientation);
   } else if (c.mode === 'anteil' || c.mode === 'wert') {
     const n = cm.steps || 5, sw = Math.round(base * (n > 5 ? 1.9 : 2.4)), sh = Math.round(base * 1.0), gap = 2;
     const hue = c.mode === 'anteil' ? partyColor(doc, c.party) : c.hue;
     const T5 = STEP_T[n] || STEP_T[5];
-    for (let s = 0; s < n; s++) R(s * (sw + gap), y, sw, sh, mixWhite(hue, T5[Math.min(s, T5.length - 1)]));
+    for (let s2 = 0; s2 < n; s2++) R(s2 * (sw + gap), y, sw, sh, mixWhite(hue, T5[Math.min(s2, T5.length - 1)]));
     scale(n, sw, gap, y + sh + small * 1.25);
-    y += sh + small * 1.6;
-    if (c.mode === 'anteil') { T(0, y + small * 0.9, 'Anteil in %', 'text', small, soft); y += small * 1.4; }
+    y += sh + small * 0.9;
   }
-  if (cm.missing) {
-    y += base * 0.5; const sh = Math.round(base * 0.9);
-    R(0, y, sh, sh, doc.style.noData);
-    T(sh + base * 0.5, y + sh / 2 + capOffset('text', small), `keine Daten (${cm.missing})`, 'text', small, soft);
-    y += sh;
+  if (M.caption && !M.caption.hidden && M.caption.text) { T(0, y + small * 1.5, M.caption.text, 'text', small, soft); y += small * 1.8; }
+  if (more.length) {
+    y += base * 0.55;
+    list(more, Math.round(base * 0.95), small, soft, doc.legend.orientation === 'vertical' || M.main === 'matrix' || M.main === 'bar' ? 'vertical' : doc.legend.orientation);
   }
-  const nOv = Object.keys(doc.overrides).filter(k => k.startsWith(doc.geoSet + ':')).length;
-  if (nOv) { y += base * 0.7; T(0, y + small, `${nOv} Gebiet${nOv > 1 ? 'e' : ''} manuell eingefärbt`, 'text', small, soft); y += small * 1.3; }
-  return { texts, rects, box: { x: P.x, y: P.y, w: Math.ceil(maxX), h: Math.ceil(y) } };
+  if (M.ovNote && !M.ovNote.hidden) { y += base * 0.7; T(0, y + small, M.ovNote.text, 'text', small, soft); y += small * 1.3; }
+  return { texts, rects, paths, box: { x: P.x, y: P.y, w: Math.ceil(maxX), h: Math.ceil(y) } };
 }
 
 // ---------- Beschriftungen ----------

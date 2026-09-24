@@ -1,7 +1,7 @@
 import React from 'react';
 import { STEP_T, mixWhite, shortRangeLabels } from '../../lib/color';
 import { PARTY_DEFS, SHARE_KEYS } from '../../data/parties';
-import { update, useStore } from '../../model/store';
+import { setUI, update, useStore } from '../../model/store';
 import type { ColorRule } from '../../model/types';
 import { colorModel, fillOf, partyColor } from '../../render/colorModel';
 import { geoOf } from '../../render/scene';
@@ -70,7 +70,8 @@ export function PanelFaerbung() {
       </Section>}
       {rule.mode === 'kategorie' && <Section title="Optionen">
         <Field label="Spalte"><select value={rule.column} onChange={e => set({ ...rule, column: e.target.value })}>{catCols.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></Field>
-        <p className="hint">Werte, die wie Parteinamen aussehen, bekommen die Parteifarbe. Ab der neunten Kategorie wird grau, statt neue Farben zu erfinden.</p>
+        <button className="btn small" onClick={() => setUI({ sel: { kind: 'el', id: 'legend' } })}><Icon.legend /> Legende bearbeiten</button>
+        <p className="hint">Werte, die wie Parteinamen aussehen, bekommen die Parteifarbe. Andere Kategorien bekommen der Häufigkeit nach eine Farbe, ab der neunten grau. Farben und Texte einzelner Kategorien änderst du in der Legende.</p>
       </Section>}
       <Section title="Parteifarben" aside="gilt im Projekt">
         <div className="ptable">{PARTY_DEFS.map(p => (

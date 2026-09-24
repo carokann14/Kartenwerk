@@ -30,7 +30,7 @@ export const partyLabel = (key: string) => partyDef(key)?.label || key;
 
 const cache = new WeakMap<Doc['color'], { deps: unknown[]; cm: ColorModel }>();
 export function colorModel(doc: Doc): ColorModel {
-  const deps = [doc.datasets, doc.partyColors, doc.fokus, doc.geoSet, doc.style.noData];
+  const deps = [doc.datasets, doc.partyColors, doc.categoryColors, doc.fokus, doc.geoSet, doc.style.noData];
   const hit = cache.get(doc.color);
   if (hit && hit.deps.every((d, i) => d === deps[i])) return hit.cm;
   const cm = compute(doc);
@@ -81,12 +81,12 @@ function compute(doc: Doc): ColorModel {
         const r = rowIdx(i); if (r == null || gm[r].win < 0) continue;
         const key = catKey(gm[r].win);
         let base = colParty[gm[r].win] ? partyColor(doc, key) : null;
-        if (!base) { if (!others.includes(key)) others.push(key); base = CATEGORICAL[others.indexOf(key) % CATEGORICAL.length]; }
+        if (!base) { if (!others.includes(key)) others.push(key); base = doc.categoryColors[key] || CATEGORICAL[others.indexOf(key) % CATEGORICAL.length]; }
         cm.keys[i] = key;
         if (rule.mode === 'siegerStaerke') { const v = val(i); const c = v == null ? 0 : classOf(v, cm.breaks); cm.cls[i] = c; cm.fills[i] = mixWhite(base, STEP_T[steps][c]); }
         else { cm.cls[i] = 0; cm.fills[i] = base; }
       }
-      const colorOfKey = (key: string) => colParty.includes(key) ? partyColor(doc, key) : CATEGORICAL[Math.max(0, others.indexOf(key)) % CATEGORICAL.length];
+      const colorOfKey = (key: string) => colParty.includes(key) ? partyColor(doc, key) : doc.categoryColors[key] || CATEGORICAL[Math.max(0, others.indexOf(key)) % CATEGORICAL.length];
       finishEntries(doc, cm, key => ({ label: colParty.includes(key) ? partyLabel(key) : key, color: colorOfKey(key) }));
       return cm;
     }
@@ -109,6 +109,7 @@ function compute(doc: Doc): ColorModel {
     const isNeg = (v: string) => /^(nicht|kein|keine|ohne|–|-|n\. ?a\.?)(\s|$)/i.test(v);
     const others = order.filter(v => !doc.partyColors[v] && !partyDef(v) && !partyOf(v) && !isNeg(v));
     const colorOf = (v: string) => {
+      if (doc.categoryColors[v]) return doc.categoryColors[v];
       if (doc.partyColors[v]) return doc.partyColors[v];
       const p = partyDef(v) || partyOf(v); if (p) return partyColor(doc, p.key);
       if (isNeg(v)) return NEG_GREY;

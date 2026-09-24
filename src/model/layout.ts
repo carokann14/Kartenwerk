@@ -82,7 +82,7 @@ export function makeLayout(doc: Doc, W: number, H: number, ts: number): Layout {
 export function makeVariant(doc: Doc, preset: string, w?: number, h?: number): Variant {
   const p = PRESETS[preset] || PRESETS['4:5'];
   const W = w || p.w, H = h || p.h, ts = defaultTS(W, H);
-  const v: Variant = { id: uid('v'), preset, w: W, h: H, ts, L: makeLayout(doc, W, H, ts), labelOffsets: {}, locked: { main: false, inset: false } };
+  const v: Variant = { id: uid('v'), preset, w: W, h: H, ts, L: makeLayout(doc, W, H, ts), labelOffsets: {}, locked: { main: false, inset: false }, ann: {} };
   fitMain(doc, v); fitInset(doc, v);
   return v;
 }

@@ -564,3 +564,67 @@ button.start-card:hover { border-color: var(--accent); }
   .modal-back { padding: 8px; }
   .wiz-steps { display: none; }
 }
+
+/* ============================================================
+   M2 · Etappe 1: Schraffuren und Legende
+   ============================================================ */
+.hatch-sw { display: block; flex: none; border-radius: 3px; }
+.hatch-list { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.hatch-row { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; border: 0; border-top: 1px solid var(--line-2); background: var(--panel); padding: 7px 10px; }
+.hatch-row:first-child { border-top: 0; }
+.hatch-row:hover { background: var(--panel-2); }
+.hatch-row b { display: block; font-size: 12.5px; font-weight: 600; }
+.hatch-row .hint { font-size: 11.5px; }
+.hatch-row .count { font: 500 11.5px var(--mono); color: var(--muted); }
+.btn .hatch-sw { border-radius: 2px; }
+.pattern-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.pattern-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 4px 5px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); font-size: 11px; color: var(--ink-2); }
+.pattern-btn:hover { border-color: var(--muted); }
+.pattern-btn.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; background: var(--accent-soft); color: var(--ink); font-weight: 600; }
+.card.rule { gap: 8px; padding: 8px 10px; }
+.rule-head { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+.value-list { display: flex; flex-direction: column; gap: 3px; max-height: 190px; overflow: auto; padding-right: 4px; }
+.value-list .check { font-size: 12px; }
+.value-list .check .dim { margin-left: auto; font-size: 11px; }
+.leg-list { display: flex; flex-direction: column; gap: 4px; }
+.leg-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+.leg-row input[type="text"] { height: 26px; }
+.leg-row.off input[type="text"] { color: var(--muted); text-decoration: line-through; }
+.leg-row.off input[type="color"], .leg-row.off .leg-sw { opacity: .45; }
+.leg-sw { width: 28px; height: 24px; display: grid; place-items: center; border: 0; padding: 0; background: none; }
+.leg-btns { display: flex; gap: 0; }
+.leg-btns .btn.icon { width: 22px; height: 22px; font-size: 12px; color: var(--ink-2); }
+.leg-btns .btn.icon svg { width: 13px; height: 13px; }
+.leg-extra { grid-column: 2 / 4; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+.leg-extra select { width: auto; flex: 1; min-width: 100px; height: 26px; }
+
+/* ============================================================
+   M2 · Etappe 2: Marker und Textkästen
+   ============================================================ */
+.canvaswrap.placing, .canvaswrap.placing #artboard * { cursor: crosshair !important; }
+#artboard [data-ann] { cursor: move; }
+.mapmode-bar.tool-bar { background: var(--accent); color: var(--accent-ink); }
+.mapmode-bar.tool-bar .btn { border-color: color-mix(in srgb, var(--accent-ink) 35%, transparent); }
+.place-search { position: relative; display: flex; flex-direction: column; gap: 4px; }
+.place-hits { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); overflow: hidden; box-shadow: var(--shadow); }
+.place-hits .hint { padding: 8px 10px; }
+.place-hit { display: flex; align-items: baseline; gap: 8px; text-align: left; border: 0; border-top: 1px solid var(--line-2); background: none; padding: 6px 10px; }
+.place-hit:first-child { border-top: 0; }
+.place-hit.on { background: var(--accent-soft); }
+.place-hit b { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.place-hit .hint { padding: 0; font-size: 11.5px; margin-left: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.el-list { display: flex; flex-direction: column; gap: 2px; }
+.el-row { display: flex; align-items: center; gap: 8px; text-align: left; border: 0; background: none; padding: 5px 8px; border-radius: 6px; font-size: 12.5px; }
+.el-row:hover { background: var(--panel-2); }
+.el-row.on { background: var(--accent-soft); }
+.el-row.off span { color: var(--muted); text-decoration: line-through; }
+.el-row svg { width: 16px; height: 16px; flex: none; color: var(--muted); }
+.el-row span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mk-ico { display: block; flex: none; }
+.lrow .li .mk-ico { width: 14px; height: 14px; }
+.shape-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+.shape-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px 5px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); font-size: 10.5px; color: var(--ink-2); }
+.shape-btn:hover { border-color: var(--muted); }
+.shape-btn.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; background: var(--accent-soft); color: var(--ink); font-weight: 600; }
+.shape-btn svg { width: 20px; height: 20px; }
+.row-btns.nowrap input[type="text"] { flex: 1; min-width: 0; }

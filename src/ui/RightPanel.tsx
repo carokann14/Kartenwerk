@@ -11,6 +11,9 @@ import { ColorModel, colorModel, legendTitleAuto, partyColor } from '../render/c
 import { activeVariant, layoutLabels, sourceText } from '../render/elements';
 import { INSET_DEFS, fokusLabel, geoOf, insetLabel } from '../render/scene';
 import { Check, Field, Icon, Note, NumInput, Section, Seg } from './common';
+import { AreaHatch, HatchList, HatchProps, LegendProps } from './annotationsUI';
+import { AnnProps, MarkerIcon } from './elementsUI';
+import { elName } from '../render/annotations';
 
 // ---------- Ebenen ----------
 function Layers() {
@@ -39,11 +42,13 @@ function Layers() {
       <Row lvl={1} s={{ kind: 'el', id: 'source' }} icon={<Icon.text />} name="Quellenzeile" hidden={!T.source.visible} extra={<><span className="lock" title="Pflichtteil fest"><Icon.lock /></span>{eye(T.source.visible, on => update(d => { d.texts.source.visible = on; }), 'Quellenzeile')}</>} />
       <Row lvl={1} s={{ kind: 'frame', id: 'main' }} icon={<Icon.frame />} name={<>Hauptkarte <small>{fokusLabel(doc)}</small></>} extra={v.locked.main ? <span className="lock" title="Ausschnitt gesperrt"><Icon.lock /></span> : null} />
       <Row lvl={2} s={{ kind: 'layer', id: 'wk' }} icon={<Icon.layer />} name={g.meta.levelLabel || g.meta.label} extra={<>{tog(L.wkFill, on => update(d => { d.layers.wkFill = on; }), 'F', 'Fläche')}{tog(L.wkLines, on => update(d => { d.layers.wkLines = on; }), 'G', 'Grenze')}{tog(L.wkLabels, on => update(d => { d.layers.wkLabels = on; }), 'B', 'Beschriftung')}</>} />
+      <Row lvl={2} s={{ kind: 'layer', id: 'hatches' }} icon={<Icon.layer />} name={<>Schraffuren <small>{doc.hatches.length}</small></>} hidden={!L.hatches} extra={eye(L.hatches, on => update(d => { d.layers.hatches = on; }), 'Schraffuren')} />
       <Row lvl={2} s={{ kind: 'layer', id: 'land' }} icon={<Icon.layer />} name="Ländergrenzen" hidden={!L.landLines} extra={eye(L.landLines, on => update(d => { d.layers.landLines = on; }), 'Ländergrenzen')} />
       <Row lvl={2} s={{ kind: 'layer', id: 'water' }} icon={<Icon.layer />} name={<>Gewässer <small>Kontext</small></>} hidden={!L.lakes} extra={eye(L.lakes, on => update(d => { d.layers.lakes = on; }), 'Gewässer')} />
       <Row lvl={2} s={{ kind: 'layer', id: 'neighbors' }} icon={<Icon.layer />} name={<>Nachbarstaaten <small>Kontext</small></>} hidden={!L.neighbors} extra={eye(L.neighbors, on => update(d => { d.layers.neighbors = on; }), 'Nachbarstaaten')} />
       <Row lvl={1} s={{ kind: 'frame', id: 'inset' }} icon={<Icon.frame />} name={<>Inset „{insetLabel(doc)}“</>} hidden={!doc.inset.visible} extra={eye(doc.inset.visible, on => { update(d => { d.inset.visible = on; d.inset.autoHidden = false; }); refitAfterInset(); }, 'Inset')} />
       <Row lvl={1} s={{ kind: 'el', id: 'legend' }} icon={<Icon.legend />} name="Legende" hidden={!doc.legend.visible} extra={eye(doc.legend.visible, on => update(d => { d.legend.visible = on; }), 'Legende')} />
+      {doc.els.map(el => <Row key={el.id} lvl={1} s={{ kind: 'ann', id: el.id }} icon={el.type === 'marker' ? <MarkerIcon m={el} s={14} /> : <Icon.text />} name={elName(el)} hidden={!!el.hidden} extra={eye(!el.hidden, on => update(d => { const x = d.els.find(q => q.id === el.id); if (x) x.hidden = !on; }), elName(el))} />)}
     </div>
   );
 }
@@ -75,6 +80,7 @@ function AreaProps({ doc, ids, cm }: { doc: Doc; ids: string[]; cm: ColorModel }
     <p className="hint">Umschalt + Klick fügt hinzu oder entfernt.</p>
     <button className="btn small" onClick={() => setFokus((ids.length === 1 ? { kind: 'area', id: ids[0] } : { kind: 'custom', ids: [...ids].sort((a, b) => +a - +b) }))}><Icon.target /> Auswahl als Fokus</button>
     <OverrideUI doc={doc} ids={ids} />
+    <AreaHatch doc={doc} ids={ids} />
   </>;
   const i = g.byId.get(ids[0]); if (i == null) return <Head t="Gebiet nicht im Gebietsstand" />;
   const a = g.areas[i], ds = cm.dataset, grp = cm.group;
@@ -102,6 +108,7 @@ function AreaProps({ doc, ids, cm }: { doc: Doc; ids: string[]; cm: ColorModel }
     <Head t={`${a.nr} · ${a.name}`} sub={`${LAENDER[a.bl]?.[0] || a.bl} · ${fmtInt(a.area)} km²${grp ? ' · ' + grp.label : ''}`} />
     {body}
     <OverrideUI doc={doc} ids={ids} />
+    <AreaHatch doc={doc} ids={ids} />
   </>;
 }
 
@@ -135,7 +142,7 @@ function FrameProps({ doc, id }: { doc: Doc; id: 'main' | 'inset' }) {
   </>;
 }
 
-function LayerProps({ doc, id }: { doc: Doc; id: 'wk' | 'labels' | 'land' | 'water' | 'neighbors' }) {
+function LayerProps({ doc, id }: { doc: Doc; id: 'wk' | 'labels' | 'land' | 'water' | 'neighbors' | 'hatches' }) {
   const v = activeVariant(doc), st = doc.style, g = geoOf(doc);
   const colW = (c: string, w: number, ck: 'wkLine' | 'landLine', wk: 'wkLineW' | 'landLineW', max: number) => (
     <div className="row-btns"><input type="color" value={c} onChange={e => { const val = e.target.value.toUpperCase(); update(d => { d.style[ck] = val; }, { key: ck }); }} aria-label="Linienfarbe" /><NumInput min={0.1} max={max} step={0.1} value={w} onChange={n => update(d => { d.style[wk] = n; }, { key: wk })} ariaLabel="Linienstärke in Pixeln" /></div>
@@ -160,6 +167,10 @@ function LayerProps({ doc, id }: { doc: Doc; id: 'wk' | 'labels' | 'land' | 'wat
       </Section>
     </>;
   }
+  if (id === 'hatches') return <>
+    <Head t="Schraffuren" sub="über den Flächen, im Export als echte Linien" />
+    <HatchList doc={doc} />
+  </>;
   if (id === 'land') return <>
     <Head t="Ländergrenzen" sub="aus den Gebieten abgeleitet" />
     <Check checked={doc.layers.landLines} onChange={on => update(d => { d.layers.landLines = on; })}>Anzeigen</Check>
@@ -211,20 +222,15 @@ function Props() {
       <Field label="Größe (px)"><NumInput min={8} max={40} value={t.size} onChange={n => update(d => { d.texts.source.size = n; }, { key: 'src-size' })} ariaLabel="Schriftgröße der Quellenzeile" /></Field>
       <Note icon={<Icon.lock />}>Der Pflichtteil ist fest. Weil die Geometrien vereinfacht sind, steht der Hinweis „vereinfacht“ darin.</Note>
     </>;
-  } else if (s.kind === 'el' && s.id === 'legend') {
-    const lg = doc.legend;
-    body = <>
-      <Head t="Legende" sub="erzeugt aus der Farbregel, bleibt verknüpft" />
-      <Field stack label="Titel" htmlFor="p-lt"><input type="text" id="p-lt" value={lg.title} placeholder={legendTitleAuto(doc, cm)} onChange={e => { const val = e.target.value; update(d => { d.legend.title = val; }, { key: 'lg-title' }); }} /></Field>
-      {(doc.color.mode === 'sieger' || doc.color.mode === 'kategorie') && <Field label="Anordnung"><Seg items={[['vertical', 'Untereinander'], ['horizontal', 'Nebeneinander']]} value={lg.orientation} onChange={o => update(d => { d.legend.orientation = o; })} /></Field>}
-      <Check checked={lg.counts} onChange={on => update(d => { d.legend.counts = on; })}>Anzahl der Gebiete zeigen</Check>
-      <Field label="Größe (px)"><NumInput min={9} max={40} value={lg.size} onChange={n => update(d => { d.legend.size = n; }, { key: 'lg-size' })} ariaLabel="Schriftgröße der Legende" /></Field>
-      <p className="hint">Leerer Titel = automatisch passend zur Färbung. Die Kästchen nutzen exakt die Kartenfarben.</p>
-    </>;
-  } else if (s.kind === 'frame') body = <FrameProps doc={doc} id={s.id} />;
+  } else if (s.kind === 'el' && s.id === 'legend') body = <LegendProps doc={doc} />;
+  else if (s.kind === 'hatch') body = <HatchProps doc={doc} id={s.id} />;
+  else if (s.kind === 'ann') body = <AnnProps doc={doc} id={s.id} />;
+  else if (s.kind === 'frame') body = <FrameProps doc={doc} id={s.id} />;
   else if (s.kind === 'layer') body = <LayerProps doc={doc} id={s.id} />;
   else body = <GraphicProps doc={doc} />;
-  return <div className="props">{body}</div>;
+  // Neuer Gegenstand = Eigenschaften von oben zeigen
+  const selKey = s.kind === 'area' ? 'area:' + (s.ids.length > 1 ? 'multi' : s.ids[0]) : s.kind + ':' + ('id' in s ? s.id : '');
+  return <div className="props" key={selKey}>{body}</div>;
 }
 
 export function RightPanel() {
