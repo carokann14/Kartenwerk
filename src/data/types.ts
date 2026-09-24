@@ -5,7 +5,12 @@ export type PresetId = 'auto' | 'bwl-kerg' | 'bwl-kerg2' | 'bwl-umrechnung' | 'a
 export interface Column { id: string; label: string; kind: 'number' | 'text'; role: Role; party: string | null; short: string | null }
 export interface Group { id: string; label: string; columns: string[]; total: string | null; parties: boolean }
 
-export interface LongSettings { key: number; name: number | null; group: number; sub: number | null; value: number; kind: number | null; filterCol: number | null; filterValue: string }
+export interface LongAttr { col: number; label: string; map?: Record<string, string> }
+export interface LongSettings {
+  key: number; name: number | null; group: number; sub: number | null; value: number; kind: number | null; filterCol: number | null; filterValue: string;
+  prev?: number | null;       // Wert der Vorperiode (z. B. VorpAnzahl), wird zu „… · Vorperiode“
+  attrs?: LongAttr[];         // Merkmale je Gebiet (erster Wert je Kennung), z. B. „Gewählt“
+}
 export interface GroupSetting { label: string; columns: string[]; total: string | null; parties: boolean }
 export interface ImportSettings {
   preset: PresetId;

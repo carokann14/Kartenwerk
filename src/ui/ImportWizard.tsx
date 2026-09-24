@@ -107,7 +107,7 @@ function StepFile({ onFile, fileRef, load, err, raw, base }: { onFile: (f: File 
       </div>
       {!base && <div>
         <h3 className="wiz-h">Beispieldateien</h3>
-        <p className="hint">Amtliche Dateien der Bundeswahlleiterin zum Ausprobieren. Für 2025 lädst du auf bundeswahlleiterin.de unter „Ergebnisse › Open Data“ die Datei kerg2.csv herunter.</p>
+        <p className="hint">Amtliche Dateien der Bundeswahlleiterin zum Ausprobieren. Weitere gibt es auf bundeswahlleiterin.de unter „Ergebnisse › Open Data“.</p>
         <div className="ex-list">
           {EXAMPLES.map(x => <button key={x.file} className="ex" onClick={async () => load(x.name, await loadBinary(x.file))}><Icon.file /><span><b>{x.label}</b><span className="hint">{x.hint}</span></span></button>)}
         </div>

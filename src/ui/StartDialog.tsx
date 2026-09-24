@@ -31,7 +31,7 @@ export function StartDialog() {
           <div className="stack-12">
             <h3 className="wiz-h">Neu beginnen</h3>
             <button className="start-card primary" disabled={busy} onClick={async () => { setBusy(true); await startExample(0); setBusy(false); }}>
-              <Icon.faerbung size={22} /><span><b>{busy ? 'Wird geladen …' : 'Beispiel: Stärkste Partei je Wahlkreis'}</b><span className="hint">{EXAMPLES[0].label}. Fertig eingefärbt, zum Ausprobieren und als Vorlage.</span></span>
+              <Icon.faerbung size={22} /><span><b>{busy ? 'Wird geladen …' : 'Beispiel: Stärkste Partei je Wahlkreis'}</b><span className="hint">{EXAMPLES[0].label}, Zweitstimmen. Fertig eingefärbt, zum Ausprobieren und als Vorlage.</span></span>
             </button>
             <div className="start-card">
               <Icon.gebiete size={22} />

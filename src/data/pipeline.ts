@@ -73,9 +73,18 @@ export function defaultSettings(raw: RawInput, preset: PresetId = 'auto', sheet 
     const h = findRow(cells, r => r.includes('Gebietsart') && r.includes('Gruppenname'));
     const hdr = rowText(cells[h]);
     const ix = (n: string) => hdr.indexOf(n);
-    const long: LongSettings = { key: ix('Gebietsnummer'), name: ix('Gebietsname'), group: ix('Gruppenname'), sub: ix('Stimme'), value: ix('Anzahl'), kind: ix('Gruppenart'), filterCol: ix('Gebietsart'), filterValue: 'Wahlkreis' };
+    const long: LongSettings = {
+      key: ix('Gebietsnummer'), name: ix('Gebietsname'), group: ix('Gruppenname'), sub: ix('Stimme'), value: ix('Anzahl'), kind: ix('Gruppenart'), filterCol: ix('Gebietsart'), filterValue: 'Wahlkreis',
+      prev: ix('VorpAnzahl') >= 0 ? ix('VorpAnzahl') : null,
+      // „Gewählt“: Partei der oder des gewählten Wahlkreisbewerbers, „–“ = kein Direktmandat zugeteilt (Wahlrecht 2025)
+      attrs: ix('Gewählt') >= 0 ? [{ col: ix('Gewählt'), label: 'Direktmandat', map: { '–': 'nicht zugeteilt', '-': 'nicht zugeteilt' } }] : [],
+    };
     const wahltag = txt(cells[h + 1]?.[ix('Wahltag')]);
-    return { ...base, headerStart: h, headerRows: 1, format: 'long', long, sourceTitle: `Bundestagswahl ${wahltag ? wahltag.slice(-4) : ''}`.trim(), attribution: 'Die Bundeswahlleiterin' };
+    const pre = cells.slice(0, h).map(r => txt(r[0]));
+    const status = cells.slice(0, h).find(r => /^Status/.test(txt(r[0])));
+    const endg = status && /Endgültig/i.test(txt(status[1])) ? ', endgültiges Ergebnis' : status ? `, ${txt(status[1])}` : '';
+    const copy = pre.find(x => /^\(c\)|^©/i.test(x));
+    return { ...base, headerStart: h, headerRows: 1, format: 'long', long, sourceTitle: `Bundestagswahl ${wahltag ? wahltag.slice(-4) : ''}${endg}`.trim(), attribution: copy ? copy.replace(/^\(c\)\s*|^©\s*/i, '') : 'Die Bundeswahlleiterin' };
   }
   return { ...base, ...detectHeader(cells) };
 }
@@ -106,22 +115,32 @@ function mergeHeaders(rows: string[][], preset: PresetId): string[] {
 function pivot(header: string[], body: Cell[][], L: LongSettings) {
   const subLabel = (v: string) => v === '1' ? 'Erststimmen' : v === '2' ? 'Zweitstimmen' : v;
   const keys: string[] = [], names: Record<string, string> = {}, byKey: Record<string, Record<string, Cell>> = {};
-  const colOrder: string[] = [], colSeen = new Set<string>(), kinds: Record<string, string> = {}, colGroup: Record<string, string> = {}, colSub: Record<string, string> = {};
+  const colOrder: string[] = [], prevOrder: string[] = [], colSeen = new Set<string>(), kinds: Record<string, string> = {}, colGroup: Record<string, string> = {}, colSub: Record<string, string> = {};
+  const attrs = L.attrs || [], attrVal: Record<string, Record<string, string>> = {};
+  const hasPrev = L.prev != null && L.prev >= 0;
+  const addCol = (label: string, g: string, s: string, order: string[]) => { if (!colSeen.has(label)) { colSeen.add(label); order.push(label); colGroup[label] = g; colSub[label] = s; } };
   for (const r of body) {
     if (L.filterCol != null && L.filterCol >= 0 && L.filterValue && txt(r[L.filterCol]) !== L.filterValue) continue;
     const k = txt(r[L.key]); if (!k) continue;
     const g = txt(r[L.group]); if (!g) continue;
     const s = L.sub != null && L.sub >= 0 ? subLabel(txt(r[L.sub])) : '';
     const label = s ? `${g} · ${s}` : g;
-    if (!byKey[k]) { byKey[k] = {}; keys.push(k); }
+    if (!byKey[k]) { byKey[k] = {}; keys.push(k); attrVal[k] = {}; }
     if (L.name != null && L.name >= 0) names[k] = txt(r[L.name]);
     byKey[k][label] = r[L.value];
-    if (!colSeen.has(label)) { colSeen.add(label); colOrder.push(label); colGroup[label] = g; colSub[label] = s; }
+    addCol(label, g, s, colOrder);
+    if (hasPrev) { const pl = `${label} · Vorperiode`; byKey[k][pl] = r[L.prev!]; addCol(pl, g, s, prevOrder); }
+    for (const a of attrs) { const v = txt(r[a.col]); if (v && !attrVal[k][a.label]) attrVal[k][a.label] = a.map?.[v] ?? v; }
     if (L.kind != null && L.kind >= 0) kinds[g] = txt(r[L.kind]);
   }
-  const outHeader = [header[L.key] || 'Kennung', ...(L.name != null && L.name >= 0 ? [header[L.name] || 'Name'] : []), ...colOrder];
-  const outBody: Cell[][] = keys.map(k => [k, ...(L.name != null && L.name >= 0 ? [names[k] || ''] : []), ...colOrder.map(c => byKey[k][c] ?? '')]);
-  return { header: outHeader, body: outBody, kinds, colGroup, colSub };
+  // Spalten ohne einen einzigen Wert tragen nichts bei (z. B. Zweitstimmen von Einzelbewerbern)
+  const filled = (c: string) => keys.some(k => txt(byKey[k][c] ?? '') !== '');
+  const cols = [...colOrder, ...prevOrder].filter(filled);
+  const attrCols = attrs.map(a => a.label).filter(l => keys.some(k => attrVal[k][l]));
+  const hasName = L.name != null && L.name >= 0;
+  const outHeader = [header[L.key] || 'Kennung', ...(hasName ? [header[L.name!] || 'Name'] : []), ...attrCols, ...cols];
+  const outBody: Cell[][] = keys.map(k => [k, ...(hasName ? [names[k] || ''] : []), ...attrCols.map(l => attrVal[k][l] || ''), ...cols.map(c => byKey[k][c] ?? '')]);
+  return { header: outHeader, body: outBody, kinds, colGroup, colSub, attrCols };
 }
 
 // ---------- Tabelle aus Rohdaten ----------
@@ -140,6 +159,8 @@ export function buildTable(raw: RawInput, st: ImportSettings): TableResult {
     pv = pivot(header, body, st.long);
     header = pv.header; body = pv.body;
     notes.push(`Langformat gedreht: ${body.length} Gebiete × ${header.length - 1} Spalten`);
+    if (header.some(h => / · Vorperiode$/.test(h))) notes.push('Die Werte der Vorperiode stehen als eigene Spalten daneben („… · Vorperiode“).');
+    if (pv.attrCols.length) notes.push(`Merkmal je Gebiet: ${pv.attrCols.map(a => `„${a}“`).join(', ')}. Es lässt sich als Kategorie einfärben.`);
   }
   const width = header.length;
   // Zahlenformat und Spaltenart
@@ -192,7 +213,7 @@ function autoGroups(columns: Column[], st: ImportSettings, kinds: Record<string,
   const NONPARTY = /^(Wahlberechtigte|Wählende|Wähler|Ungültig|Gültig|Nr|Wahlbeteiligung)/;
   if (st.preset === 'bwl-kerg' || st.preset === 'bwl-umrechnung' || st.preset === 'bwl-kerg2') {
     const isParty = (c: Column) => {
-      if (st.preset === 'bwl-kerg2') { const k = kinds[colGroup[c.label]]; return k === 'Partei' || k === 'Einzelbewerber'; }
+      if (st.preset === 'bwl-kerg2') { const k = kinds[colGroup[c.label]] || ''; return k === 'Partei' || k.startsWith('Einzelbewerber'); }
       return !NONPARTY.test(c.label);
     };
     const variants: [string, (l: string) => boolean][] = [

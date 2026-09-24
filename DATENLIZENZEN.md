@@ -21,6 +21,7 @@ Lizenztext dl-de/by-2-0: https://www.govdata.de/dl-de/by-2-0
 
 | Datei | Inhalt | Quelle |
 | --- | --- | --- |
+| `public/beispiele/btw2025_kerg2.csv` | Bundestagswahl 2025, amtliches Endergebnis nach Wahlkreisen (kerg2.csv) | © Die Bundeswahlleiterin, Wiesbaden 2025, Datenlizenz Deutschland – Namensnennung – Version 2.0 |
 | `public/beispiele/btw2021_kerg.csv` | Bundestagswahl 2021, amtliches Endergebnis nach Wahlkreisen | © Der Bundeswahlleiter, Wiesbaden 2021 |
 | `public/beispiele/btwkr25_umrechnung_btw21.csv` | Ergebnis 2021, umgerechnet auf die Wahlkreise 2025 | © Die Bundeswahlleiterin, Wiesbaden 2024 |
 

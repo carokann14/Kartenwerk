@@ -1,7 +1,9 @@
 // Farbregel → Füllfarbe je Gebiet + Legendenmodell
 import { CATEGORICAL, OTHER_GREY, STEP_T, classOf, equalBreaks, mixWhite, niceBreaks, quantileBreaks } from '../lib/color';
 import { areaRowIndex, colIndex, groupMetrics, partyShare } from '../data/derive';
-import { partyDef } from '../data/parties';
+import { partyDef, partyOf } from '../data/parties';
+
+const NEG_GREY = '#BDB6A8';
 import type { Dataset, Group } from '../data/types';
 import type { Doc } from '../model/types';
 import { fokusIdx, geoOf } from './scene';
@@ -102,9 +104,21 @@ function compute(doc: Doc): ColorModel {
     const freq: Record<string, number> = {};
     for (const i of g.all) { const r = rowIdx(i); if (r == null) continue; const v = String(ds.rows[r][ci] ?? '').trim(); if (v) freq[v] = (freq[v] || 0) + 1; }
     const order = Object.keys(freq).sort((a, b) => freq[b] - freq[a]);
-    const colorOf = (v: string) => { const p = partyDef(v) || null; if (doc.partyColors[v]) return doc.partyColors[v]; if (p) return partyColor(doc, p.key); const k = order.indexOf(v); return k < CATEGORICAL.length ? CATEGORICAL[k] : OTHER_GREY; };
-    for (const i of g.all) { const r = rowIdx(i); if (r == null) continue; const v = String(ds.rows[r][ci] ?? '').trim(); if (!v) continue; cm.keys[i] = v; cm.cls[i] = 0; cm.fills[i] = colorOf(v); }
-    finishEntries(doc, cm, key => ({ label: key, color: colorOf(key) }));
+    // Parteinamen (auch Varianten wie „CDU“, „Die Linke“) bekommen die Parteifarbe, verneinende Werte ein neutrales Grau,
+    // übrige Kategorien die Palette in der Reihenfolge ihrer Häufigkeit
+    const isNeg = (v: string) => /^(nicht|kein|keine|ohne|–|-|n\. ?a\.?)(\s|$)/i.test(v);
+    const others = order.filter(v => !doc.partyColors[v] && !partyDef(v) && !partyOf(v) && !isNeg(v));
+    const colorOf = (v: string) => {
+      if (doc.partyColors[v]) return doc.partyColors[v];
+      const p = partyDef(v) || partyOf(v); if (p) return partyColor(doc, p.key);
+      if (isNeg(v)) return NEG_GREY;
+      const k = others.indexOf(v); return k >= 0 && k < CATEGORICAL.length ? CATEGORICAL[k] : OTHER_GREY;
+    };
+    // Varianten einer Partei (CDU und CSU → Union) bilden eine Kategorie mit einem Legendeneintrag
+    const keyOf = (v: string) => { if (doc.partyColors[v] || partyDef(v)) return v; const p = partyOf(v); return p ? p.key : v; };
+    const labelOf = (k: string) => (partyDef(k) ? partyLabel(k) : k);
+    for (const i of g.all) { const r = rowIdx(i); if (r == null) continue; const v = String(ds.rows[r][ci] ?? '').trim(); if (!v) continue; const k = keyOf(v); cm.keys[i] = k; cm.cls[i] = 0; cm.fills[i] = colorOf(k); }
+    finishEntries(doc, cm, key => ({ label: labelOf(key), color: colorOf(key) }));
     return cm;
   }
   finishEntries(doc, cm, key => ({ label: partyLabel(key), color: partyColor(doc, key) }));

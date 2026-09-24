@@ -24,12 +24,12 @@ Folgt in M2: Ortsmarker, Textkästen, Pfeile, Schraffuren. M3: Gemeinden und Kre
 
 ## Einrichten auf GitHub Pages (einmalig)
 
-1. Auf GitHub ein öffentliches Repository anlegen (hier: `Data-Visualizer`). Kein README, keine Lizenz anhaken, beides ist schon im Ordner.
+1. Auf GitHub ein öffentliches Repository anlegen (hier: `Kartenwerk`). Kein README, keine Lizenz anhaken, beides ist schon im Ordner.
 2. Die ZIP-Datei auf dem Rechner entpacken. GitHub packt ZIP-Dateien nicht aus, deshalb nie die ZIP selbst hochladen.
 3. Im Repo **Add file › Upload files**. Den entpackten Ordner `kartenwerk` öffnen, **alles darin** markieren (Strg+A) und in das Upload-Feld ziehen. Nicht den Ordner `kartenwerk` selbst ziehen, sonst liegt `docs` eine Ebene zu tief.
 4. Unten **Commit changes**.
 5. **Settings › Pages**. Bei „Build and deployment“: Source **Deploy from a branch**, Branch **main**, Ordner **/docs**. **Save**.
-6. Nach ein bis zwei Minuten läuft Kartenwerk unter `https://carokann14.github.io/Data-Visualizer/`.
+6. Nach ein bis zwei Minuten läuft Kartenwerk unter `https://carokann14.github.io/Kartenwerk/`.
 
 Danach liegen im Repo direkt `docs`, `src`, `public` und `README.md`.
 
@@ -42,7 +42,7 @@ Wenn Dateien in einer neuen Version wegfallen, stehen sie in den Versionshinweis
 ## Daten
 
 - Beispieldateien stecken im Importassistenten („Beispieldateien“) und im Startdialog.
-- **Bundestagswahl 2025:** Auf bundeswahlleiterin.de unter *Bundestagswahl 2025 › Ergebnisse › Open Data* die Datei `kerg2.csv` herunterladen und im Assistenten importieren. Die Vorlage „Bundeswahlleiterin · kerg2 (Langformat)“ wird automatisch erkannt.
+- **Bundestagswahl 2025:** Das amtliche Endergebnis (`kerg2.csv`) ist als Beispiel dabei, mit den Werten der Vorperiode (2021, umgerechnet) und der Spalte „Direktmandat“ (Partei des gewählten Wahlkreisbewerbers oder „nicht zugeteilt“). Neuere Dateien gibt es auf bundeswahlleiterin.de unter *Ergebnisse › Open Data*; die Vorlage „Bundeswahlleiterin · kerg2 (Langformat)“ wird automatisch erkannt.
 - Wahlkreisnummern gelten nur zusammen mit dem Gebietsstand. Ergebnisse 2021 gehören auf die Wahlkreise 2021, die amtliche Umrechnung auf die Wahlkreise 2025.
 
 ## Sicherung
