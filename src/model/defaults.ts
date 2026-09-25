@@ -39,10 +39,10 @@ export function defaultDoc(geoSet = 'btw-wk-2025'): Doc {
     partyColors: { ...DEFAULT_PARTY_COLORS },
     overrides: {},
     fokus: { kind: 'de' }, umfeld: 'parent', umfeldStyle: 'fill', fokusOutline: false,
-    layers: { wkFill: true, wkLines: true, wkLabels: false, krLines: true, landLines: true, neighbors: true, lakes: true, hatches: true },
+    layers: { wkFill: true, wkLines: true, wkLabels: false, krLines: true, landLines: true, neighbors: true, lakes: true, hatches: true, laender: true },
     style: {
       wkLine: '#FFFFFF', wkLineW: 0.6, krLine: '#FFFFFF', krLineW: 1.1, landLine: '#FFFFFF', landLineW: 1.8,
-      umfeld: '#E2DDD2', noData: '#ECE8DF', neighbor: '#F0EEE9', neighborLine: '#D6D1C6', water: '#D6E4EC', fokusLine: '#16181B',
+      umfeld: '#E2DDD2', noData: '#ECE8DF', neighbor: '#F0EEE9', neighborLine: '#D6D1C6', laender: '#E2DDD2', laenderLine: '#FFFFFF', laenderLineW: 1.8, water: '#D6E4EC', fokusLine: '#16181B',
       ink: '#16181B', inkSoft: '#5A5F66', frameLine: '#16181B',
     },
     labels: { preset: 'partei', template: '{partei}\n{anteil}', size: 13, halo: true },
@@ -83,6 +83,8 @@ export const defaultLegend = (): LegendSettings => ({ visible: true, title: '', 
 export function normalizeDoc(d: Doc): Doc {
   const x = JSON.parse(JSON.stringify(d)) as Doc & Record<string, unknown>;
   x.legend = { ...defaultLegend(), ...(x.legend || {}) };
+  // Nachbarländer (seit M4 · Etappe 2a): ältere Projekte behalten ihr Aussehen, neue zeigen sie
+  if (x.layers && x.layers.laender === undefined) x.layers.laender = false;
   x.layers = { ...defaultDoc(x.geoSet).layers, ...(x.layers || {}) };
   x.style = { ...defaultDoc(x.geoSet).style, ...(x.style || {}) };
   x.categoryColors ||= {};

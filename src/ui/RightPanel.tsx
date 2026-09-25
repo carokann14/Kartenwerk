@@ -11,7 +11,7 @@ import { setUI, update, useStore } from '../model/store';
 import type { Doc, Sel } from '../model/types';
 import { ColorModel, colorModel, legendTitleAuto, partyColor } from '../render/colorModel';
 import { activeVariant, autoSourceText, layoutLabels, missingMarks, sourceIsManual } from '../render/elements';
-import { INSET_DEFS, fokusLabel, geoOf, insetLabel, krLinesLabel, overlayName } from '../render/scene';
+import { INSET_DEFS, fokusLabel, geoOf, insetLabel, isRegional, krLinesLabel, laenderSetFor, overlayName } from '../render/scene';
 import { Check, Field, Icon, Note, NumInput, Section, Seg } from './common';
 import { AreaHatch, HatchList, HatchProps, LegendProps } from './annotationsUI';
 import { AnnProps, ArrowIcon, MarkerIcon } from './elementsUI';
@@ -52,6 +52,7 @@ function Layers() {
       <Row lvl={2} s={{ kind: 'layer', id: 'land' }} icon={<Icon.layer />} name="Ländergrenzen" hidden={!L.landLines} extra={eye(L.landLines, on => update(d => { d.layers.landLines = on; }), 'Ländergrenzen')} />
       {doc.overlays.map(o => <Row key={o.id} lvl={2} s={{ kind: 'overlay', id: o.id }} icon={<span className="ov-swatch" style={{ borderTopColor: o.color, borderTopStyle: o.dash ? 'dashed' : 'solid' }} />} name={<>{overlayName(o.geoSet, true)} <small>{GEO[o.geoSet]?.meta.stand ? GEO[o.geoSet]?.meta.stand?.slice(-4) : ''}</small></>} hidden={!o.visible} extra={eye(o.visible, on => updateOverlay(o.id, { visible: on }), overlayName(o.geoSet, true))} />)}
       {doc.bubbles && <Row lvl={2} s={{ kind: 'bubbles' }} icon={<span className="bub-icon" />} name={<>Blasen <small>{doc.datasets.find(d => d.id === doc.bubbles!.dataset)?.columns.find(c => c.id === doc.bubbles!.column)?.label || ''}</small></>} hidden={!doc.bubbles.visible} extra={eye(doc.bubbles.visible, on => update(d => { if (d.bubbles) d.bubbles.visible = on; }), 'Blasen')} />}
+      {isRegional(g) && <Row lvl={2} s={{ kind: 'layer', id: 'laender' }} icon={<Icon.layer />} name={<>Nachbarländer <small>Kontext</small></>} hidden={!L.laender} extra={eye(L.laender, on => update(d => { d.layers.laender = on; }), 'Nachbarländer')} />}
       <Row lvl={2} s={{ kind: 'layer', id: 'water' }} icon={<Icon.layer />} name={<>Gewässer <small>Kontext</small></>} hidden={!L.lakes} extra={eye(L.lakes, on => update(d => { d.layers.lakes = on; }), 'Gewässer')} />
       <Row lvl={2} s={{ kind: 'layer', id: 'neighbors' }} icon={<Icon.layer />} name={<>Nachbarstaaten <small>Kontext</small></>} hidden={!L.neighbors} extra={eye(L.neighbors, on => update(d => { d.layers.neighbors = on; }), 'Nachbarstaaten')} />
       <Row lvl={1} s={{ kind: 'frame', id: 'inset' }} icon={<Icon.frame />} name={<>Inset „{insetLabel(doc)}“</>} hidden={!doc.inset.visible} extra={eye(doc.inset.visible, on => { update(d => { d.inset.visible = on; d.inset.autoHidden = false; }); refitAfterInset(); }, 'Inset')} />
@@ -176,10 +177,10 @@ function FrameProps({ doc, id }: { doc: Doc; id: 'main' | 'inset' }) {
   </>;
 }
 
-function LayerProps({ doc, id }: { doc: Doc; id: 'wk' | 'labels' | 'kr' | 'land' | 'water' | 'neighbors' | 'hatches' }) {
+function LayerProps({ doc, id }: { doc: Doc; id: 'wk' | 'labels' | 'kr' | 'land' | 'water' | 'neighbors' | 'hatches' | 'laender' }) {
   const v = activeVariant(doc), st = doc.style, g = geoOf(doc);
-  const colW = (c: string, w: number, ck: 'wkLine' | 'krLine' | 'landLine', wk: 'wkLineW' | 'krLineW' | 'landLineW', max: number) => (
-    <div className="row-btns"><input type="color" value={c} onChange={e => { const val = e.target.value.toUpperCase(); update(d => { d.style[ck] = val; }, { key: ck }); }} aria-label="Linienfarbe" /><NumInput min={0.1} max={max} step={0.1} value={w} onChange={n => update(d => { d.style[wk] = n; }, { key: wk })} ariaLabel="Linienstärke in Pixeln" /></div>
+  const colW = (c: string, w: number, ck: 'wkLine' | 'krLine' | 'landLine' | 'laenderLine', wk: 'wkLineW' | 'krLineW' | 'landLineW' | 'laenderLineW', max: number, min = 0.1) => (
+    <div className="row-btns"><input type="color" value={c} onChange={e => { const val = e.target.value.toUpperCase(); update(d => { d.style[ck] = val; }, { key: ck }); }} aria-label="Linienfarbe" /><NumInput min={min} max={max} step={0.1} value={w} onChange={n => update(d => { d.style[wk] = n; }, { key: wk })} ariaLabel="Linienstärke in Pixeln" /></div>
   );
   if (id === 'wk' || id === 'labels') {
     const lb = doc.labels;
@@ -216,6 +217,17 @@ function LayerProps({ doc, id }: { doc: Doc; id: 'wk' | 'labels' | 'kr' | 'land'
     <Check checked={doc.layers.landLines} onChange={on => update(d => { d.layers.landLines = on; })}>Anzeigen</Check>
     <Field label="Farbe · Stärke">{colW(st.landLine, st.landLineW, 'landLine', 'landLineW', 8)}</Field>
   </>;
+  if (id === 'laender') {
+    const lid = laenderSetFor(g), lg = lid ? GEO[lid] : null;
+    return <>
+      <Head t="Nachbarländer" sub={`Kontextebene · ${lg ? `Länder aus den Verwaltungsgrenzen, Stand ${lg.meta.stand || lg.meta.year}` : 'Länder aus den Verwaltungsgrenzen'}`} />
+      <Check checked={doc.layers.laender} onChange={on => update(d => { d.layers.laender = on; })}>Anzeigen</Check>
+      <Field label="Fläche"><div className="row-btns"><input type="color" value={st.laender} onChange={e => { const val = e.target.value.toUpperCase(); update(d => { d.style.laender = val; }, { key: 'lae' }); }} aria-label="Flächenfarbe der Nachbarländer" />
+        {st.laender !== st.umfeld && <button className="btn small" onClick={() => update(d => { d.style.laender = d.style.umfeld; })}>wie Umfeld</button>}</div></Field>
+      <Field label="Grenze · Stärke">{colW(st.laenderLine, st.laenderLineW, 'laenderLine', 'laenderLineW', 8, 0)}</Field>
+      <p className="hint">Die Karte deckt nur einen Teil Deutschlands ab. Die übrigen Länder erscheinen dahinter als Umfeld, ohne Daten und ohne Legendeneintrag. Stärke 0 zeichnet keine Grenzen. Die Quellenzeile nennt dann auch das BKG.</p>
+    </>;
+  }
   const w = id === 'water';
   return <>
     <Head t={w ? 'Gewässer' : 'Nachbarstaaten'} sub="Kontextebene · Natural Earth, gemeinfrei" />

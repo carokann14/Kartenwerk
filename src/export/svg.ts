@@ -10,7 +10,7 @@ import { annItems, elName } from '../render/annotations';
 import { bubbleSet } from '../render/bubbles';
 import { activeVariant, labelPrims, layoutLabels, legendPrims, Prims, TextPrim, textPrims } from '../render/elements';
 import { logoExportSvg } from '../model/logo';
-import { FrameId, activeOverlays, frameMeshes, frameSets, insetIdx, insetLabel, krLinesLabel, overlayParts } from '../render/scene';
+import { FrameId, activeOverlays, frameMeshes, frameSets, insetIdx, insetLabel, krLinesLabel, laenderCtx, overlayParts } from '../render/scene';
 
 const q1 = (v: number) => Math.round(v * 10);
 function relD(rings: number[][][], closed: boolean) {
@@ -141,6 +141,15 @@ function exportFrame(doc: Doc, id: FrameId, o: ExportOpts) {
   let s = `<g id="${id === 'main' ? 'Hauptkarte' : 'Inset-' + svgId(insetLabel(doc))}">`;
   if (id === 'inset') s += `<rect x="${F.x}" y="${F.y}" width="${F.w}" height="${F.h}" fill="#FFFFFF"/>`;
   if (doc.layers.neighbors) { s += `<g id="${id}-Nachbarstaaten">`; for (const c of CONTEXT.countries) { const d = polyOut(c.polys, c.bbox); if (d) s += `<path id="${id}-${c.code}" d="${d}" fill="${st.neighbor}" fill-rule="evenodd" stroke="${st.neighborLine}" stroke-width="0.7" stroke-linejoin="round"/>`; } s += `</g>`; }
+  const lc = laenderCtx(doc);
+  if (lc) {
+    // Flächen ohne Kontur (sonst entstünde am Rahmenrand eine Linie), die Grenzen als eigene, am Rahmen geschnittene Linien
+    const lg = lc.g, llt = lodTol(lg, vw.k * 2 * Math.max(1, o.scale));
+    s += `<g id="${id}-Nachbarlaender">`;
+    for (const i of lc.idx) { const a = lg.areas[i]; const d = polyOut(polysAt(lg, i, llt), a.bbox); if (d) s += `<path id="${id}-${svgId(a.name)}" d="${d}" fill="${st.laender}" fill-rule="evenodd"/>`; }
+    if (st.laenderLineW > 0) { const d = lineOut(lc.idx.flatMap(i => polysAt(lg, i, llt).flat())); if (d) s += `<path id="${id}-Nachbarlaender-Grenzen" d="${d}" fill="none" stroke="${st.laenderLine}" stroke-width="${st.laenderLineW}" stroke-linejoin="round" stroke-linecap="round"/>`; }
+    s += `</g>`;
+  }
   if (doc.layers.lakes) { s += `<g id="${id}-Gewaesser">`; for (const c of CONTEXT.lakes) { const d = polyOut(c.polys, c.bbox); if (d) s += `<path d="${d}" fill="${st.water}" fill-rule="evenodd"/>`; } s += `</g>`; }
   // Gleiche Farben als eine Fläche: keine feinen Nahtlinien zwischen Nachbargebieten (PNG), kleinere Datei
   const merge = o.merge;

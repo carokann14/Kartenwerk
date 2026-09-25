@@ -68,8 +68,8 @@ export interface Doc {
   partyColors: Record<string, string>;
   overrides: Record<string, string>;   // "<geoSet>:<id>" → Farbe
   fokus: Fokus; umfeld: Umfeld; umfeldStyle: 'fill' | 'lines'; fokusOutline: boolean;
-  layers: { wkFill: boolean; wkLines: boolean; wkLabels: boolean; krLines: boolean; landLines: boolean; neighbors: boolean; lakes: boolean; hatches: boolean };
-  style: { wkLine: string; wkLineW: number; krLine: string; krLineW: number; landLine: string; landLineW: number; umfeld: string; noData: string; neighbor: string; neighborLine: string; water: string; fokusLine: string; ink: string; inkSoft: string; frameLine: string };
+  layers: { wkFill: boolean; wkLines: boolean; wkLabels: boolean; krLines: boolean; landLines: boolean; neighbors: boolean; lakes: boolean; hatches: boolean; laender: boolean };
+  style: { wkLine: string; wkLineW: number; krLine: string; krLineW: number; landLine: string; landLineW: number; umfeld: string; noData: string; neighbor: string; neighborLine: string; laender: string; laenderLine: string; laenderLineW: number; water: string; fokusLine: string; ink: string; inkSoft: string; frameLine: string };
   labels: { preset: string; template: string; size: number; halo: boolean };
   texts: { title: TextEl; subtitle: TextEl; source: SourceEl };
   legend: LegendSettings;
@@ -172,7 +172,7 @@ export type Sel =
   | { kind: 'area'; ids: string[] }
   | { kind: 'el'; id: 'title' | 'subtitle' | 'source' | 'legend' | 'logo' }
   | { kind: 'frame'; id: 'main' | 'inset' }
-  | { kind: 'layer'; id: 'wk' | 'labels' | 'kr' | 'land' | 'water' | 'neighbors' | 'hatches' }
+  | { kind: 'layer'; id: 'wk' | 'labels' | 'kr' | 'land' | 'water' | 'neighbors' | 'hatches' | 'laender' }
   | { kind: 'hatch'; id: string }
   | { kind: 'ann'; id: string }
   | { kind: 'overlay'; id: string }

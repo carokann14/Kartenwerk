@@ -1,6 +1,6 @@
 import React, { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { create } from 'zustand';
-import { CONTEXT, GEO, GeoSet, areaContext, areaD, areaTitle, arcLines, bboxOfIds, linesD, lodTol } from '../geo/geo';
+import { CONTEXT, GEO, GeoSet, areaContext, areaD, areaTitle, arcLines, bboxOfIds, ensureGeo, linesD, lodTol } from '../geo/geo';
 import { CUTS, measureW } from '../lib/fonts';
 import { clamp, esc, fmt1, fmtNum } from '../lib/util';
 import { signed } from '../lib/color';
@@ -9,7 +9,7 @@ import type { ArrowEl, ArrowEnd, Doc, Fokus, Variant } from '../model/types';
 import { colorModel, fillOf } from '../render/colorModel';
 import { areaFill, hatchMap, patternSpec } from '../render/hatch';
 import { LabelItem, TextPrim, activeVariant, labelPrims, layoutLabels, legendPrims, textPrims } from '../render/elements';
-import { FrameId, activeOverlays, fokusIdx, fokusLabel, frameMeshes, frameSets, geoOf, insetIdx, insetLabel, overlayParts } from '../render/scene';
+import { FrameId, activeOverlays, fokusIdx, fokusLabel, frameMeshes, frameSets, geoOf, insetIdx, insetLabel, laenderCtx, laenderSetFor, overlayParts } from '../render/scene';
 import { finerSet } from '../geo/relate';
 import { refitFrame, setFokus, setGeoSet } from '../model/actions';
 import { addArrow, addMarker, addTextBox } from '../model/annotations';
@@ -39,6 +39,12 @@ const ContextLayer = memo(function ContextLayer({ neighbors, lakes, st, k }: { n
   return <>{neighbors && <path d={nd} fill={st.neighbor} stroke={st.neighborLine} strokeWidth={0.7 / k} strokeLinejoin="round" data-ctx="1" />}{lakes && <path d={ld} fill={st.water} data-ctx="1" />}</>;
 });
 
+/** Nachbarländer als Umfeld regionaler Gebietsstände (eine Fläche je Land, Grenze als Kontur) */
+const LaenderLayer = memo(function LaenderLayer({ g, idx, st, k, zoom }: { g: GeoSet; idx: number[]; st: Doc['style']; k: number; zoom: number }) {
+  const tol = lodTol(g, k, zoom);
+  const ds = useMemo(() => idx.map(i => areaD(g, i, tol)), [g, idx, tol]);
+  return <g data-ctx="1" pointerEvents="none">{idx.map((i, n) => <path key={i} data-bl={g.areas[i].id} d={ds[n]} fillRule="evenodd" fill={st.laender} />)}{st.laenderLineW > 0 && <path d={ds.join('')} fill="none" stroke={st.laenderLine} strokeWidth={st.laenderLineW / k} strokeLinejoin="round" />}</g>;
+});
 const OverlayPath = memo(function OverlayPath({ bg, og, color, width, dash, k, zoom }: { bg: GeoSet; og: GeoSet; color: string; width: number; dash: boolean; k: number; zoom: number }) {
   const parts = useMemo(() => overlayParts(bg, og), [bg, og]);
   const tols = parts.map(p => lodTol(p.set, k, zoom)).join(',');
@@ -54,6 +60,11 @@ function MapFrame({ id }: { id: FrameId }) {
   const v = activeVariant(doc), F = v.L[id], vw = F.view, st = doc.style, g = geoOf(doc);
   const tol = lodTol(g, vw.k, zoom);
   const sets = useMemo(() => frameSets(doc, id), [g, doc.fokus, doc.umfeld, doc.inset.preset, id]); // eslint-disable-line
+  // Nachbarländer: bei Bedarf nachladen (etwa nach dem Einschalten), dann neu zeichnen
+  const lid = doc.layers.laender ? laenderSetFor(g) : null;
+  const [lTick, setLTick] = useState(0);
+  useEffect(() => { if (lid && !GEO[lid]) ensureGeo([lid]).then(() => setLTick(x => x + 1)).catch(() => { /* Umfeld ist Beiwerk */ }); }, [lid]);
+  const lc = useMemo(() => laenderCtx(doc), [g, lid, doc.layers.laender, lTick]); // eslint-disable-line
   const me = useMemo(() => frameMeshes(doc, id, sets), [sets, doc.umfeldStyle]); // eslint-disable-line
   const cm = colorModel(doc);
   const Flist = useMemo(() => [...sets.F], [sets]);
@@ -83,6 +94,7 @@ function MapFrame({ id }: { id: FrameId }) {
       <g clipPath={`url(#clip-${id})`}>
         <g transform={`matrix(${k} 0 0 ${k} ${F.w / 2 - vw.cx * k} ${F.h / 2 - vw.cy * k})`}>
           <ContextLayer neighbors={doc.layers.neighbors} lakes={doc.layers.lakes} st={st} k={k} />
+          {lc && <LaenderLayer g={lc.g} idx={lc.idx} st={st} k={k} zoom={zoom} />}
           <AreaPaths g={g} ids={Ulist} fill={linesMode ? 'none' : st.umfeld} u pe={!linesMode} tol={tol} />
           <AreaPaths g={g} ids={Flist} fills={fills} tol={tol} />
           {hatchLayers.length > 0 && <g pointerEvents="none">

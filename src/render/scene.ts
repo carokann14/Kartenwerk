@@ -1,5 +1,5 @@
 // Welche Gebiete zeigt welcher Rahmen? Fokus, Umfeld, Insets, Grenzlinien
-import { GEO, GeoSet, LAENDER, areaLabel, bboxOfIds } from '../geo/geo';
+import { GEO, GEO_INDEX, GeoSet, LAENDER, areaLabel, bboxOfIds } from '../geo/geo';
 import { areaAt } from '../geo/relate';
 import type { Doc, Fokus } from '../model/types';
 import { datasetFor } from '../data/aggregate';
@@ -17,7 +17,7 @@ export function fokusIdx(doc: Doc, f: Fokus = doc.fokus): number[] {
 /** Grenzen der Gruppierungsebene: Kreise, in Berlin die Bezirke */
 export const krLinesLabel = (g: GeoSet) => (g.meta.level.startsWith('be-') ? 'Bezirksgrenzen' : 'Kreisgrenzen');
 /** Fokus „alles“: Deutschland, bei importierten Geodaten deren Name */
-export const allLabel = (g: GeoSet) => (g.meta.level === 'user' ? g.meta.label : g.meta.level.startsWith('be-') ? 'Berlin' : 'Deutschland');
+export const allLabel = (g: GeoSet) => (g.meta.level === 'user' ? g.meta.label : g.meta.level.startsWith('be-') ? 'Berlin' : g.meta.level.startsWith('ltw-') ? GEO_INDEX.find(e => e.id === g.meta.id)?.region || 'Deutschland' : 'Deutschland');
 export function fokusLabel(doc: Doc, f: Fokus = doc.fokus): string {
   const g = geoOf(doc);
   if (f.kind === 'de') return allLabel(g);
@@ -47,6 +47,28 @@ export function umfeldIdx(doc: Doc): number[] {
   else if (doc.umfeld === 'parent') base = parentIdx(doc);
   else if (doc.umfeld === 'all') base = g.all;
   return base.filter(i => !F.has(i));
+}
+
+// ---------- Nachbarländer ----------
+// Gebietsstände, die nur einen Teil Deutschlands abdecken (Landtagswahlkreise, Berlin, importierte Geodaten, Regionen daraus),
+// zeigen die übrigen Länder als Umfeld. Die Flächen kommen aus den Verwaltungsgrenzen (VG250, Ebene Länder).
+const coverCache = new WeakMap<GeoSet, Set<string>>();
+const coveredBl = (g: GeoSet) => { let s = coverCache.get(g); if (!s) { s = new Set(g.areas.map(a => a.bl)); coverCache.set(g, s); } return s; };
+/** Deckt der Gebietsstand nur einen Teil der Länder ab? */
+export const isRegional = (g: GeoSet | undefined) => !!g && g.meta.level !== 'lan' && coveredBl(g).size > 0 && coveredBl(g).size < 16;
+/** Gebietsstand der Länder für das Umfeld: ein schon geladener, sonst der zum Jahr passende */
+export function laenderSetFor(g: GeoSet | undefined): string | null {
+  if (!isRegional(g)) return null;
+  const c = GEO_INDEX.filter(e => e.level === 'lan'); if (!c.length) return null;
+  const loaded = c.find(e => GEO[e.id]); if (loaded) return loaded.id;
+  return (c.filter(e => e.year <= g!.meta.year).sort((a, b) => b.year - a.year)[0] || [...c].sort((a, b) => b.year - a.year)[0]).id;
+}
+/** Nachbarländer, wie sie gezeichnet werden (null: abgeschaltet, nicht nötig oder noch nicht geladen) */
+export function laenderCtx(doc: Doc): { g: GeoSet; idx: number[] } | null {
+  if (!doc.layers.laender) return null;
+  const g = geoOf(doc), id = laenderSetFor(g); if (!id || !GEO[id]) return null;
+  const L = GEO[id], cov = coveredBl(g);
+  return { g: L, idx: L.all.filter(i => !cov.has(L.areas[i].id)) };
 }
 
 // Detail-Lupen je Gebietsstand

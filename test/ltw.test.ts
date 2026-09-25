@@ -77,3 +77,20 @@ const dbe = { ...defaultDoc('btw-wk-2025'), fokus: { kind: 'land', bl: '11' } } 
 ok(!sisterSets(btw, dbe).some(x => x.id === 'ltw-mv-2026'), 'nicht bei Fokus Berlin');
 const f = translateFokus({ kind: 'area', id: '1' }, mv, lan);
 ok(f.kind === 'area' && f.id === '13', `Fokus Wahlkreis Greifswald → Länder: ${JSON.stringify(f)}`);
+// Nachbarländer als Umfeld regionaler Gebietsstände
+{
+  const { isRegional, laenderCtx, laenderSetFor, allLabel } = await import('../src/render/scene');
+  const { autoSourceText } = await import('../src/render/elements');
+  const { normalizeDoc } = await import('../src/model/defaults');
+  ok(isRegional(mv) && !isRegional(btw) && !isRegional(lan), 'regional: Landtagswahlkreise MV ja, Bundestagswahlkreise und Länder nein');
+  ok(laenderSetFor(mv) === 'vg-lan-2026' && allLabel(mv) === 'Mecklenburg-Vorpommern', `Länder für das Umfeld: ${laenderSetFor(mv)}; „alles“ heißt ${allLabel(mv)}`);
+  const d0 = { ...defaultDoc('ltw-mv-2026'), datasets: [ds] } as never as import('../src/model/types').Doc;
+  const lc = laenderCtx(d0)!;
+  ok(lc.idx.length === 15 && !lc.idx.some(i => lc.g.areas[i].id === '13'), `${lc.idx.length} Nachbarländer, ohne Mecklenburg-Vorpommern`);
+  ok(/Nachbarländer: Gebietsstand 01\.01\.2026, © BKG \(2026\)/.test(autoSourceText(d0)), 'Quellenzeile nennt das BKG für die Nachbarländer');
+  ok(laenderCtx({ ...d0, layers: { ...d0.layers, laender: false } }) === null && !/Nachbarländer/.test(autoSourceText({ ...d0, layers: { ...d0.layers, laender: false } })), 'abgeschaltet: nicht gezeichnet, nicht in der Quellenzeile');
+  ok(laenderCtx({ ...defaultDoc('btw-wk-2025') } as never) === null, 'Bundestagswahlkreise: keine Nachbarländer');
+  const old = JSON.parse(JSON.stringify(d0)); delete old.layers.laender; delete old.style.laender;
+  const n = normalizeDoc(old);
+  ok(n.layers.laender === false && n.style.laender === '#E2DDD2' && defaultDoc().layers.laender === true, 'ältere Projekte: Nachbarländer aus (Aussehen bleibt), neue Projekte: an; Farben ergänzt');
+}

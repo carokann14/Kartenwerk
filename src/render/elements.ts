@@ -11,7 +11,7 @@ import { hatchPathD, rectRing } from './hatch';
 import { markerD } from './annotations';
 import { LegEntry, legendModel } from './legend';
 import { bubbleLegendValues, bubbleSet, circleD } from './bubbles';
-import { FrameId, frameSets, geoOf, jointOf } from './scene';
+import { FrameId, frameSets, geoOf, jointOf, laenderCtx } from './scene';
 import { logoRect } from '../model/logo';
 
 export interface TextPrim { x: number; y: number; text: string; cut: Cut; size: number; color: string; anchor: 'start' | 'middle' | 'end'; halo?: boolean }
@@ -37,6 +37,8 @@ export function autoSourceText(doc: Doc): string {
     if (ds.derived) parts.push(`Werte aus ${dativ(GEO[ds.derived.from]?.meta.levelLabel || 'kleineren Gebieten')} summiert.`);
   }
   if (g) parts.push(`Geometrie: ${g.meta.stand ? `Gebietsstand ${g.meta.stand}, ` : ''}${g.meta.attribution}, vereinfacht${g.meta.base ? `; Regionen aus ${dativ(GEO[g.meta.base]?.meta.levelLabel || 'Bausteinen')} zusammengefasst` : ''}.`);
+  const lc = laenderCtx(doc);
+  if (lc && lc.idx.length) parts.push(`Nachbarländer: ${lc.g.meta.stand ? `Gebietsstand ${lc.g.meta.stand}, ` : ''}${lc.g.meta.attribution}, vereinfacht.`);
   if (doc.layers.neighbors || doc.layers.lakes) parts.push('Nachbarstaaten und Gewässer: Natural Earth.');
   const gv = [...new Set(doc.els.filter(e => e.type === 'marker' && !e.hidden && e.place).map(e => (e as { place: { src: string } }).place.src))];
   if (gv.length) parts.push(`Ortslagen: ${gv.join('; ')}.`);
@@ -50,7 +52,8 @@ export function missingMarks(doc: Doc, text = sourceText(doc)): string[] {
   const g = GEO[doc.geoSet], cm = colorModel(doc);
   const holder = (a: string | undefined) => (a || '').replace(/©/g, '').split(/,|\(|;/)[0].trim();
   const norm = (x: string) => x.replace(/©/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
-  const need = [holder(cm.dataset?.settings.attribution), holder(g?.meta.attribution)].filter(x => x.length > 2);
+  const lc = laenderCtx(doc);
+  const need = [holder(cm.dataset?.settings.attribution), holder(g?.meta.attribution), lc && lc.idx.length ? holder(lc.g.meta.attribution) : ''].filter(x => x.length > 2);
   const t = norm(text);
   return [...new Set(need)].filter(h => !t.includes(norm(h)));
 }

@@ -10,7 +10,7 @@ import { translateFokus } from '../geo/relate';
 import { syncRegions } from '../geo/regions';
 import { isVirtualGeo, syncUserGeo } from '../geo/userGeo';
 import { datasetFor, usableDatasets } from '../data/aggregate';
-import { fokusLabel } from '../render/scene';
+import { fokusLabel, laenderSetFor } from '../render/scene';
 import { activeVariant, autoSourceText, textBlock } from '../render/elements';
 import { saveLocal } from './persist';
 import { withDefaultLogo } from './logo';
@@ -31,9 +31,11 @@ export const refit = (d: Draft<Doc>, which: 'main' | 'inset' | 'both' = 'main') 
 /** Gebietsstände bei Bedarf nachladen (Gemeinden usw. werden erst geladen, wenn man sie braucht). */
 export async function loadGeoSets(ids: (string | null | undefined)[]): Promise<boolean> {
   const need = [...new Set(ids.filter((x): x is string => !!x && !GEO[x] && !isVirtualGeo(x)))];   // Regionen und importierte Geodaten liegen im Projekt
-  if (!need.length) return true;
-  setUI({ busy: 'Lade ' + need.map(geoLabel).join(', ') + ' …' });
-  try { await ensureGeo(need); return true; }
+  // Länder als Umfeld für Gebietsstände, die nur einen Teil Deutschlands abdecken (Landtagswahlkreise, Berlin)
+  const extra = () => [...new Set(ids.map(x => (x && GEO[x] ? laenderSetFor(GEO[x]) : null)).filter((x): x is string => !!x && !GEO[x]))];
+  if (!need.length && !extra().length) return true;
+  setUI({ busy: 'Lade ' + (need.length ? need : extra()).map(geoLabel).join(', ') + ' …' });
+  try { await ensureGeo(need); try { await ensureGeo(extra()); } catch { /* Umfeld ist Beiwerk: Karte trotzdem zeigen */ } return true; }
   catch (e) { toast('Geometrien konnten nicht geladen werden: ' + (e as Error).message); return false; }
   finally { setUI({ busy: null }); }
 }
