@@ -25,7 +25,7 @@ export function mixWhite(hex: string, t: number) {
   const b = toOklab(hex); const r = fromOklab(WHITE.map((v, i) => v + (b[i] - v) * t)); cache.set(k, r); return r;
 }
 export const luminance = (hex: string) => { const [r, g, b] = hexToRgb(hex).map(s2l); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
-export const STEP_T: Record<number, number[]> = { 3: [0.42, 0.7, 1], 4: [0.34, 0.55, 0.77, 1], 5: [0.16, 0.34, 0.54, 0.76, 1] };
+export const STEP_T: Record<number, number[]> = { 1: [1], 2: [0.55, 1], 3: [0.42, 0.7, 1], 4: [0.34, 0.55, 0.77, 1], 5: [0.16, 0.34, 0.54, 0.76, 1] };
 
 /** Runde Klassengrenzen aus Quantilen. */
 export function niceBreaks(values: (number | null)[], n: number): number[] {

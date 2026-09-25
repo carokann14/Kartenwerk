@@ -69,9 +69,9 @@ export function PanelFaerbung() {
         <Field label="Stimmen"><select value={rule.group} onChange={e => set({ ...rule, group: e.target.value })}>{groups.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}</select></Field>
         {rule.mode === 'siegerStaerke' && <>
           <Field label="Stärke nach"><Seg items={[['anteil', 'Anteil'], ['vorsprung', 'Vorsprung']]} value={rule.basis} onChange={v => set({ ...rule, basis: v })} /></Field>
-          <Field label="Stufen"><Seg items={[['3', '3'], ['4', '4']]} value={String(rule.steps) as '3' | '4'} onChange={v => set({ ...rule, steps: +v as 3 | 4 })} /></Field>
-          <Field label="Grenzen"><div className="meta-row">{shortRangeLabels(cm.breaks, rule.basis === 'anteil' ? ' %' : '').map(x => <span key={x} className="chip num">{x}</span>)}</div></Field>
-          <p className="hint">Runde Grenzen aus den Quartilen aller Gebiete. So bleiben die Farben beim Wechsel in ein Land vergleichbar.</p>
+          <Field label="Stufen"><Seg items={[['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']]} value={String(rule.steps) as '1' | '2' | '3' | '4'} onChange={v => set({ ...rule, steps: +v as 1 | 2 | 3 | 4 })} /></Field>
+          {rule.steps > 1 && <Field label="Grenzen"><div className="meta-row">{shortRangeLabels(cm.breaks, rule.basis === 'anteil' ? ' %' : '').map(x => <span key={x} className="chip num">{x}</span>)}</div></Field>}
+          <p className="hint">{rule.steps > 1 ? 'Runde Grenzen aus den Quartilen aller Gebiete. So bleiben die Farben beim Wechsel in ein Land vergleichbar.' : 'Ein Kasten je Partei, ohne Abstufung nach Stärke.'}</p>
         </>}
         {rule.mode === 'anteil' && <>
           <Field label="Partei"><select value={rule.party} onChange={e => set({ ...rule, party: e.target.value })}>{SHARE_KEYS.map(p => <option key={p} value={p}>{PARTY_DEFS.find(x => x.key === p)?.label}</option>)}</select></Field>

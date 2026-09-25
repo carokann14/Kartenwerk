@@ -25,7 +25,7 @@ const styleColor = (doc: Doc, c: string) => (c in doc.style ? String((doc.style 
 // ---------- Quellenvermerk ----------
 /** „Wahlbezirke“ → „Wahlbezirken“ (Dativ Plural nach „aus“), „Gemeinden“ bleibt */
 export const dativ = (label: string) => label.replace(/^([^\s(]+)/, w => /[ns]$/.test(w) ? w : w + 'n');
-/** Automatischer Quellenvermerk aus den verwendeten Daten, Geometrien und Ortslagen (plus eigener Zusatz) */
+/** Automatischer Quellenvermerk aus den verwendeten Daten, Geometrien und Ortslagen */
 export function autoSourceText(doc: Doc): string {
   const g = GEO[doc.geoSet];
   const parts: string[] = [];
@@ -40,7 +40,6 @@ export function autoSourceText(doc: Doc): string {
   if (doc.layers.neighbors || doc.layers.lakes) parts.push('Nachbarstaaten und Gewässer: Natural Earth.');
   const gv = [...new Set(doc.els.filter(e => e.type === 'marker' && !e.hidden && e.place).map(e => (e as { place: { src: string } }).place.src))];
   if (gv.length) parts.push(`Ortslagen: ${gv.join('; ')}.`);
-  if (doc.texts.source.extra.trim()) parts.push(doc.texts.source.extra.trim());
   return parts.join(' ');
 }
 /** Quellenzeile, wie sie in der Grafik steht: eigene Fassung oder automatisch */
@@ -67,7 +66,9 @@ export function textPrims(doc: Doc, kind: 'title' | 'subtitle' | 'source', v: Va
   if (!t.visible) return null;
   const b = textBlock(doc, kind, L.w, v.ts);
   const asc = ascentRatio(t.cut);
-  const texts = b.lines.map((line, k) => ({ x: L.x, y: L.y + k * b.lh + (b.lh - b.size) / 2 + asc * b.size * 0.94, text: line, cut: t.cut, size: b.size, color: styleColor(doc, t.color), anchor: 'start' as const }));
+  const align = t.align || 'start';
+  const ax = align === 'middle' ? L.x + L.w / 2 : align === 'end' ? L.x + L.w : L.x;
+  const texts = b.lines.map((line, k) => ({ x: ax, y: L.y + k * b.lh + (b.lh - b.size) / 2 + asc * b.size * 0.94, text: line, cut: t.cut, size: b.size, color: styleColor(doc, t.color), anchor: align }));
   return { texts, rects: [], box: { x: L.x, y: L.y, w: L.w, h: b.height } };
 }
 
@@ -138,7 +139,7 @@ export function legendPrims(doc: Doc, P: { x: number; y: number } = activeVarian
   };
   if (M.main === 'matrix' && c.mode === 'siegerStaerke') {
     const n = cm.steps, sw = segW(n, base * 2.35), sh = Math.round(base * 1.1), gap = 2;
-    scale(n, sw, gap, y + small * 0.9); y += small * 1.45;
+    if (n > 1) { scale(n, sw, gap, y + small * 0.9); y += small * 1.45; }
     for (const e of rows) {
       for (let s2 = 0; s2 < n; s2++) R(s2 * (sw + gap), y, sw, sh, mixWhite(e.color, STEP_T[n][s2]));
       T(n * (sw + gap) + base * 0.55, y + sh / 2 + capOffset('text', base * 0.92), lbl(e), 'text', base * 0.92, ink);
