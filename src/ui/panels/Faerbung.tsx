@@ -1,9 +1,10 @@
-import { datasetFor, usableDatasets } from '../../data/aggregate';
+import { datasetFor, dsLabel, usableDatasets } from '../../data/aggregate';
 import { GEO, countLabel } from '../../geo/geo';
 import React from 'react';
 import { STEP_T, divergingColors, mixWhite, shortRangeLabels, signed } from '../../lib/color';
 import { PARTY_DEFS, SHARE_KEYS } from '../../data/parties';
 import { setUI, update, useStore } from '../../model/store';
+import { showDataset } from '../../model/actions';
 import type { ColorRule, VeraenderungRule } from '../../model/types';
 import { CHANGE_NEG, CHANGE_POS_WERT, colorModel, fillOf, partyColor } from '../../render/colorModel';
 import { geoOf } from '../../render/scene';
@@ -34,8 +35,8 @@ export function PanelFaerbung() {
   ];
   // Vergleichswerte für „Veränderung“: alle Datensätze dieses Gebietsstands
   const same = usableDatasets(doc);   // eigener Gebietsstand oder auf die Karte summierbar
-  const shareRefs = same.flatMap(d => d.groups.filter(g => g.parties).map(g => ({ v: d.id + '|' + g.id, l: (same.length > 1 ? d.name + ' · ' : '') + g.label, ds: d.id, grp: g.id })));
-  const numRefs = same.flatMap(d => d.columns.filter(c => c.kind === 'number' && c.role === 'value').map(c => ({ v: d.id + '|' + c.id, l: (same.length > 1 ? d.name + ' · ' : '') + c.label, ds: d.id, col: c.id })));
+  const shareRefs = same.flatMap(d => d.groups.filter(g => g.parties).map(g => ({ v: d.id + '|' + g.id, l: (same.length > 1 ? dsLabel(doc, d) + ' · ' : '') + g.label, ds: d.id, grp: g.id })));
+  const numRefs = same.flatMap(d => d.columns.filter(c => c.kind === 'number' && c.role === 'value').map(c => ({ v: d.id + '|' + c.id, l: (same.length > 1 ? dsLabel(doc, d) + ' · ' : '') + c.label, ds: d.id, col: c.id })));
   const mkChange = (): ColorRule => {
     if (shareRefs.length >= 2) {
       const cur = shareRefs.filter(r => r.ds === ds?.id), a = cur.find(r => /Zweit/.test(r.l) && !/Vorperiode/.test(r.l)) || cur[0] || shareRefs[0];
@@ -50,8 +51,8 @@ export function PanelFaerbung() {
   return (
     <>
       <Section title="Datensatz">
-        <select value={ds?.id} onChange={e => { const d2 = doc.datasets.find(x => x.id === e.target.value)!; const g0 = d2.groups.find(g => g.parties) || d2.groups[0]; set(g0 ? { mode: 'siegerStaerke', dataset: d2.id, group: g0.id, basis: 'anteil', steps: 4 } : { mode: 'none' }); }} aria-label="Datensatz für die Färbung">
-          {doc.datasets.map(d => { const u = datasetFor(doc, d.id)!; return <option key={d.id} value={d.id}>{d.name}{u.derived ? ' · summiert' : u.geoSet !== doc.geoSet ? ' · andere Ebene' : ''}</option>; })}
+        <select value={ds?.id} onChange={e => void showDataset(e.target.value)} aria-label="Datensatz für die Färbung">
+          {doc.datasets.map(d => { const u = datasetFor(doc, d.id)!; return <option key={d.id} value={d.id}>{dsLabel(doc, d)}{u.derived ? ' · summiert' : u.geoSet !== doc.geoSet ? ' · andere Ebene' : ''}</option>; })}
         </select>
         {cm.dataset?.derived && <p className="hint">Auf {geoOf(doc).meta.levelLabel} summiert: Zahlen aus {countLabel(cm.dataset.derived.sources, GEO[cm.dataset.derived.from]?.meta.level || '')} addiert{cm.dataset.derived.rates.length ? ', Anteile und Quoten der Tabelle bleiben leer' : ''}. Details unter „Daten“.</p>}
       </Section>

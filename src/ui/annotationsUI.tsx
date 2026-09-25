@@ -1,4 +1,4 @@
-import { usableDatasets } from '../data/aggregate';
+import { dsLabel, usableDatasets } from '../data/aggregate';
 import React, { useMemo } from 'react';
 import { areaRowIndex, colIndex } from '../data/derive';
 import { fmtNum } from '../lib/util';
@@ -99,7 +99,7 @@ function RuleEditor({ doc, r }: { doc: Doc; r: Extract<HatchRule, { source: 'col
   return (
     <div className="card rule">
       <div className="rule-head"><b>Aus Daten</b><button className="btn icon ghost small" onClick={() => removeRule(r.id)} aria-label="Regel entfernen"><Icon.x size={13} /></button></div>
-      {dsList.length > 1 && <Field label="Datensatz"><select value={ds.id} onChange={e => updateRule(r.id, { dataset: e.target.value, values: [] })} aria-label="Datensatz">{dsList.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}</select></Field>}
+      {dsList.length > 1 && <Field label="Datensatz"><select value={ds.id} onChange={e => updateRule(r.id, { dataset: e.target.value, values: [] })} aria-label="Datensatz">{dsList.map(d => <option key={d.id} value={d.id}>{dsLabel(doc, d)}</option>)}</select></Field>}
       <Field label="Spalte"><select value={col?.id || ''} onChange={e => { const c = ds.columns.find(x => x.id === e.target.value); updateRule(r.id, { column: e.target.value, values: [], op: c?.kind === 'number' ? 'gt' : 'in', num: null }); }} aria-label="Spalte">
         <option value="" disabled>– wählen –</option>{cols.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></Field>
       {col && col.kind !== 'number' && <div className="value-list">{values.map(([v, n]) => (

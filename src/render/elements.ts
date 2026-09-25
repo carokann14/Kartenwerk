@@ -23,7 +23,10 @@ export const activeVariant = (doc: Doc): Variant => doc.variants[doc.active];
 const styleColor = (doc: Doc, c: string) => (c in doc.style ? String((doc.style as unknown as Record<string, string>)[c]) : c);
 
 // ---------- Quellenvermerk ----------
-export function sourceText(doc: Doc): string {
+/** „Wahlbezirke“ → „Wahlbezirken“ (Dativ Plural nach „aus“), „Gemeinden“ bleibt */
+export const dativ = (label: string) => label.replace(/^([^\s(]+)/, w => /[ns]$/.test(w) ? w : w + 'n');
+/** Automatischer Quellenvermerk aus den verwendeten Daten, Geometrien und Ortslagen (plus eigener Zusatz) */
+export function autoSourceText(doc: Doc): string {
   const g = GEO[doc.geoSet];
   const parts: string[] = [];
   const cm = colorModel(doc);
@@ -31,14 +34,26 @@ export function sourceText(doc: Doc): string {
   for (const ds of used) {
     const s = ds.settings;
     parts.push(`Daten: ${[s.attribution, s.sourceTitle].filter(Boolean).join(', ') || ds.fileName}.`);
-    if (ds.derived) parts.push(`Werte aus ${GEO[ds.derived.from]?.meta.levelLabel || 'kleineren Gebieten'} summiert.`);
+    if (ds.derived) parts.push(`Werte aus ${dativ(GEO[ds.derived.from]?.meta.levelLabel || 'kleineren Gebieten')} summiert.`);
   }
-  if (g) parts.push(`Geometrie: ${g.meta.stand ? `Gebietsstand ${g.meta.stand}, ` : ''}${g.meta.attribution}, vereinfacht${g.meta.base ? `; Regionen aus ${GEO[g.meta.base]?.meta.levelLabel || 'Bausteinen'} zusammengefasst` : ''}.`);
+  if (g) parts.push(`Geometrie: ${g.meta.stand ? `Gebietsstand ${g.meta.stand}, ` : ''}${g.meta.attribution}, vereinfacht${g.meta.base ? `; Regionen aus ${dativ(GEO[g.meta.base]?.meta.levelLabel || 'Bausteinen')} zusammengefasst` : ''}.`);
   if (doc.layers.neighbors || doc.layers.lakes) parts.push('Nachbarstaaten und Gewässer: Natural Earth.');
   const gv = [...new Set(doc.els.filter(e => e.type === 'marker' && !e.hidden && e.place).map(e => (e as { place: { src: string } }).place.src))];
   if (gv.length) parts.push(`Ortslagen: ${gv.join('; ')}.`);
   if (doc.texts.source.extra.trim()) parts.push(doc.texts.source.extra.trim());
   return parts.join(' ');
+}
+/** Quellenzeile, wie sie in der Grafik steht: eigene Fassung oder automatisch */
+export const sourceText = (doc: Doc): string => doc.texts.source.text != null ? doc.texts.source.text : autoSourceText(doc);
+export const sourceIsManual = (doc: Doc) => doc.texts.source.text != null;
+/** Lizenzgeber, die im Quellenvermerk genannt sein müssen (Daten und Geometrie), und die davon in `text` fehlenden */
+export function missingMarks(doc: Doc, text = sourceText(doc)): string[] {
+  const g = GEO[doc.geoSet], cm = colorModel(doc);
+  const holder = (a: string | undefined) => (a || '').replace(/©/g, '').split(/,|\(|;/)[0].trim();
+  const norm = (x: string) => x.replace(/©/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+  const need = [holder(cm.dataset?.settings.attribution), holder(g?.meta.attribution)].filter(x => x.length > 2);
+  const t = norm(text);
+  return [...new Set(need)].filter(h => !t.includes(norm(h)));
 }
 export const textOf = (doc: Doc, kind: 'title' | 'subtitle' | 'source') => kind === 'source' ? sourceText(doc) : doc.texts[kind].text;
 export function textBlock(doc: Doc, kind: 'title' | 'subtitle' | 'source', w: number, ts: number) {

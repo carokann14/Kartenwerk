@@ -254,36 +254,77 @@ export function normKey(meta: Pick<GeoMeta, 'keyLen' | 'level'>, raw: string): s
   return s;
 }
 
+// Doppelte Fläche je Bogen (Gaußsche Trapezformel über seine Punkte); die Summe über einen Ring ist dessen doppelte Fläche mit Vorzeichen.
+const shoeCache = new WeakMap<Pt[][], Float64Array>();
+function arcShoe(arcs: Pt[][]): Float64Array {
+  let s = shoeCache.get(arcs); if (s) return s;
+  s = new Float64Array(arcs.length);
+  for (let k = 0; k < arcs.length; k++) { const a = arcs[k]; let t = 0; for (let i = 1; i < a.length; i++) t += a[i - 1][0] * a[i][1] - a[i][0] * a[i - 1][1]; s[k] = t; }
+  shoeCache.set(arcs, s); return s;
+}
+/** Doppelte Fläche eines Rings aus Bogen-Verweisen, mit Vorzeichen (Umlaufsinn) */
+export const arcRingArea2 = (g: GeoSet, ring: number[]) => { const sh = arcShoe(g.arcs); let t = 0; for (const ai of ring) t += ai >= 0 ? sh[ai] : -sh[~ai]; return t; };
+const degenerate = (a: Pt[]) => { for (let i = 1; i < a.length; i++) if (a[i][0] !== a[0][0] || a[i][1] !== a[0][1]) return false; return true; };
+
 /** Gebiete zu Flächen zusammenfassen: innere Grenzen entfallen, die Außenränder werden zu Ringen aus Bögen verkettet
- *  (für eigene Gebiete und für den Export, eine Fläche je Farbe). */
+ *  (für eigene Gebiete, gröbere Ebenen aus Bausteinen und für den Export, eine Fläche je Farbe).
+ *  Gezählt wird je Bogen der Umlauf mit Vorzeichen (Außenringe jeder Teilfläche einheitlich gedreht): Grenzen zwischen zwei
+ *  Gebieten heben sich auf, ebenso Hin-und-zurück-Stücke (Spitzen nach dem Raster) und Bögen ohne Länge. Übrig bleibt ein
+ *  geschlossener Umlauf, der sich immer in Ringe zerlegen lässt. Außenringe laufen danach positiv, Löcher negativ. */
 export function mergedArcRings(g: GeoSet, ids: Iterable<number>): number[][] {
   const S = new Set(ids); if (!S.size) return [];
-  const used: number[] = [];
-  for (const i of S) for (const poly of g.areas[i].ra) for (const ring of poly) for (const ai of ring) {
-    const k = ai >= 0 ? ai : ~ai, [a, b] = g.arcOwner[k];
-    if (a >= 0 && b >= 0 && a !== b && S.has(a) && S.has(b)) continue;   // innere Grenze
-    used.push(ai);
+  const sh = arcShoe(g.arcs);
+  const net = new Map<number, number>();
+  for (const i of S) for (const poly of g.areas[i].ra) {
+    if (!poly.length) continue;
+    let t = 0; for (const ai of poly[0]) t += ai >= 0 ? sh[ai] : -sh[~ai];
+    const f = t < 0 ? -1 : 1;
+    for (const ring of poly) for (const ai of ring) { const k = ai >= 0 ? ai : ~ai; net.set(k, (net.get(k) || 0) + (ai >= 0 ? f : -f)); }
   }
+  const used: number[] = [];
+  for (const [k, n] of net) { if (!n || degenerate(g.arcs[k])) continue; for (let c = Math.abs(n); c > 0; c--) used.push(n > 0 ? k : ~k); }
   const end0 = (ai: number) => { const a = g.arcs[ai >= 0 ? ai : ~ai]; return ai >= 0 ? a[0] : a[a.length - 1]; };
   const end1 = (ai: number) => { const a = g.arcs[ai >= 0 ? ai : ~ai]; return ai >= 0 ? a[a.length - 1] : a[0]; };
   const key = (p: Pt) => p[0] + ',' + p[1];
   const byStart = new Map<string, number[]>();
-  for (const ai of used) { const k = key(end0(ai)); const L = byStart.get(k); if (L) L.push(ai); else byStart.set(k, [ai]); }
-  const done = new Set<number>(), rings: number[][] = [];
-  for (const first of used) {
-    if (done.has(first)) continue;
-    const ring: number[] = []; let cur = first; const start = key(end0(first));
-    for (let guard = 0; guard < used.length + 1; guard++) {
-      done.add(cur); ring.push(cur);
-      const end = key(end1(cur));
+  used.forEach((ai, u) => { const k = key(end0(ai)); const L = byStart.get(k); if (L) L.push(u); else byStart.set(k, [u]); });
+  const done = new Uint8Array(used.length), rings: number[][] = [];
+  for (let first = 0; first < used.length; first++) {
+    if (done[first]) continue;
+    const ring: number[] = []; let cur = first; const start = key(end0(used[first]));
+    for (let guard = 0; guard <= used.length; guard++) {
+      done[cur] = 1; ring.push(used[cur]);
+      const end = key(end1(used[cur]));
       if (end === start) break;
-      const next = (byStart.get(end) || []).find(x => !done.has(x));
-      if (next == null) break;
+      const L = byStart.get(end); let next = -1;
+      if (L) for (const u of L) if (!done[u]) { next = u; break; }
+      if (next < 0) break;   // kommt bei geschlossenem Umlauf nicht vor
       cur = next;
     }
     rings.push(ring);
   }
   return rings;
+}
+const inRing = (pt: Pt, ring: Pt[]) => {
+  let c = false; const [x, y] = pt;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [xi, yi] = ring[i], [xj, yj] = ring[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; }
+  return c;
+};
+/** Ringe aus mergedArcRings zu Teilflächen ordnen: Außenring zuerst, Löcher dazu (jeweils in den kleinsten umgebenden Außenring). */
+export function ringsToPolys(g: GeoSet, rings: number[][]): number[][][] {
+  const outer: { r: number[]; A: number; pts?: Pt[] }[] = [], holes: number[][] = [];
+  for (const r of rings) { const A = arcRingArea2(g, r); if (A > 0) outer.push({ r, A }); else if (A < 0) holes.push(r); }
+  outer.sort((a, b) => b.A - a.A);
+  const polys: number[][][] = outer.map(o => [o.r]);
+  for (const h of holes) {
+    const hp = ringFrom(g.arcs, h); let best = -1;
+    for (let k = outer.length - 1; k >= 0; k--) {   // von klein nach groß
+      const o = outer[k]; o.pts ||= ringFrom(g.arcs, o.r);
+      if (hp.some(p => inRing(p, o.pts!))) { best = k; break; }
+    }
+    if (best >= 0) polys[best].push(h); else polys.push([h]);   // sollte nicht vorkommen; als eigener Ring bleibt es bei evenodd ein Loch
+  }
+  return polys;
 }
 export function mergedRings(g: GeoSet, ids: Iterable<number>, tol = 0): Pt[][] {
   const arcs = arcsAt(g, tol);
@@ -307,7 +348,7 @@ export function buildRegionSet(id: string, label: string, base: GeoSet, defs: Re
     let best = r.members[0], bd = Infinity; for (const i of r.members) { const [x, y] = base.areas[i].label, dd = (x - cx) ** 2 + (y - cy) ** 2; if (dd < bd) { bd = dd; best = i; } }
     const bls: Record<string, number> = {}; for (const i of r.members) bls[base.areas[i].bl] = (bls[base.areas[i].bl] || 0) + base.areas[i].area;
     const nr = /^\d+$/.test(r.id) ? +r.id : 10000 + k;
-    raws.push({ id: r.id, nr, name: r.name, bl: Object.entries(bls).sort((x, y) => y[1] - x[1])[0]?.[0] || '00', area: Math.round(sa * 10) / 10, label: base.areas[best].label, polys: rings.map(rg => [rg]), ...(r.free ? { free: 1 as const } : {}) });
+    raws.push({ id: r.id, nr, name: r.name, bl: Object.entries(bls).sort((x, y) => y[1] - x[1])[0]?.[0] || '00', area: Math.round(sa * 10) / 10, label: base.areas[best].label, polys: ringsToPolys(base, rings), ...(r.free ? { free: 1 as const } : {}) });
   }
   const meta: GeoMeta = { ...base.meta, id, label, level: 'custom', levelLabel: 'Regionen', count: 0, keyLen: undefined, showNr: false, base: base.meta.id };
   const g = finishSet(meta, base.arcs, mkAreas(raws, base.arcs, arcBoxes(base.arcs)));

@@ -6,11 +6,11 @@ import { areaRowIndex, groupMetrics } from '../data/derive';
 import { GEO, areaContext, areaTitle } from '../geo/geo';
 import { removeOverlay, updateOverlay } from '../model/overlays';
 import { LABEL_PRESETS, PRESETS } from '../model/defaults';
-import { refitAfterInset, refitFrame, setFokus, relayoutActive, removeVariant, resizeVariant, setOverride, setTextScale } from '../model/actions';
+import { refitAfterInset, refitFrame, setFokus, relayoutActive, removeVariant, resizeVariant, resetSourceText, setOverride, setSourceExtra, setSourceText, setTextScale } from '../model/actions';
 import { setUI, update, useStore } from '../model/store';
 import type { Doc, Sel } from '../model/types';
 import { ColorModel, colorModel, legendTitleAuto, partyColor } from '../render/colorModel';
-import { activeVariant, layoutLabels, sourceText } from '../render/elements';
+import { activeVariant, autoSourceText, layoutLabels, missingMarks, sourceIsManual } from '../render/elements';
 import { INSET_DEFS, fokusLabel, geoOf, insetLabel, krLinesLabel, overlayName } from '../render/scene';
 import { Check, Field, Icon, Note, NumInput, Section, Seg } from './common';
 import { AreaHatch, HatchList, HatchProps, LegendProps } from './annotationsUI';
@@ -44,7 +44,7 @@ function Layers() {
       <Row s={{ kind: 'graphic' }} icon={<Icon.graphic />} name={<>Grafik <small>{v.preset}</small></>} />
       <Row lvl={1} s={{ kind: 'el', id: 'title' }} icon={<Icon.text />} name="Titel" hidden={!T.title.visible} extra={eye(T.title.visible, on => update(d => { d.texts.title.visible = on; }), 'Titel')} />
       <Row lvl={1} s={{ kind: 'el', id: 'subtitle' }} icon={<Icon.text />} name="Unterzeile" hidden={!T.subtitle.visible} extra={eye(T.subtitle.visible, on => update(d => { d.texts.subtitle.visible = on; }), 'Unterzeile')} />
-      <Row lvl={1} s={{ kind: 'el', id: 'source' }} icon={<Icon.text />} name="Quellenzeile" hidden={!T.source.visible} extra={<><span className="lock" title="Pflichtteil fest"><Icon.lock /></span>{eye(T.source.visible, on => update(d => { d.texts.source.visible = on; }), 'Quellenzeile')}</>} />
+      <Row lvl={1} s={{ kind: 'el', id: 'source' }} icon={<Icon.text />} name="Quellenzeile" hidden={!T.source.visible} extra={<>{T.source.text != null && <small className="dim" title="Quellenzeile von Hand bearbeitet">eigen</small>}{eye(T.source.visible, on => update(d => { d.texts.source.visible = on; }), 'Quellenzeile')}</>} />
       <Row lvl={1} s={{ kind: 'frame', id: 'main' }} icon={<Icon.frame />} name={<>Hauptkarte <small>{fokusLabel(doc)}</small></>} extra={v.locked.main ? <span className="lock" title="Ausschnitt gesperrt"><Icon.lock /></span> : null} />
       <Row lvl={2} s={{ kind: 'layer', id: 'wk' }} icon={<Icon.layer />} name={g.meta.levelLabel || g.meta.label} extra={<>{tog(L.wkFill, on => update(d => { d.layers.wkFill = on; }), 'F', 'Fläche')}{tog(L.wkLines, on => update(d => { d.layers.wkLines = on; }), 'G', 'Grenze')}{tog(L.wkLabels, on => update(d => { d.layers.wkLabels = on; }), 'B', 'Beschriftung')}</>} />
       <Row lvl={2} s={{ kind: 'layer', id: 'hatches' }} icon={<Icon.layer />} name={<>Schraffuren <small>{doc.hatches.length}</small></>} hidden={!L.hatches} extra={eye(L.hatches, on => update(d => { d.layers.hatches = on; }), 'Schraffuren')} />
@@ -132,7 +132,27 @@ function TextProps({ doc, id }: { doc: Doc; id: 'title' | 'subtitle' }) {
     <Field label="Schnitt"><select value={t.cut} onChange={e => { const c = e.target.value as Cut; update(d => { d.texts[id].cut = c; }); }} aria-label="Schriftschnitt">{(['display', 'bold', 'text'] as Cut[]).map(c => <option key={c} value={c}>Merriweather · {CUTS[c].label}</option>)}</select></Field>
     <Field label="Farbe"><Seg items={[['ink', 'Dunkel'], ['inkSoft', 'Grau']]} value={t.color} onChange={c => update(d => { d.texts[id].color = c; })} /></Field>
     <Field label="Breite (px)"><NumInput min={100} max={v.w} value={Math.round(v.L[id].w)} onChange={n => update(d => { d.variants[d.active].L[id].w = n; }, { key: 'w-' + id })} ariaLabel="Breite des Textblocks" /></Field>
-    <p className="hint">Ziehen auf der Arbeitsfläche verschiebt den Block, Pfeiltasten verschieben um 1 px, mit Umschalt um 10 px.</p>
+    <p className="hint">Doppelklick auf den Text in der Grafik springt hierher. Ziehen auf der Arbeitsfläche verschiebt den Block, Pfeiltasten verschieben um 1 px, mit Umschalt um 10 px.</p>
+  </>;
+}
+
+function SourceProps({ doc }: { doc: Doc }) {
+  const t = doc.texts.source, v = activeVariant(doc), manual = sourceIsManual(doc), auto = autoSourceText(doc);
+  const text = manual ? t.text! : auto, missing = missingMarks(doc, text), changed = manual && t.autoBase != null && t.autoBase !== auto;
+  return <>
+    <Head t="Quellenzeile" sub={manual ? 'eigene Fassung' : 'automatisch aus Daten und Geometrien'} />
+    <Field stack label="Text" htmlFor="p-text"><textarea id="p-text" rows={5} value={text} onChange={e => setSourceText(e.target.value)} /></Field>
+    {manual
+      ? <div className="row-btns"><button className="btn small" onClick={resetSourceText} title="Eigene Fassung verwerfen, Text wieder aus Daten und Geometrien erzeugen"><Icon.refresh /> Automatisch erzeugen</button></div>
+      : <p className="hint">Wenn du den Text änderst, gilt deine Fassung. Sie wird dann bei neuen Daten nicht mehr angepasst; „Automatisch erzeugen“ holt den Vermerk zurück.</p>}
+    {changed && <Note kind="warn">Seit deiner Bearbeitung haben sich Daten oder Ebene geändert. Automatisch stünde jetzt da: „{auto}“</Note>}
+    {missing.length > 0 && <Note kind="warn">Im Text fehlt der Lizenzvermerk für {missing.map((m, k) => <React.Fragment key={m}>{k ? ' und ' : ''}„{m}“</React.Fragment>)}. Offene Daten (CC BY, dl-de/by) verlangen die Nennung der Quelle.</Note>}
+    {!manual && <Field stack label="Eigener Zusatz" htmlFor="p-extra"><textarea id="p-extra" rows={2} value={t.extra} placeholder="z. B. Grafik: Name" onChange={e => setSourceExtra(e.target.value)} /></Field>}
+    <Field label="Größe (px)"><NumInput min={8} max={40} value={t.size} onChange={n => update(d => { d.texts.source.size = n; }, { key: 'src-size' })} ariaLabel="Schriftgröße der Quellenzeile" /></Field>
+    <Field label="Schnitt"><select value={t.cut} onChange={e => { const c = e.target.value as Cut; update(d => { d.texts.source.cut = c; }); }} aria-label="Schriftschnitt der Quellenzeile">{(['display', 'bold', 'text'] as Cut[]).map(c => <option key={c} value={c}>Merriweather · {CUTS[c].label}</option>)}</select></Field>
+    <Field label="Farbe"><Seg items={[['ink', 'Dunkel'], ['inkSoft', 'Grau']]} value={t.color} onChange={c => update(d => { d.texts.source.color = c; })} /></Field>
+    <Field label="Breite (px)"><NumInput min={100} max={v.w} value={Math.round(v.L.source.w)} onChange={n => update(d => { d.variants[d.active].L.source.w = n; }, { key: 'w-source' })} ariaLabel="Breite der Quellenzeile" /></Field>
+    <p className="hint">Doppelklick auf die Quellenzeile in der Grafik springt hierher. Ziehen verschiebt sie, Pfeiltasten um 1 px, mit Umschalt um 10 px.</p>
   </>;
 }
 
@@ -244,16 +264,8 @@ function Props() {
   let body: React.ReactNode;
   if (s.kind === 'area' && s.ids.length) body = <AreaProps doc={doc} ids={s.ids} cm={cm} />;
   else if (s.kind === 'el' && (s.id === 'title' || s.id === 'subtitle')) body = <TextProps doc={doc} id={s.id} />;
-  else if (s.kind === 'el' && s.id === 'source') {
-    const t = doc.texts.source;
-    body = <>
-      <Head t="Quellenzeile" sub="wird aus den verwendeten Datensätzen erzeugt" />
-      <div className="card muted"><p className="hint ink2">{sourceText(doc)}</p></div>
-      <Field stack label="Eigener Zusatz" htmlFor="p-extra"><textarea id="p-extra" rows={2} value={t.extra} placeholder="z. B. Grafik: Name" onChange={e => { const val = e.target.value; update(d => { d.texts.source.extra = val; }, { key: 'src-extra' }); }} /></Field>
-      <Field label="Größe (px)"><NumInput min={8} max={40} value={t.size} onChange={n => update(d => { d.texts.source.size = n; }, { key: 'src-size' })} ariaLabel="Schriftgröße der Quellenzeile" /></Field>
-      <Note icon={<Icon.lock />}>Der Pflichtteil ist fest. Weil die Geometrien vereinfacht sind, steht der Hinweis „vereinfacht“ darin.</Note>
-    </>;
-  } else if (s.kind === 'el' && s.id === 'legend') body = <LegendProps doc={doc} />;
+  else if (s.kind === 'el' && s.id === 'source') body = <SourceProps doc={doc} />;
+  else if (s.kind === 'el' && s.id === 'legend') body = <LegendProps doc={doc} />;
   else if (s.kind === 'el' && s.id === 'logo') body = <LogoProps doc={doc} />;
   else if (s.kind === 'hatch') body = <HatchProps doc={doc} id={s.id} />;
   else if (s.kind === 'ann') body = <AnnProps doc={doc} id={s.id} />;

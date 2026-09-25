@@ -1,5 +1,5 @@
 // Einstellungen für Blasen (proportionale Kreise aus einer Zahlenspalte)
-import { usableDatasets } from '../../data/aggregate';
+import { dsLabel, usableDatasets } from '../../data/aggregate';
 import React from 'react';
 import { update, useStore } from '../../model/store';
 import type { Bubbles, Doc } from '../../model/types';
@@ -35,7 +35,7 @@ export function BubbleSection({ inPanel = false }: { inPanel?: boolean }) {
     return <>
       <Check checked={b.visible} onChange={v => setB({ visible: v })}>Blasen zeigen</Check>
       {!ds && <Note kind="warn">Der Datensatz der Blasen gehört nicht zu diesem Gebietsstand.</Note>}
-      {same.length > 1 && <Field label="Datensatz"><select value={b.dataset} onChange={e => { const d2 = same.find(x => x.id === e.target.value)!; const c2 = d2.columns.find(c => c.kind === 'number' && c.role !== 'id'); setB({ dataset: d2.id, column: c2?.id || '' }); }}>{same.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}</select></Field>}
+      {same.length > 1 && <Field label="Datensatz"><select value={b.dataset} onChange={e => { const d2 = same.find(x => x.id === e.target.value)!; const c2 = d2.columns.find(c => c.kind === 'number' && c.role !== 'id'); setB({ dataset: d2.id, column: c2?.id || '' }); }}>{same.map(d => <option key={d.id} value={d.id}>{dsLabel(doc, d)}</option>)}</select></Field>}
       <Field label="Größe nach"><select value={b.column} onChange={e => setB({ column: e.target.value })} aria-label="Spalte für die Größe">{nums.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></Field>
       <Field label="Größter Kreis (px)"><NumInput min={2} max={120} value={b.maxR} onChange={n => setB({ maxR: n }, 'bmax')} ariaLabel="Radius des größten Kreises" /></Field>
       <Field label="Bezugswert"><div className="row-btns"><NumInput min={0} max={1e12} value={b.ref ?? 0} onChange={n => setB({ ref: n > 0 ? n : null }, 'bref')} ariaLabel="Wert für den größten Kreis" />{b.ref != null ? <button className="btn small ghost" onClick={() => setB({ ref: null })}>größter Wert</button> : <span className="hint">größter Wert</span>}</div></Field>

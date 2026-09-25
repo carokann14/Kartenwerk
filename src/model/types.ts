@@ -49,6 +49,12 @@ export interface Variant {
   ann: Record<string, [number, number]>;   // Versatz je Element: Marker → Beschriftung, Textkasten → Kasten
 }
 export interface TextEl { text: string; visible: boolean; size: number; cut: Cut; color: 'ink' | 'inkSoft' }
+/** Quellenzeile: automatisch aus Daten und Geometrien; `text` gesetzt = von Hand bearbeitet (wird dann nicht mehr angepasst) */
+export interface SourceEl {
+  visible: boolean; extra: string; size: number; cut: Cut; color: 'ink' | 'inkSoft';
+  text?: string | null;      // eigene Fassung (null/fehlt = automatisch)
+  autoBase?: string;         // automatischer Text beim Beginn der Bearbeitung, um spätere Änderungen zu melden
+}
 export interface Doc {
   app: 'kartenwerk'; version: 1;
   id: string;
@@ -62,7 +68,7 @@ export interface Doc {
   layers: { wkFill: boolean; wkLines: boolean; wkLabels: boolean; krLines: boolean; landLines: boolean; neighbors: boolean; lakes: boolean; hatches: boolean };
   style: { wkLine: string; wkLineW: number; krLine: string; krLineW: number; landLine: string; landLineW: number; umfeld: string; noData: string; neighbor: string; neighborLine: string; water: string; fokusLine: string; ink: string; inkSoft: string; frameLine: string };
   labels: { preset: string; template: string; size: number; halo: boolean };
-  texts: { title: TextEl; subtitle: TextEl; source: { visible: boolean; extra: string; size: number; cut: Cut; color: 'ink' | 'inkSoft' } };
+  texts: { title: TextEl; subtitle: TextEl; source: SourceEl };
   legend: LegendSettings;
   categoryColors: Record<string, string>;   // Farbe je Kategorie (keine Partei), gilt im Projekt
   hatches: HatchStyle[];

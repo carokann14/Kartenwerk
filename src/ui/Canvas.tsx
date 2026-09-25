@@ -468,6 +468,13 @@ export function Canvas() {
       }
       return;
     }
+    // Doppelklick auf Titel, Unterzeile oder Quellenzeile: Text in den Eigenschaften bearbeiten
+    const tel = (t.closest('[data-el]') as SVGElement | null)?.dataset.el;
+    if (tel === 'title' || tel === 'subtitle' || tel === 'source') {
+      setUI({ sel: { kind: 'el', id: tel } });
+      setTimeout(() => { const ta = document.getElementById('p-text') as HTMLTextAreaElement | null; if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }, 30);
+      return;
+    }
     for (const id of ['inset', 'main'] as FrameId[]) if (inFrame(d, id, a) && !t.closest('[data-el]')) { setUI({ mapMode: id, sel: { kind: 'frame', id } }); toast('Kartenmodus – Esc beendet'); return; }
   };
 

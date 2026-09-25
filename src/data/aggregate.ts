@@ -131,3 +131,12 @@ export function datasetFor(doc: Doc, id: string | null | undefined, geoId: strin
 export function usableDatasets(doc: Doc, geoId: string = doc.geoSet): Dataset[] {
   return doc.datasets.map(d => datasetFor(doc, d.id, geoId)!).filter(d => d.geoSet === geoId);
 }
+/** Name eines Datensatzes für Listen; tragen mehrere Datensätze denselben Namen (etwa Beispiel und eigener Import),
+ *  kommt die Importzeit dazu, bei gleicher Minute die laufende Nummer. */
+export function dsLabel(doc: Pick<Doc, 'datasets'>, d: Pick<Dataset, 'id' | 'name' | 'importedAt'>): string {
+  const same = doc.datasets.filter(x => x.name === d.name);
+  if (same.length < 2) return d.name;
+  const when = (x: Pick<Dataset, 'importedAt'>) => { const t = new Date(x.importedAt); return isNaN(+t) ? '' : t.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); };
+  const times = same.map(when), k = same.findIndex(x => x.id === d.id);
+  return new Set(times).size === same.length && times[k] ? `${d.name} · importiert ${times[k]}` : `${d.name} · Import ${k + 1}`;
+}

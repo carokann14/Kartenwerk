@@ -7,7 +7,7 @@
 // die amtliche Wahlkreis-Datei RBS_OD_Wahlkreise_AH2026.zip.
 import fs from 'node:fs';
 import polylabel from 'polylabel';
-import { GEO, Pt, RawArea, mergedArcRings, setFromRaw } from '../src/geo/geo';
+import { GEO, Pt, RawArea, mergedArcRings, ringsToPolys, setFromRaw } from '../src/geo/geo';
 import { readGeoFiles } from '../src/geo/readers';
 import { buildUserGeo } from '../src/geo/buildUserGeo';
 import { crsFromWkt } from '../src/geo/crs';
@@ -56,7 +56,7 @@ const main = async () => {
       const area = (pts: Pt[]) => { let s = 0; for (let i = 0, n = pts.length; i < n; i++) { const [x1, y1] = pts[i], [x2, y2] = pts[(i + 1) % n]; s += x1 * y2 - x2 * y1; } return Math.abs(s / 2); };
       for (const r of rings) { const A = area(ptsOf(r)); if (A > bestA) { bestA = A; best = r; } }
       const lp = polylabel([ptsOf(best!)] as unknown as number[][][], Math.max(1, Math.sqrt(bestA) / 60));
-      out.push({ id: k, nr: /^\d+$/.test(k) ? Number(k) : out.length + 1, name: name(k), bl: '11', area: Math.round(sa * 1000) / 1000, label: [Math.round(lp[0]), Math.round(lp[1])], polys: rings.map(r => [r]), p: par(k) });
+      out.push({ id: k, nr: /^\d+$/.test(k) ? Number(k) : out.length + 1, name: name(k), bl: '11', area: Math.round(sa * 1000) / 1000, label: [Math.round(lp[0]), Math.round(lp[1])], polys: ringsToPolys(G, rings), p: par(k) });
     }
     return out;
   };

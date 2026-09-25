@@ -57,3 +57,24 @@ ok(dsb.report.exact === 12, `Gebietsdatei: ${dsb.report.exact} Bezirke zugeordne
 const rawE = await readFile('Datenexport_AGH2026_Erststimme_W_BE.csv', buf('data-src/berlin/Datenexport_AGH2026_Erststimme_W_BE.csv'));
 const se = defaultSettings(rawE); const te = buildTable(rawE, se);
 ok(te.groups.some(g => g.label === 'Erststimmen') && te.columns.some(c => c.label.startsWith('Einzelbewerbung Mihm')), `Erststimmen: Gruppe erkannt, Einzelbewerbungen benannt · Titel „${se.sourceTitle}“`);
+// Gröbere Ebenen aus den Wahlbezirken: geschlossene Ringe, Fläche = Summe der Wahlbezirke (keine Lücken wie vor dem 25.09.2026)
+{
+  const { arcRingArea2, mergedArcRings } = await import('../src/geo/geo');
+  const areaOf = (g: typeof wbz, i: number) => g.areas[i].ra.reduce((s, p) => s + p.reduce((t, r) => t + arcRingArea2(g, r), 0), 0);
+  for (const [G, lab] of [[wk, 'Wahlkreise'], [bwb, 'Briefwahlbezirke'], [bez, 'Bezirke']] as const) {
+    let open = 0, worst = 0;
+    const pid = G.meta.id;
+    const members = new Map<string, number[]>();
+    for (const a of wbz.areas) { const k = pid === 'be-bez-2026' ? a.par?.['be-bez-2026'] : pid === 'be-wk-2026' ? a.par?.['be-wk-2026'] : a.par?.['be-bwb-2026']; if (k) (members.get(k) || members.set(k, []).get(k)!).push(a.i); }
+    for (const a of G.areas) {
+      for (const p of a.polys) for (const r of p) { const f = r[0], l = r[r.length - 1]; if (f[0] !== l[0] || f[1] !== l[1]) open++; }
+      const want = (members.get(a.id) || []).reduce((s, i) => s + areaOf(wbz, i), 0), got = areaOf(G, a.i);
+      worst = Math.max(worst, Math.abs(got - want) / want);
+    }
+    ok(open === 0 && worst < 1e-9, `${lab}: alle Ringe geschlossen, Fläche = Summe der Wahlbezirke (Abweichung ${worst.toExponential(1)})`);
+  }
+  // Zusammenfassen über Spitzen und Bögen ohne Länge hinweg: Wahlkreis Mitte 7 (vorher 8 offene Ringe)
+  const m7 = wbz.areas.filter(a => a.par?.['be-wk-2026'] === '0107').map(a => a.i);
+  const rings = mergedArcRings(wbz, m7);
+  ok(rings.length === 1, `Mitte 7 aus ${m7.length} Wahlbezirken: ${rings.length} Ring`);
+}

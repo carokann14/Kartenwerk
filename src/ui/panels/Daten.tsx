@@ -2,11 +2,11 @@ import React, { useMemo, useState } from 'react';
 import { fmt1, fmtInt } from '../../lib/util';
 import { areaRowIndex, groupMetrics } from '../../data/derive';
 import { PRESET_LABELS } from '../../data/pipeline';
-import { datasetFor } from '../../data/aggregate';
+import { datasetFor, dsLabel } from '../../data/aggregate';
 import type { Dataset } from '../../data/types';
 import { countLabel } from '../../geo/geo';
 import { GEO } from '../../geo/geo';
-import { removeDataset, setGeoSet } from '../../model/actions';
+import { removeDataset, setGeoSet, showDataset } from '../../model/actions';
 import { setUI, update, useStore } from '../../model/store';
 import { colorModel, fillOf, partyColor } from '../../render/colorModel';
 import { geoOf } from '../../render/scene';
@@ -43,13 +43,14 @@ export function PanelDaten() {
     <>
       <Section title="Datensätze" aside={`${doc.datasets.length} im Projekt`}>
         <button className="btn primary" onClick={() => setUI({ wizard: { mode: 'new' } })}><Icon.upload /> Datei importieren …</button>
+        {doc.datasets.length > 1 && <p className="hint">Welcher Datensatz die Karte färbt, wechselst du mit „Karte damit färben“ oder oben im Schritt „Färbung“.</p>}
         {!doc.datasets.length && <p className="hint">CSV oder Excel. Für Wahlergebnisse der Bundeswahlleiterin gibt es fertige Vorlagen, Beispieldateien findest du im Importassistenten.</p>}
         {doc.datasets.map(d => {
           const r = d.report, used = cm.dataset?.id === d.id, sum = datasetFor(doc, d.id)!.derived, other = d.geoSet !== doc.geoSet && !sum;
           const open = r.ambiguous + r.unknown + r.duplicate;
           return (
             <div key={d.id} className={'card ds' + (used ? ' used' : '')}>
-              <div className="ds-head"><h4>{d.name}</h4>{used && <span className="chip accent">färbt die Karte</span>}</div>
+              <div className="ds-head"><h4>{dsLabel(doc, d)}</h4>{used && <span className="chip accent">färbt die Karte</span>}</div>
               <p className="hint">{d.fileName} · {PRESET_LABELS[d.preset]} · {GEO[d.geoSet]?.meta.label}</p>
               <div className="meta-row">
                 <span className={'chip ' + (open ? 'warn' : 'ok')}><span className="dot" />{r.exact + r.byName + r.ruled - r.ignored} von {GEO[d.geoSet]?.areas.length} zugeordnet</span>
@@ -60,9 +61,10 @@ export function PanelDaten() {
                 {sum && <span className="chip accent" title={`${sum.sources.toLocaleString('de-DE')} ${GEO[d.geoSet]?.meta.levelLabel} → ${sum.targets.toLocaleString('de-DE')} ${g.meta.levelLabel}`}>auf {g.meta.levelLabel} summiert</span>}
               </div>
               <div className="row-btns">
+                {!used && <button className="btn small primary" onClick={() => void showDataset(d.id)} title={other ? 'Karte auf „' + GEO[d.geoSet]?.meta.label + '“ umstellen und damit färben' : 'Die Karte mit diesem Datensatz färben; Darstellung und Optionen bleiben'}><Icon.faerbung /> Karte damit färben</button>}
                 <button className="btn small" onClick={() => setUI({ wizard: { mode: 'replace', datasetId: d.id } })} title="Neue Version derselben Datei laden, Gestaltung bleibt"><Icon.refresh /> Daten ersetzen …</button>
                 <button className="btn small ghost" onClick={() => setUI({ tableDataset: d.id })}>Tabelle</button>
-                {other && <button className="btn small ghost" onClick={() => setGeoSet(d.geoSet)} title={'Karte auf „' + GEO[d.geoSet]?.meta.label + '“ umstellen'}>Karte auf {GEO[d.geoSet]?.meta.levelLabel} {GEO[d.geoSet]?.meta.year}</button>}
+                {other && used && <button className="btn small ghost" onClick={() => setGeoSet(d.geoSet)} title={'Karte auf „' + GEO[d.geoSet]?.meta.label + '“ umstellen'}>Karte auf {GEO[d.geoSet]?.meta.levelLabel} {GEO[d.geoSet]?.meta.year}</button>}
                 <button className="btn small ghost danger" onClick={() => removeDataset(d.id)} aria-label={'Datensatz ' + d.name + ' entfernen'}><Icon.trash /></button>
               </div>
             </div>

@@ -99,6 +99,6 @@ for (const mode of ['gemeinsam', 'anteilig'] as const) {
   const nFree = eg.areas.filter(a => a.free).length;
   let maxRel = 0; for (const a of eg.areas) { if (a.free) continue; const k = krs.areas.find(x => x.name === a.name)!; maxRel = Math.max(maxRel, Math.abs(a.area - k.area) / k.area); }
   ok(eg.areas.length - nFree === 400 && maxRel < 0.001, `400 Kreise aus Gemeinden nachgebaut in ${ms.toFixed(0)} ms (Rest ${nFree}, größte Flächenabweichung ${(maxRel * 100).toFixed(3)} %)`);
-  const rings = eg.areas.reduce((s, a) => s + a.ra.length, 0), kr = krs.areas.reduce((s, a) => s + a.ra.reduce((t, p) => t + p.length, 0), 0);
-  ok(Math.abs(rings - kr) <= 5, `Ringe: ${rings} (Kreise: ${kr})`);
+  const rings = eg.areas.reduce((s, a) => s + a.ra.reduce((t, p) => t + p.length, 0), 0), polys = eg.areas.reduce((s, a) => s + a.ra.length, 0), kp = krs.areas.reduce((s, a) => s + a.ra.length, 0), kr = krs.areas.reduce((s, a) => s + a.ra.reduce((t, p) => t + p.length, 0), 0);
+  ok(Math.abs(rings - kr) <= 5 && Math.abs(polys - kp) <= 5, `Ringe: ${rings} (Kreise: ${kr}), Teilflächen mit Löchern: ${polys} (Kreise: ${kp})`);
 }

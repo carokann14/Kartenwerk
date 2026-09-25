@@ -11,9 +11,12 @@ import { syncRegions } from '../geo/regions';
 import { isVirtualGeo, syncUserGeo } from '../geo/userGeo';
 import { datasetFor, usableDatasets } from '../data/aggregate';
 import { fokusLabel } from '../render/scene';
+import { autoSourceText, textBlock } from '../render/elements';
 import { saveLocal } from './persist';
 import { withDefaultLogo } from './logo';
 
+/** Gebietsbezeichnung im Singular, z. B. für „Stärkste Partei je Wahlkreis“ */
+const SING: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Regierungsbezirk', krs: 'Kreis', vwg: 'Gemeindeverband', gem: 'Gemeinde', custom: 'Region', 'be-wk': 'Wahlkreis', 'be-bez': 'Bezirk', 'be-bwb': 'Briefwahlbezirk', 'be-wbz': 'Wahlbezirk' };
 export const refit = (d: Draft<Doc>, which: 'main' | 'inset' | 'both' = 'main') => {
   const plain = current(d) as Doc;
   d.variants.forEach((v, k) => {
@@ -71,6 +74,10 @@ export async function setGeoSet(id: string, opts: { fokus?: Fokus; from?: Fokus 
     const plain = current(d) as Doc, cur = plain.color as ColorRule & { dataset?: string };
     const ds = datasetFor(plain, cur.dataset, id);
     if (ds && ds.geoSet !== id) { const alt = usableDatasets(plain, id).find(x => !x.derived) || usableDatasets(plain, id)[0]; if (alt) d.color = autoRule(alt); }
+    // „… je Wahlbezirk“ im Titel folgt der Ebene („… je Wahlkreis“)
+    const a = SING[from?.meta.level || ''], b = SING[GEO[id].meta.level];
+    if (a && b && a !== b) for (const k of ['title', 'subtitle'] as const) d.texts[k].text = d.texts[k].text.replace(new RegExp(`\\bje ${a}(?![\\wäöüß])`, 'g'), 'je ' + b);
+    keepSourceBottom(d0, d);
   });
   setUI({ sel: { kind: 'graphic' } });
   const fl = fokusLabel(getDoc()), gl = GEO[id].meta.label;
@@ -85,25 +92,83 @@ export function autoRule(ds: Dataset): ColorRule {
   if (cat) return { mode: 'kategorie', dataset: ds.id, column: cat.id };
   return { mode: 'none' };
 }
+/** Farbregel auf einen anderen Datensatz übertragen: Darstellung und Optionen bleiben, soweit der Datensatz sie hergibt
+ *  (gleiche Stimmengruppe bzw. Spalte über die Beschriftung, sonst die passende erste). */
+export function carryRule(rule: ColorRule, prev: Dataset | null, ds: Dataset): ColorRule {
+  const r = rule as ColorRule & { group?: string; column?: string };
+  const og = prev?.groups.find(g => g.id === r.group);
+  const kind = (l: string) => /Zweit/.test(l) ? 'z' : /Erst/.test(l) ? 'e' : '';
+  const pick = (parties: boolean) => {
+    const c = ds.groups.filter(g => !parties || g.parties), pp = c.filter(g => g.parties);
+    return c.find(g => og && g.label === og.label) || (og && kind(og.label) ? pp.find(g => kind(g.label) === kind(og.label)) : undefined)
+      || pp.find(g => /Zweit/.test(g.label)) || pp[0] || c[0];
+  };
+  switch (rule.mode) {
+    case 'siegerStaerke': case 'sieger': { const g = pick(false); return g ? { ...rule, dataset: ds.id, group: g.id } : autoRule(ds); }
+    case 'anteil': { const g = pick(true); return g ? { ...rule, dataset: ds.id, group: g.id } : autoRule(ds); }
+    case 'wert': case 'kategorie': {
+      const lab = prev?.columns.find(c => c.id === r.column)?.label;
+      const c = ds.columns.find(x => x.label === lab && (rule.mode === 'wert' ? x.kind === 'number' && x.role === 'value' : x.role === 'category' || x.role === 'label'));
+      return c ? { ...rule, dataset: ds.id, column: c.id } as ColorRule : autoRule(ds);
+    }
+    default: return autoRule(ds);
+  }
+}
+/** Titel und Unterzeile nennen den bisherigen Datensatz („…, Erststimmen, Stand …“): auf den neuen umschreiben */
+function swapDatasetTexts(d: Draft<Doc>, prev: Dataset, ds: Dataset, oldRule: ColorRule) {
+  const og = prev.groups.find(g => g.id === (oldRule as { group?: string }).group)?.label;
+  const ng = ds.groups.find(g => g.id === (d.color as { group?: string }).group)?.label;
+  const esc = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const swap = (t: string) => {
+    if (prev.name && ds.name && prev.name !== ds.name && t.includes(prev.name)) t = t.split(prev.name).join(ds.name);
+    else if (og && ng && og !== ng && !t.includes(ng)) t = t.replace(new RegExp(`(^|[^\\wÄÖÜäöüß])${esc(og)}(?=$|[^\\wÄÖÜäöüß])`, 'g'), (_m, a) => a + ng);
+    return t;
+  };
+  d.texts.title.text = swap(d.texts.title.text);
+  d.texts.subtitle.text = swap(d.texts.subtitle.text);
+  if (d.legend.title) d.legend.title = swap(d.legend.title);   // eigener Legendentitel; der automatische folgt ohnehin
+}
+/** Die Karte mit einem anderen Datensatz des Projekts färben. Passt er weder zur Karte noch lässt er sich auf sie summieren,
+ *  wechselt die Karte auf seinen Gebietsstand. */
+export async function showDataset(id: string) {
+  const d0 = getDoc(), raw = d0.datasets.find(x => x.id === id); if (!raw) return;
+  const prev = datasetFor(d0, (d0.color as { dataset?: string }).dataset);
+  if (prev?.id === id && d0.color.mode !== 'none') return;
+  if (datasetFor(d0, id)!.geoSet !== d0.geoSet) await setGeoSet(raw.geoSet);
+  const before = getDoc(), ds = datasetFor(before, id)!;
+  update(d => {
+    d.color = carryRule(d0.color, prev, ds) as Draft<ColorRule>;
+    if (prev) swapDatasetTexts(d, prev, ds, d0.color);
+    keepSourceBottom(before, d);
+  });
+  toast(`Karte zeigt „${raw.name}“` + (getDoc().texts.source.text != null ? ' · Quellenzeile ist eigene Fassung und bleibt' : ''));
+}
 export function addDataset(ds: Dataset, useIt = true) {
+  const before = getDoc();
+  const prev = datasetFor(before, (before.color as { dataset?: string }).dataset);
+  // Färbt schon ein Datensatz die Karte und lassen sich die neuen Daten auf sie summieren (Wahlbezirke → Wahlkreise), bleibt die Karte
+  const keepMap = !!prev && datasetFor({ ...before, datasets: [...before.datasets, ds] }, ds.id)!.geoSet === before.geoSet;
   update(d => {
     d.datasets.push(ds as Draft<Dataset>);
     if (useIt) {
-      if (d.geoSet !== ds.geoSet) { d.geoSet = ds.geoSet; d.fokus = { kind: 'de' }; if (GEO[ds.geoSet] && GEO[ds.geoSet].meta.level !== 'btw-wk' && d.inset.visible) d.inset.visible = false; }
-      d.color = autoRule(ds);
+      const moved = d.geoSet !== ds.geoSet && !keepMap;
+      if (moved) { d.geoSet = ds.geoSet; d.fokus = { kind: 'de' }; if (GEO[ds.geoSet] && GEO[ds.geoSet].meta.level !== 'btw-wk' && d.inset.visible) d.inset.visible = false; }
+      d.color = (prev ? carryRule(before.color, prev, ds) : autoRule(ds)) as Draft<ColorRule>;
+      if (prev) swapDatasetTexts(d, prev, ds, before.color);   // Titel und Unterzeile, die den bisherigen Datensatz nennen
       if (d.texts.title.text === 'Titel der Grafik' && ds.groups.some(g => g.parties)) {
-        const SING: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Regierungsbezirk', krs: 'Kreis', vwg: 'Gemeindeverband', gem: 'Gemeinde', custom: 'Region', 'be-wk': 'Wahlkreis', 'be-bez': 'Bezirk', 'be-bwb': 'Briefwahlbezirk', 'be-wbz': 'Wahlbezirk' };
         d.texts.title.text = 'Stärkste Partei je ' + (SING[GEO[ds.geoSet]?.meta.level] || 'Gebiet');
         const grp = ds.groups.find(g => g.parties && /Zweit/.test(g.label)) || ds.groups.find(g => g.parties);
         d.texts.subtitle.text = `${grp && !ds.name.includes(grp.label) ? grp.label + ', ' : ''}${ds.name}. Je kräftiger die Farbe, desto höher der Anteil der stärksten Partei.`;
         d.name = d.name === 'Neues Projekt' ? ds.name : d.name;
       }
-      const plain = current(d) as Doc;
-      d.variants.forEach((v, k) => { const copy: Variant = JSON.parse(JSON.stringify(plain.variants[k])); relayout(plain, copy); d.variants[k] = copy as Draft<Variant>; });
+      if (!prev || moved) {   // erster Datensatz oder andere Karte: Layout neu; sonst bleibt die Gestaltung
+        const plain = current(d) as Doc;
+        d.variants.forEach((v, k) => { const copy: Variant = JSON.parse(JSON.stringify(plain.variants[k])); relayout(plain, copy); d.variants[k] = copy as Draft<Variant>; });
+      } else keepSourceBottom(before, d);
     }
   });
   if (useIt) setUI({ sel: { kind: 'graphic' }, mapMode: null });
-  toast(`Datensatz „${ds.name}“ übernommen`);
+  toast(useIt && before.datasets.length ? `„${ds.name}“ färbt jetzt die Karte · Wechsel unter „Daten“ oder „Färbung“` : `Datensatz „${ds.name}“ übernommen`);
 }
 export function replaceDataset(ds: Dataset) {
   update(d => {
@@ -168,4 +233,37 @@ export function setTextScale(ts: number) {
 }
 export function setOverride(ids: string[], color: string | null) {
   update(d => { for (const id of ids) { const k = d.geoSet + ':' + id; if (color) d.overrides[k] = color; else delete d.overrides[k]; } }, { key: color ? 'ov-' + ids.join(',') : '' });
+}
+
+// ---------- Quellenzeile ----------
+/** Unten verankerte Quellenzeile: wächst oder schrumpft der Text, bleibt die Unterkante stehen (je Variante). */
+export function keepSourceBottom(before: Doc, d: Draft<Doc>) {
+  if (!before.texts.source.visible) return;
+  const after = current(d) as Doc;
+  before.variants.forEach((v, k) => {
+    const L = v.L.source, w = d.variants[k]?.L.source; if (!w) return;
+    const h0 = textBlock(before, 'source', L.w, v.ts).height, h1 = textBlock(after, 'source', L.w, v.ts).height;
+    if (Math.abs(h0 - h1) > 0.5 && L.y + h0 >= v.h - v.L.m - Math.max(4, v.h * 0.02)) w.y = Math.round((L.y + h0 - h1) * 10) / 10;
+  });
+}
+/** Quellenzeile von Hand ändern: ab dann gilt die eigene Fassung */
+export function setSourceText(text: string) {
+  const before = getDoc(), auto = autoSourceText(before);
+  update(d => {
+    const s = d.texts.source;
+    if (s.text == null) s.autoBase = auto;
+    s.text = text;
+    keepSourceBottom(before, d);
+  }, { key: 'src-text' });
+}
+/** Zurück zum automatischen Quellenvermerk */
+export function resetSourceText() {
+  const before = getDoc();
+  update(d => { d.texts.source.text = null; delete d.texts.source.autoBase; keepSourceBottom(before, d); });
+  toast('Quellenzeile wieder automatisch');
+}
+/** Eigenen Zusatz zum automatischen Vermerk ändern */
+export function setSourceExtra(extra: string) {
+  const before = getDoc();
+  update(d => { d.texts.source.extra = extra; keepSourceBottom(before, d); }, { key: 'src-extra' });
 }
