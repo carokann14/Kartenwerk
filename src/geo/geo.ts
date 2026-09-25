@@ -44,6 +44,10 @@ export const LAENDER: Record<string, [string, string]> = {
 export const BL_ORDER = Object.keys(LAENDER).sort();
 /** Reihenfolge der Ebenen in Auswahllisten, von groß nach klein */
 export const LEVEL_ORDER = ['btw-wk', 'lan', 'rbz', 'krs', 'vwg', 'gem', 'be-wk', 'be-bez', 'be-bwb', 'be-wbz'];
+/** Landtagswahlkreise eines Landes (`ltw-mv` usw., Katalog in data/ltw.ts) */
+export const isLtw = (level: string) => level.startsWith('ltw-');
+/** Rang einer Ebene für Auswahllisten: bekannte Ebenen in fester Folge, Landtagswahlkreise danach */
+export const levelRank = (level: string) => { const i = LEVEL_ORDER.indexOf(level); return i >= 0 ? i : isLtw(level) ? LEVEL_ORDER.length : LEVEL_ORDER.length + 1; };
 /** Schlüssellänge je Verwaltungsebene (ARS-Präfix bzw. AGS bei Gemeinden) */
 export const KEY_LEN: Record<string, number> = { lan: 2, rbz: 3, krs: 5, vwg: 9, gem: 8 };
 
@@ -77,7 +81,7 @@ export const CONTEXT: { countries: Shape[]; lakes: Shape[] } = { countries: [], 
 
 export interface RawArea { id: string; nr?: number; name: string; bl: string; area: number; label: Pt; nb?: number[]; polys: number[][][]; kr?: string; bez?: string; ars?: string; free?: 1; p?: string[] }
 export interface RawSet { meta: GeoMeta; arcs: number[][]; arcOwner: [number, number][]; areas: RawArea[] }
-interface RawLevel { level: string; levelLabel: string; label: string; areas: RawArea[]; keyLen?: number }
+interface RawLevel { level: string; levelLabel: string; label: string; areas: RawArea[]; keyLen?: number; showNr?: boolean }
 interface RawFile { meta: Omit<GeoMeta, 'id' | 'label' | 'level' | 'levelLabel' | 'count'>; arcs: number[][]; levels: Record<string, RawLevel>; parents?: string[]; krFrom?: string }
 
 /** Gebiete mit Bogen-Verweisen; Koordinaten und Pfad erst beim ersten Zugriff */
@@ -128,7 +132,7 @@ async function loadFile(file: string): Promise<void> {
     const sets: GeoSet[] = [];
     for (const [part, L] of Object.entries(raw.levels)) {
       const e = GEO_INDEX.find(s => s.file === file && s.part === part); if (!e) continue;
-      const meta: GeoMeta = { ...raw.meta, id: e.id, label: e.label, level: L.level, levelLabel: L.levelLabel, count: 0, keyLen: L.keyLen ?? KEY_LEN[L.level], showNr: false, file };
+      const meta: GeoMeta = { ...raw.meta, id: e.id, label: e.label, level: L.level, levelLabel: L.levelLabel, count: 0, keyLen: L.keyLen ?? KEY_LEN[L.level], showNr: !!L.showNr, file };
       const g = finishSet(meta, arcs, mkAreas(L.areas, arcs, boxes, raw.parents, e.id === raw.krFrom ? undefined : raw.krFrom));
       GEO[e.id] = g; sets.push(g);
     }
@@ -233,7 +237,8 @@ export const areaLabel = (g: GeoSet, i: number) => g.meta.showNr ? `${g.areas[i]
 const PLURAL: Record<string, string> = { 'btw-wk': 'Wahlkreise', lan: 'Länder', rbz: 'Bezirke', krs: 'Kreise', vwg: 'Verbände', gem: 'Gemeinden', 'be-wk': 'Wahlkreise', 'be-bez': 'Bezirke', 'be-bwb': 'Briefwahlbezirke', 'be-wbz': 'Wahlbezirke' };
 const SINGULAR: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Bezirk', krs: 'Kreis', vwg: 'Verband', gem: 'Gemeinde', 'be-wk': 'Wahlkreis', 'be-bez': 'Bezirk', 'be-bwb': 'Briefwahlbezirk', 'be-wbz': 'Wahlbezirk' };
 /** „12 Kreise“, „1 Gemeinde“ */
-export const countLabel = (n: number, level: string) => `${n.toLocaleString('de-DE')} ${n === 1 ? SINGULAR[level] || 'Gebiet' : PLURAL[level] || 'Gebiete'}`;
+export const levelWord = (level: string, plural: boolean) => (plural ? PLURAL : SINGULAR)[level] || (isLtw(level) ? (plural ? 'Wahlkreise' : 'Wahlkreis') : plural ? 'Gebiete' : 'Gebiet');
+export const countLabel = (n: number, level: string) => `${n.toLocaleString('de-DE')} ${levelWord(level, n !== 1)}`;
 export function areaContext(g: GeoSet, i: number): string {
   const a = g.areas[i], land = LAENDER[a.bl]?.[0] || a.bl;
   if (g.memberN && g.meta.base) { const n = countLabel(g.memberN[i] || 0, GEO[g.meta.base]?.meta.level || ''); return a.free ? `ohne Region · ${n} · ${land}` : n; }

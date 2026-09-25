@@ -7,7 +7,7 @@ export const uid = (p = 'id') => p + '-' + Math.random().toString(36).slice(2, 9
 export const norm = (s: string) => s.toLowerCase()
   .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
   .normalize('NFD').replace(/[̀-ͯ]/g, '')
-  .replace(/[–—‐-‒−_/.,;:()'"„“”]+/g, ' ').replace(/\s+/g, ' ').trim();
+  .replace(/[–—‐‑‒−_/.,;:()'"„“”-]+/g, ' ').replace(/\s+/g, ' ').trim();
 export const svgId = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ß/g, 'ss').replace(/[^A-Za-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
 export type BBox = [number, number, number, number];
 export const emptyBBox = (): BBox => [Infinity, Infinity, -Infinity, -Infinity];

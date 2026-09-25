@@ -1,6 +1,6 @@
 export type Cell = string | number | null;
 export type Role = 'id' | 'name' | 'value' | 'category' | 'label' | 'ignore';
-export type PresetId = 'auto' | 'bwl-kerg' | 'bwl-kerg2' | 'bwl-umrechnung' | 'bwl-kreis' | 'bwl-wbz' | 'be-wbz' | 'be-gebiete' | 'allgemein';
+export type PresetId = 'auto' | 'bwl-kerg' | 'bwl-kerg2' | 'bwl-umrechnung' | 'bwl-kreis' | 'bwl-wbz' | 'be-wbz' | 'be-gebiete' | 'ltw-mv' | 'allgemein';
 
 export interface Column { id: string; label: string; kind: 'number' | 'text'; role: Role; party: string | null; short: string | null }
 export interface Group { id: string; label: string; columns: string[]; total: string | null; parties: boolean }

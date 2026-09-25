@@ -129,7 +129,7 @@ export function finerSet(g: GeoSet, i?: number): string | null {
   const be: Record<string, string> = { 'be-bez': 'be-wk', 'be-wk': 'be-wbz', 'be-bwb': 'be-wbz' };
   if (be[L]) return GEO_INDEX.find(e => e.level === be[L] && e.file === g.meta.file)?.id || null;
   const next: Record<string, string> = { lan: 'krs', rbz: 'krs', krs: 'gem', vwg: 'gem', 'btw-wk': 'gem' };
-  const lv = next[L]; if (!lv) return null;
+  const lv = next[L] || (L.startsWith('ltw-') ? 'gem' : ''); if (!lv) return null;
   const cands = GEO_INDEX.filter(e => e.level === lv).sort((a, b) => b.year - a.year);
   const same = g.meta.file ? cands.find(e => e.file === g.meta.file) : cands.find(e => e.year === g.meta.year);
   return (same || cands[0])?.id || null;

@@ -16,7 +16,8 @@ import { saveLocal } from './persist';
 import { withDefaultLogo } from './logo';
 
 /** Gebietsbezeichnung im Singular, z. B. für „Stärkste Partei je Wahlkreis“ */
-const SING: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Regierungsbezirk', krs: 'Kreis', vwg: 'Gemeindeverband', gem: 'Gemeinde', custom: 'Region', 'be-wk': 'Wahlkreis', 'be-bez': 'Bezirk', 'be-bwb': 'Briefwahlbezirk', 'be-wbz': 'Wahlbezirk' };
+const SING_: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Regierungsbezirk', krs: 'Kreis', vwg: 'Gemeindeverband', gem: 'Gemeinde', custom: 'Region', 'be-wk': 'Wahlkreis', 'be-bez': 'Bezirk', 'be-bwb': 'Briefwahlbezirk', 'be-wbz': 'Wahlbezirk' };
+const SING = new Proxy(SING_, { get: (t, k: string) => t[k] ?? (typeof k === 'string' && k.startsWith('ltw-') ? 'Wahlkreis' : undefined) });
 export const refit = (d: Draft<Doc>, which: 'main' | 'inset' | 'both' = 'main') => {
   const plain = current(d) as Doc;
   d.variants.forEach((v, k) => {

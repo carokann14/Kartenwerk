@@ -32,6 +32,14 @@ Bezug: https://daten.berlin.de/datensaetze/geometrien-der-wahlbezirke-fur-die-wa
 
 Lizenztext CC BY 3.0 DE: https://creativecommons.org/licenses/by/3.0/de/
 
+## Landtagswahlkreise der Länder
+
+| Datei | Inhalt | Quelle | Lizenzstand |
+| --- | --- | --- | --- |
+| `public/data/ltw-mv-2026.json` | 36 Wahlkreise der Landtagswahl Mecklenburg-Vorpommern 2026 | © Landesamt für innere Verwaltung Mecklenburg-Vorpommern (LAiV), Karte Landtagswahlkreise 1 : 250 000 (KLWK250MV), `LTwahl_Wahlkreise.zip` | **keine Lizenz angegeben**; das LAiV stellt die Datei kostenlos zum Download bereit und vermerkt „© LAiV“. Eine ausdrückliche Erlaubnis zur Weitergabe liegt nicht vor. |
+
+Bezug: https://www.laiv-mv.de/Wahlen/Landtagswahlen/2026/Wahlkreise-und-%E2%80%93leiter/ (Shapefile, ETRS89 / UTM 33). Aufbereitung für Kartenwerk (`npm run ltw`, Katalog in `src/data/ltw.ts`): nach ETRS89 / UTM 32 auf ein 10-m-Raster gebracht, auf rund 10 m vereinfacht; Namen und Nummern aus der Datei. Die Quellenzeile nennt den Vermerk und „vereinfacht“.
+
 ## Ortsliste für Marker
 
 `public/data/orte.json` stammt aus dem Gemeindeverzeichnis-Informationssystem GV-ISys des Statistischen Bundesamts (Auszug „Alle politisch selbständigen Gemeinden“, Gebietsstand 30.09.2026): Name, Gemeindeschlüssel, Einwohnerzahl und geografischer Mittelpunkt, umgerechnet nach ETRS89 / UTM 32. © Statistisches Bundesamt (Destatis), 2026; Vervielfältigung und Verbreitung mit Quellenangabe gestattet. Die Quellenzeile nennt das Gemeindeverzeichnis, sobald ein Marker aus der Ortssuche verwendet wird.

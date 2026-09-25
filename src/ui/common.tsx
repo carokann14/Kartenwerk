@@ -1,5 +1,5 @@
 import React from 'react';
-import { GEO_INDEX, GeoIndexEntry, LEVEL_ORDER } from '../geo/geo';
+import { GEO_INDEX, GeoIndexEntry, isLtw, levelRank } from '../geo/geo';
 
 const S = (d: React.ReactNode) => (p: { size?: number }) => (
   <svg viewBox="0 0 24 24" width={p.size || 15} height={p.size || 15} fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>
@@ -74,8 +74,12 @@ export interface CustomGeo { id: string; label: string; base: string; sub: strin
 export function GeoPicker({ value, onChange, label = 'Gebietsstand', customs = [] }: { value: string; onChange: (id: string) => void; label?: string; customs?: CustomGeo[] }) {
   const custom = customs.find(c => c.id === value);
   const cur = GEO_INDEX.find(e => e.id === (custom ? custom.base : value)) || GEO_INDEX[0];
-  const levels = [...new Set(GEO_INDEX.filter(e => !e.region).map(e => e.level))].sort((a, b) => LEVEL_ORDER.indexOf(a) - LEVEL_ORDER.indexOf(b));
-  const regions = [...new Set(GEO_INDEX.filter(e => e.region).map(e => e.region!))];
+  const levels = [...new Set(GEO_INDEX.filter(e => !e.region).map(e => e.level))].sort((a, b) => levelRank(a) - levelRank(b));
+  // Regionen mit eigenen Ebenen (Berlin) als eigene Gruppe; Länder, die nur Landtagswahlkreise haben, gemeinsam unter „Landtagswahlkreise“
+  const regionLevels = (r: string) => [...new Set(GEO_INDEX.filter(e => e.region === r).map(e => e.level))].sort((a, b) => levelRank(a) - levelRank(b));
+  const allRegions = [...new Set(GEO_INDEX.filter(e => e.region).map(e => e.region!))];
+  const ltwOnly = allRegions.filter(r => regionLevels(r).every(isLtw)).sort((a, b) => a.localeCompare(b, 'de'));
+  const regions = allRegions.filter(r => !ltwOnly.includes(r));
   const stands = GEO_INDEX.filter(e => e.level === cur.level).sort((a, b) => b.year - a.year);
   // Ebenenwechsel: innerhalb der Verwaltungsgebiete den Stand behalten, sonst den neuesten nehmen
   const pickLevel = (l: string) => { const L = GEO_INDEX.filter(e => e.level === l).sort((a, b) => b.year - a.year); onChange(((cur.stand ? L.find(e => e.year === cur.year) : null) || L[0]).id); };
@@ -84,7 +88,8 @@ export function GeoPicker({ value, onChange, label = 'Gebietsstand', customs = [
     <div className="geo-picker stack-8">
       <select value={custom ? custom.id : cur.level} onChange={e => { const x = e.target.value; if (customs.some(c => c.id === x)) onChange(x); else pickLevel(x); }} aria-label={label + ': Ebene'}>
         {levels.map(l => { const e = GEO_INDEX.find(x => x.level === l)!; return <option key={l} value={l}>{e.levelLabel}</option>; })}
-        {regions.map(r => <optgroup key={r} label={r}>{[...new Set(GEO_INDEX.filter(e => e.region === r).map(e => e.level))].sort((a, b) => LEVEL_ORDER.indexOf(a) - LEVEL_ORDER.indexOf(b)).map(l => { const e = GEO_INDEX.find(x => x.level === l)!; return <option key={l} value={l}>{r}: {e.levelLabel}</option>; })}</optgroup>)}
+        {ltwOnly.length > 0 && <optgroup label="Landtagswahlkreise">{ltwOnly.map(r => <option key={r} value={regionLevels(r)[0]}>{r}</option>)}</optgroup>}
+        {regions.map(r => <optgroup key={r} label={r}>{regionLevels(r).map(l => { const e = GEO_INDEX.find(x => x.level === l)!; return <option key={l} value={l}>{r}: {e.levelLabel}</option>; })}</optgroup>)}
         {customs.some(c => c.kind === 'import') && <optgroup label="Importierte Geodaten">{customs.filter(c => c.kind === 'import').map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</optgroup>}
         {customs.some(c => c.kind !== 'import') && <optgroup label="Eigene Gebiete">{customs.filter(c => c.kind !== 'import').map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</optgroup>}
       </select>
@@ -98,11 +103,11 @@ export function GeoPicker({ value, onChange, label = 'Gebietsstand', customs = [
 /** Kompakte Auswahl (eine Liste), gruppiert nach Ebene */
 export function GeoSelect({ value, onChange, label = 'Gebietsstand', filter }: { value: string; onChange: (id: string) => void; label?: string; filter?: (e: GeoIndexEntry) => boolean }) {
   const list = GEO_INDEX.filter(e => !filter || filter(e));
-  const levels = [...new Set(list.map(e => e.level))].sort((a, b) => LEVEL_ORDER.indexOf(a) - LEVEL_ORDER.indexOf(b));
+  const levels = [...new Set(list.map(e => e.level))].sort((a, b) => levelRank(a) - levelRank(b));
   return (
     <select value={value} onChange={e => onChange(e.target.value)} aria-label={label}>
       {levels.map(l => { const L = list.filter(e => e.level === l).sort((a, b) => b.year - a.year); return (
-        <optgroup key={l} label={L[0].levelLabel}>{L.map(e => <option key={e.id} value={e.id}>{e.stand ? `${e.levelLabel} · ${e.stand}${e.hint ? ' (' + e.hint + ')' : ''}` : e.label}</option>)}</optgroup>); })}
+        <optgroup key={l} label={isLtw(l) ? `${L[0].levelLabel} ${L[0].region || ''}`.trim() : L[0].levelLabel}>{L.map(e => <option key={e.id} value={e.id}>{e.stand ? `${e.levelLabel} · ${e.stand}${e.hint ? ' (' + e.hint + ')' : ''}` : e.label}</option>)}</optgroup>); })}
     </select>
   );
 }

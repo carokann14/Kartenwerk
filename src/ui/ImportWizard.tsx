@@ -54,7 +54,7 @@ export function ImportWizard() {
   }
   const onFile = async (f: File | undefined) => { if (f) await load(f.name, await f.arrayBuffer()); };
   const set = (patch: Partial<ImportSettings>) => setSt(s => (s ? { ...s, ...patch } : s));
-  const setPreset = async (p: PresetId) => { if (!raw) return; const s = defaultSettings(raw, p, st?.sheet || 0); const t = buildTable(raw, s); const sug = await suggestGeoSetAsync(t, s, raw.fileName, customOptions(getDoc()), getDoc().geoSet); s.geoSet = sug.id; setGeoReason(sug.reason); if (await loadGeoSets([s.geoSet])) setSt(s); };
+  const setPreset = async (p: PresetId) => { if (!raw) return; const s = defaultSettings(raw, p, st?.sheet || 0); const t = buildTable(raw, s); if (!s.geoSet) { const sug = await suggestGeoSetAsync(t, s, raw.fileName, customOptions(getDoc()), getDoc().geoSet); s.geoSet = sug.id; setGeoReason(sug.reason); } else setGeoReason(''); if (await loadGeoSets([s.geoSet])) setSt(s); };
   const setGeo = async (id: string) => { if (await loadGeoSets([id])) set({ geoSet: id }); };
 
   const finish = () => {
@@ -156,6 +156,9 @@ function StepStructure({ raw, st, set, setPreset, table }: { raw: RawInput; st: 
         {st.preset === 'be-gebiete' && <div className="card muted stack-8">
           <Field label="Gebiete"><Seg items={BE_EBENEN.map(e => [e[0], e[1]] as [string, string])} value={st.be?.ebene || BE_EBENEN[0][0]} onChange={v => set({ be: { ebene: v }, geoSet: BE_EBENEN.find(e => e[0] === v)![2], sourceTitle: beTitle(beStimmeOf(st.sourceTitle), beDatumOf(st.sourceTitle), v) })} /></Field>
           <p className="hint">Die Datei enthält Wahlkreise, Bezirke, Bundestagswahlkreise und Summen für Berlin. Übernommen wird eine Gebietsart.</p>
+        </div>}
+        {st.preset === 'ltw-mv' && <div className="card muted stack-8">
+          <p className="hint">Die Datei des Landeswahlleiters enthält je Wahlkreis vier Zeilen (Stimmen und Prozent, Erst- und Zweitstimme) und das Land. Übernommen werden die Stimmenzahlen, Erst- und Zweitstimmen nebeneinander; Anteile rechnet Kartenwerk selbst. „x“ heißt: nicht angetreten.</p>
         </div>}
         {st.format === 'long' && L && <div className="card muted stack-8">
           <p className="hint">Im Langformat steht jeder Wert in einer eigenen Zeile. Die Tabelle wird so gedreht, dass jede Gruppe (z. B. Partei) eine Spalte wird.</p>

@@ -4,7 +4,7 @@ Karten zur deutschen Politik für Social Media. Daten aus CSV oder Excel importi
 
 Kartenwerk läuft komplett im Browser. Deine Dateien werden nirgendwohin hochgeladen, es gibt keinen Server, kein Konto, keine Cookies und keine Anfragen an Dritte.
 
-**Stand: M4 · Etappe 1 (eigene Geodaten importieren, Berlin 2026 mit Wahlkreisen und Wahlbezirken)**
+**Stand: M4 · Etappe 2a (Landtagswahlkreise: Grundgerüst und Mecklenburg-Vorpommern 2026)**
 
 ## Was Kartenwerk kann
 
@@ -23,6 +23,7 @@ Kartenwerk läuft komplett im Browser. Deine Dateien werden nirgendwohin hochgel
 - **Eigene Gebiete:** Gebiete einer Ebene zu eigenen Regionen zusammenfassen, etwa „Ruhrgebiet“ aus Kreisen, Landtagswahlkreise aus Gemeinden oder Ost/West aus Ländern. Regionen aus der Auswahl in der Karte (Umschalt + Klick) oder aus dem Fokus anlegen, Gebiete per Klick einer Region zuordnen, umbenennen, löschen. Übrige Gebiete bleiben neutral oder bilden eine eigene Region. „Als Karte zeigen“ macht aus der Einteilung eine eigene Ebene: Daten der Bausteine (auch feinerer, etwa Gemeinden unter Kreis-Regionen) werden je Region addiert; Daten lassen sich auch direkt für die Regionen importieren (Zuordnung über Name oder Nummer). Die Regionsgrenzen lassen sich über jeder Karte einblenden. Einteilungen werden mit dem Projekt gespeichert.
 - **Eigene Geodaten:** Shapefile (auch als ZIP, wie Ämter sie anbieten), GeoJSON, KML/KMZ und GeoPackage importieren. Das Koordinatensystem wird aus der `.prj`-Datei bzw. der Datei gelesen oder nach den Zahlen erkannt (Länge/Breite, UTM 32 und 33, auch mit Zonenpräfix, Gauß-Krüger mit Umrechnung von DHDN, Web-Mercator, LAEA); eine Vorschau über den Wahlkreisen zeigt, ob die Lage stimmt. Kartenwerk bildet gemeinsame Grenzen, vereinfacht wahlweise auf 10, 30 oder 100 m und fragt Kennung, Namen und Quellenvermerk ab. Die Ebene wird im Projekt gespeichert und funktioniert wie jede andere: Fokus, Tabellen importieren (Zuordnung über die Kennung), Grenzen einblenden, eigene Gebiete.
 - **Berlin 2026:** Wahlbezirke (2.542), Briefwahlbezirke (1.572), Wahlkreise zum Abgeordnetenhaus (78) und Bezirke (12) sind eingebaut (Open Data, CC BY 3.0 DE). Vorlagen für die Datenexporte von wahlen-berlin.de: nach Wahlbezirken (Briefwahl anteilig verteilt oder je Briefwahlbezirk) und nach Wahlkreisen, Bezirken oder Bundestagswahlkreisen. Ergebnisse der Wahlbezirke werden automatisch auf Wahlkreise, Bezirke, Bundestagswahlkreise und das Land summiert; geprüft gegen die amtlichen Wahlkreisergebnisse. Beispiel im Startdialog: „Berlin 2026“.
+- **Landtagswahlkreise:** Mecklenburg-Vorpommern 2026 (36 Wahlkreise, LAiV) ist eingebaut, in der Auswahl unter „Landtagswahlkreise“ und als Schnellwahl bei Fokus auf das Land. Vorlage für die Ergebnisdatei des Landeswahlleiters (`l_wahlkreise.csv`): Erst- und Zweitstimmen je Wahlkreis, Prüfung gegen das Landesergebnis, Summe aufs Land. Weitere Länder folgen (Katalog in `src/data/ltw.ts`).
 - **Navigation über Ebenen:** Unter dem Fokus-Pfad wechselst du mit „zeigen als“ zwischen Wahlkreisen, Ländern, Bezirken, Kreisen, Verbänden und Gemeinden; der Fokus bleibt dabei erhalten (Kreis Görlitz als Kreis, als Gemeinden oder als Wahlkreis 156). Im Kartenmodus geht ein Doppelklick eine Stufe tiefer und am Ende in die nächstfeinere Ebene (Land › Kreise › Gemeinden, Wahlkreis › Gemeinden). Die Suche findet auch Gebiete anderer Ebenen, etwa „Wahlkreis 211“ in einer Gemeindekarte. Ein Klick auf ein Gebiet zeigt es im Gebietsbaum.
 - **Grenzen einblenden:** Grenzen anderer Ebenen über der Karte, etwa Wahlkreise über Gemeinden oder Kreise über Wahlkreisen; Farbe, Stärke, gestrichelt, mit Legendeneintrag. Wahlkreisgrenzen über Gemeinden folgen genau den Gemeindegrenzen.
 - **Stände:** Auswahl in zwei Schritten (Ebene, dann Stand). Der neueste Stand ist als „aktuell“ markiert, 2025 als „passt zur Bundestagswahl 2025“.
@@ -96,6 +97,7 @@ npm run geodata        # Geodaten neu aufbereiten (Quelldateien in data-src/, si
 npm run orte           # Ortsliste aus dem Gemeindeverzeichnis (data-src/AuszugGV….xlsx)
 npm run vg250          # Verwaltungsgrenzen aus data-src/vg250-<Jahr>.zip (BKG)
 npm run beispiele      # Beispiel „nach Gemeinden“ aus data-src/btw25_wbz.zip
+npm run ltw            # Landtagswahlkreise aus data-src/ltw/<land>-<jahr>/ (Katalog src/data/ltw.ts)
 npm run berlin         # Berliner Wahlgebiete aus data-src/berlin/RBS_OD_UWB_AH26.zip (und Namen aus …_A_BE.csv)
 ```
 
