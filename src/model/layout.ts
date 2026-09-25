@@ -6,9 +6,21 @@ import { legendPrims, textBlock } from '../render/elements';
 import { fokusBBox, insetBBox } from '../render/scene';
 import { PRESETS } from './defaults';
 import { defaultLogoBox, logoRatio } from './logo';
-import type { Doc, FrameBox, Layout, Variant, View } from './types';
+import type { Doc, FrameBox, Guides, Layout, Variant, View } from './types';
 
 export const defaultTS = (W: number, H: number) => Math.round(clamp(Math.sqrt(W * H) / 1207, 0.7, 1.25) * 100) / 100;
+
+/** Rand für die Standardplatzierung der Inhaltselemente (Titel, Unterzeile, Quelle, Legende, Logo).
+ *  Sind Hilfslinien gesetzt und ergeben sie auf allen vier Seiten einen Rand, gilt der engste davon –
+ *  so bleiben die Elemente innerhalb aller Hilfslinien. Sonst 6 % der kurzen Seite wie bisher. */
+function marginFor(W: number, H: number, guides?: Guides): number {
+  const formula = Math.round(Math.min(W, H) * 0.06);
+  if (!guides || guides.x.length < 2 || guides.y.length < 2) return formula;
+  const gx = [...guides.x].sort((a, b) => a - b), gy = [...guides.y].sort((a, b) => a - b);
+  const left = gx[0], right = W - gx[gx.length - 1], top = gy[0], bottom = H - gy[gy.length - 1];
+  if (left <= 0 || right <= 0 || top <= 0 || bottom <= 0) return formula;
+  return Math.round(Math.min(left, right, top, bottom));
+}
 
 export function fitView(frame: { w: number; h: number }, bb: BBox, reserveRight = 0, padFrac = 0.035, reserveBottom = 0): View {
   const pad = Math.round(Math.min(frame.w, frame.h) * padFrac);
@@ -35,9 +47,9 @@ export function mainReserve(doc: Doc, v: Variant): { right: number; bottom: numb
 export const fitMain = (doc: Doc, v: Variant) => { const r = mainReserve(doc, v); v.L.main.view = fitView(v.L.main, fokusBBox(doc), r.right, 0.035, r.bottom); };
 export const fitInset = (doc: Doc, v: Variant) => { v.L.inset.view = fitView(v.L.inset, insetBBox(doc), 0, 0.07); };
 
-export function makeLayout(doc: Doc, W: number, H: number, ts: number): Layout {
+export function makeLayout(doc: Doc, W: number, H: number, ts: number, guides?: Guides): Layout {
   const s = Math.sqrt(W * H) / 1207;
-  const m = Math.round(Math.min(W, H) * 0.06);
+  const m = marginFor(W, H, guides);
   const land = W / H > 1.3, tall = H / W > 1.5;
   const tb = (kind: 'title' | 'subtitle' | 'source', w: number) => textBlock(doc, kind, w, ts).height;
   const srcW = W - 2 * m, srcH = doc.texts.source.visible ? tb('source', srcW) : 0;
@@ -87,11 +99,12 @@ export function makeLayout(doc: Doc, W: number, H: number, ts: number): Layout {
   L.logo = defaultLogoBox(L, W, H, logoRatio(doc.logo?.asset));   // unten links in der Hauptkarte
   return L;
 }
-export function makeVariant(doc: Doc, preset: string, w?: number, h?: number): Variant {
+export function makeVariant(doc: Doc, preset: string, w?: number, h?: number, guides?: Guides): Variant {
   const p = PRESETS[preset] || PRESETS['4:5'];
   const W = w || p.w, H = h || p.h, ts = defaultTS(W, H);
-  const v: Variant = { id: uid('v'), preset, w: W, h: H, ts, L: makeLayout(doc, W, H, ts), labelOffsets: {}, locked: { main: false, inset: false }, ann: {}, guides: { x: [], y: [], visible: true } };
+  const g = guides || { x: [], y: [], visible: true };
+  const v: Variant = { id: uid('v'), preset, w: W, h: H, ts, L: makeLayout(doc, W, H, ts, g), labelOffsets: {}, locked: { main: false, inset: false }, ann: {}, guides: g };
   fitMain(doc, v); fitInset(doc, v);
   return v;
 }
-export function relayout(doc: Doc, v: Variant) { v.L = makeLayout(doc, v.w, v.h, v.ts); fitMain(doc, v); fitInset(doc, v); }
+export function relayout(doc: Doc, v: Variant) { v.L = makeLayout(doc, v.w, v.h, v.ts, v.guides); fitMain(doc, v); fitInset(doc, v); }

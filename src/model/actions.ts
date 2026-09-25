@@ -39,8 +39,9 @@ export async function loadGeoSets(ids: (string | null | undefined)[]): Promise<b
 export function newProject(geoSet = 'btw-wk-2025', name = 'Neues Projekt') {
   const d = withDefaultLogo(defaultDoc(geoSet)); d.name = name;   // gemerktes Logo gleich mit Platz in der Grafik
   if (GEO[geoSet] && GEO[geoSet].meta.level !== 'btw-wk') d.inset.visible = false;   // Detail-Lupen sind für Bundestagswahlkreise gedacht
-  const v0 = makeVariant(d, '4:5');
-  v0.guides = { x: [80, 1000], y: [80, 1270], visible: true };   // Standardformat 1080×1350: 80 px Rand als Hilfslinien vorgegeben
+  // Standardformat 1080×1350: 80 px Rand als Hilfslinien vorgegeben; vor der Layout-Berechnung übergeben,
+  // damit Titel, Unterzeile, Quelle, Legende und Logo standardmäßig innerhalb dieser Hilfslinien liegen.
+  const v0 = makeVariant(d, '4:5', undefined, undefined, { x: [80, 1000], y: [80, 1270], visible: true });
   d.variants = [v0];
   setDoc(d); setUI({ start: false, sel: { kind: 'graphic' }, mapMode: null, step: 'gebiete', panelOpen: true });
 }
