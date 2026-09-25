@@ -16,6 +16,7 @@ export interface Area {
   i: number; id: string; nr: number; name: string; bl: string; area: number; label: Pt; nb: number[]; bbox: BBox;
   ra: number[][][];                  // Ringe als Bogen-Verweise (Topologie)
   kr?: string; bez?: string; ars?: string; free?: boolean;   // Verwaltungsgebiete: Kreis, Bezeichnung, Regionalschlüssel, gemeindefrei
+  par?: Record<string, string>;      // übergeordnete Gebiete anderer Gebietsstände (Stand-ID → Kennung), z. B. Wahlbezirk → Wahlkreis
   readonly polys: Poly[]; readonly d: string;   // volle Auflösung, erst bei Bedarf berechnet
 }
 export interface GeoSet {
@@ -31,6 +32,7 @@ export interface GeoIndexEntry {
   id: string; label: string; level: string; levelLabel: string; election: string; year: number;
   file?: string; part?: string; lazy?: boolean; stand?: string; count?: number;
   hint?: string;       // wofür der Stand passt („aktuell“, „passt zur Bundestagswahl 2025“)
+  region?: string;     // Gebiete nur einer Region (z. B. „Berlin“): eigene Gruppe in der Auswahl
 }
 
 export const LAENDER: Record<string, [string, string]> = {
@@ -41,7 +43,7 @@ export const LAENDER: Record<string, [string, string]> = {
 };
 export const BL_ORDER = Object.keys(LAENDER).sort();
 /** Reihenfolge der Ebenen in Auswahllisten, von groß nach klein */
-export const LEVEL_ORDER = ['btw-wk', 'lan', 'rbz', 'krs', 'vwg', 'gem'];
+export const LEVEL_ORDER = ['btw-wk', 'lan', 'rbz', 'krs', 'vwg', 'gem', 'be-wk', 'be-bez', 'be-bwb', 'be-wbz'];
 /** Schlüssellänge je Verwaltungsebene (ARS-Präfix bzw. AGS bei Gemeinden) */
 export const KEY_LEN: Record<string, number> = { lan: 2, rbz: 3, krs: 5, vwg: 9, gem: 8 };
 
@@ -73,13 +75,13 @@ export const GEO: Record<string, GeoSet> = {};
 export let GEO_INDEX: GeoIndexEntry[] = [];
 export const CONTEXT: { countries: Shape[]; lakes: Shape[] } = { countries: [], lakes: [] };
 
-interface RawArea { id: string; nr?: number; name: string; bl: string; area: number; label: Pt; nb?: number[]; polys: number[][][]; kr?: string; bez?: string; ars?: string; free?: 1 }
-interface RawSet { meta: GeoMeta; arcs: number[][]; arcOwner: [number, number][]; areas: RawArea[] }
-interface RawLevel { level: string; levelLabel: string; label: string; areas: RawArea[] }
-interface RawFile { meta: Omit<GeoMeta, 'id' | 'label' | 'level' | 'levelLabel' | 'count'>; arcs: number[][]; levels: Record<string, RawLevel> }
+export interface RawArea { id: string; nr?: number; name: string; bl: string; area: number; label: Pt; nb?: number[]; polys: number[][][]; kr?: string; bez?: string; ars?: string; free?: 1; p?: string[] }
+export interface RawSet { meta: GeoMeta; arcs: number[][]; arcOwner: [number, number][]; areas: RawArea[] }
+interface RawLevel { level: string; levelLabel: string; label: string; areas: RawArea[]; keyLen?: number }
+interface RawFile { meta: Omit<GeoMeta, 'id' | 'label' | 'level' | 'levelLabel' | 'count'>; arcs: number[][]; levels: Record<string, RawLevel>; parents?: string[]; krFrom?: string }
 
 /** Gebiete mit Bogen-Verweisen; Koordinaten und Pfad erst beim ersten Zugriff */
-function mkAreas(raws: RawArea[], arcs: Pt[][], arcBox: BBox[]): Area[] {
+function mkAreas(raws: RawArea[], arcs: Pt[][], arcBox: BBox[], parents?: string[], krFrom?: string): Area[] {
   return raws.map((a, i) => {
     const bb = emptyBBox();
     for (const poly of a.polys) for (const ai of poly[0] || []) { const b = arcBox[ai >= 0 ? ai : ~ai]; if (b[0] < bb[0]) bb[0] = b[0]; if (b[1] < bb[1]) bb[1] = b[1]; if (b[2] > bb[2]) bb[2] = b[2]; if (b[3] > bb[3]) bb[3] = b[3]; }
@@ -87,6 +89,8 @@ function mkAreas(raws: RawArea[], arcs: Pt[][], arcBox: BBox[]): Area[] {
     const ar: Area = {
       i, id: a.id, nr: a.nr ?? Number(a.id), name: a.name, bl: a.bl, area: a.area, label: a.label, nb: a.nb || [], bbox: bb, ra: a.polys,
       ...(a.kr ? { kr: a.kr } : {}), ...(a.bez ? { bez: a.bez } : {}), ...(a.ars ? { ars: a.ars } : {}), ...(a.free ? { free: true } : {}),
+      ...(a.p && parents ? { par: Object.fromEntries(parents.map((pid, k) => [pid, a.p![k]] as [string, string]).filter(x => x[1])) } : {}),
+      ...(a.p && parents && krFrom && !a.kr && parents.indexOf(krFrom) >= 0 && a.p[parents.indexOf(krFrom)] ? { kr: a.p[parents.indexOf(krFrom)] } : {}),
       get polys() { return polys ||= a.polys.map(p => p.map(r => ringFrom(arcs, r))); },
       get d() { return d ||= polysD(this.polys); },
     };
@@ -124,12 +128,12 @@ async function loadFile(file: string): Promise<void> {
     const sets: GeoSet[] = [];
     for (const [part, L] of Object.entries(raw.levels)) {
       const e = GEO_INDEX.find(s => s.file === file && s.part === part); if (!e) continue;
-      const meta: GeoMeta = { ...raw.meta, id: e.id, label: e.label, level: L.level, levelLabel: L.levelLabel, count: 0, keyLen: KEY_LEN[L.level], showNr: false, file };
-      const g = finishSet(meta, arcs, mkAreas(L.areas, arcs, boxes));
+      const meta: GeoMeta = { ...raw.meta, id: e.id, label: e.label, level: L.level, levelLabel: L.levelLabel, count: 0, keyLen: L.keyLen ?? KEY_LEN[L.level], showNr: false, file };
+      const g = finishSet(meta, arcs, mkAreas(L.areas, arcs, boxes, raw.parents, e.id === raw.krFrom ? undefined : raw.krFrom));
       GEO[e.id] = g; sets.push(g);
     }
     // Kreisnamen für Gebiete unterhalb der Kreise (Baum, Tooltips)
-    const krs = sets.find(g => g.meta.level === 'krs');
+    const krs = sets.find(g => g.meta.level === 'krs') || (raw.krFrom ? GEO[raw.krFrom] : undefined);
     if (krs) { const names: Record<string, string> = {}; for (const a of krs.areas) names[a.id] = a.name; for (const g of sets) g.krName = names; }
   } else {
     const s = raw as RawSet;
@@ -137,6 +141,11 @@ async function loadFile(file: string): Promise<void> {
     const meta: GeoMeta = { ...s.meta, showNr: true, file };
     GEO[e.id] = finishSet(meta, arcs, mkAreas(s.areas, arcs, boxes), s.arcOwner);
   }
+}
+/** Gebietsstand aus Rohdaten (Bögen deltakodiert), z. B. für importierte Geodaten im Projekt */
+export function setFromRaw(meta: GeoMeta, raw: { arcs: number[][]; areas: RawArea[]; arcOwner?: [number, number][] }): GeoSet {
+  const arcs = raw.arcs.map(decode);
+  return finishSet(meta, arcs, mkAreas(raw.areas, arcs, arcBoxes(arcs)), raw.arcOwner);
 }
 const fileOf = (id: string) => { const e = GEO_INDEX.find(s => s.id === id); return e ? (e.file || e.id + '.json') : null; };
 /** Lädt die Geometrien der genannten Gebietsstände, falls noch nicht geschehen. */
@@ -161,7 +170,7 @@ export async function loadGeo() {
 // ---------- Detailstufen ----------
 // Große Gebietsstände (Gemeinden) werden je nach Maßstab vereinfacht gezeichnet.
 // Jeder Bogen wird für sich vereinfacht (Endpunkte bleiben), so bleiben Nachbarflächen deckungsgleich.
-function dp(pts: Pt[], tol: number): Pt[] {
+export function dp(pts: Pt[], tol: number): Pt[] {
   const n = pts.length; if (n <= 2) return pts;
   const keep = new Uint8Array(n); keep[0] = keep[n - 1] = 1;
   const stack: number[] = [0, n - 1], t2 = tol * tol;
@@ -221,8 +230,8 @@ export const bboxOfIds = (g: GeoSet, ids: number[]): BBox => {
 export const areaTitle = (g: GeoSet, i: number) => { const a = g.areas[i]; return g.meta.showNr ? `${a.nr} · ${a.name}` : a.name; };
 export const areaLabel = (g: GeoSet, i: number) => g.meta.showNr ? `${g.areas[i].nr} ${g.areas[i].name}` : g.areas[i].name;
 /** Zusatz für Listen und Tooltips: Land, bei Gemeinden auch der Kreis */
-const PLURAL: Record<string, string> = { 'btw-wk': 'Wahlkreise', lan: 'Länder', rbz: 'Bezirke', krs: 'Kreise', vwg: 'Verbände', gem: 'Gemeinden' };
-const SINGULAR: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Bezirk', krs: 'Kreis', vwg: 'Verband', gem: 'Gemeinde' };
+const PLURAL: Record<string, string> = { 'btw-wk': 'Wahlkreise', lan: 'Länder', rbz: 'Bezirke', krs: 'Kreise', vwg: 'Verbände', gem: 'Gemeinden', 'be-wk': 'Wahlkreise', 'be-bez': 'Bezirke', 'be-bwb': 'Briefwahlbezirke', 'be-wbz': 'Wahlbezirke' };
+const SINGULAR: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Bezirk', krs: 'Kreis', vwg: 'Verband', gem: 'Gemeinde', 'be-wk': 'Wahlkreis', 'be-bez': 'Bezirk', 'be-bwb': 'Briefwahlbezirk', 'be-wbz': 'Wahlbezirk' };
 /** „12 Kreise“, „1 Gemeinde“ */
 export const countLabel = (n: number, level: string) => `${n.toLocaleString('de-DE')} ${n === 1 ? SINGULAR[level] || 'Gebiet' : PLURAL[level] || 'Gebiete'}`;
 export function areaContext(g: GeoSet, i: number): string {

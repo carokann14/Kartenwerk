@@ -5,30 +5,34 @@ import { GEO, bboxOfIds } from '../geo/geo';
 import { legendPrims, textBlock } from '../render/elements';
 import { fokusBBox, insetBBox } from '../render/scene';
 import { PRESETS } from './defaults';
+import { defaultLogoBox, logoRatio } from './logo';
 import type { Doc, FrameBox, Layout, Variant, View } from './types';
 
 export const defaultTS = (W: number, H: number) => Math.round(clamp(Math.sqrt(W * H) / 1207, 0.7, 1.25) * 100) / 100;
 
-export function fitView(frame: { w: number; h: number }, bb: BBox, reserveRight = 0, padFrac = 0.035): View {
+export function fitView(frame: { w: number; h: number }, bb: BBox, reserveRight = 0, padFrac = 0.035, reserveBottom = 0): View {
   const pad = Math.round(Math.min(frame.w, frame.h) * padFrac);
-  const aw = Math.max(40, frame.w - 2 * pad - reserveRight), ah = Math.max(40, frame.h - 2 * pad);
+  const aw = Math.max(40, frame.w - 2 * pad - reserveRight), ah = Math.max(40, frame.h - 2 * pad - reserveBottom);
   const bw = Math.max(1, bb[2] - bb[0]), bh = Math.max(1, bb[3] - bb[1]);
   const k = Math.min(aw / bw, ah / bh);
-  return { cx: (bb[0] + bb[2]) / 2 - (pad + aw / 2 - frame.w / 2) / k, cy: (bb[1] + bb[3]) / 2, k };
+  return { cx: (bb[0] + bb[2]) / 2 - (pad + aw / 2 - frame.w / 2) / k, cy: (bb[1] + bb[3]) / 2 - (pad + ah / 2 - frame.h / 2) / k, k };
 }
-/** Platz rechts in der Hauptkarte freihalten, wenn Inset oder Legende dort liegen. */
-export function mainReserve(doc: Doc, v: Variant) {
-  const F = v.L.main; let r = 0;
-  const boxes: { x: number; y: number; h: number }[] = [];
+/** Platz in der Hauptkarte freihalten, wenn Inset oder Legende darin liegen: rechts (Spalte oben) oder unten (Legende unter breiten Gebieten). */
+export function mainReserve(doc: Doc, v: Variant): { right: number; bottom: number } {
+  const F = v.L.main; let right = 0, bottom = 0;
+  const boxes: { x: number; y: number; w: number; h: number }[] = [];
   if (doc.inset.visible) boxes.push(v.L.inset);
   const lp = legendPrims(doc, v.L.legend, F.w, v.ts); if (lp) boxes.push(lp.box);
+  const gap = Math.round(Math.min(F.w, F.h) * 0.015);
   for (const b of boxes) {
-    const insideY = b.y < F.y + F.h && b.y + b.h > F.y;
-    if (insideY && b.x > F.x + F.w * 0.5 && b.x < F.x + F.w) r = Math.max(r, F.x + F.w - b.x + Math.round(F.w * 0.015));
+    const insideY = b.y < F.y + F.h && b.y + b.h > F.y, insideX = b.x < F.x + F.w && b.x + b.w > F.x;
+    if (!insideY || !insideX) continue;
+    if (b.y > F.y + F.h * 0.55) bottom = Math.max(bottom, F.y + F.h - b.y + gap);
+    else if (b.x > F.x + F.w * 0.5) right = Math.max(right, F.x + F.w - b.x + gap);
   }
-  return r;
+  return { right, bottom };
 }
-export const fitMain = (doc: Doc, v: Variant) => { v.L.main.view = fitView(v.L.main, fokusBBox(doc), mainReserve(doc, v)); };
+export const fitMain = (doc: Doc, v: Variant) => { const r = mainReserve(doc, v); v.L.main.view = fitView(v.L.main, fokusBBox(doc), r.right, 0.035, r.bottom); };
 export const fitInset = (doc: Doc, v: Variant) => { v.L.inset.view = fitView(v.L.inset, insetBBox(doc), 0, 0.07); };
 
 export function makeLayout(doc: Doc, W: number, H: number, ts: number): Layout {
@@ -38,7 +42,7 @@ export function makeLayout(doc: Doc, W: number, H: number, ts: number): Layout {
   const tb = (kind: 'title' | 'subtitle' | 'source', w: number) => textBlock(doc, kind, w, ts).height;
   const srcW = W - 2 * m, srcH = doc.texts.source.visible ? tb('source', srcW) : 0;
   const blank: FrameBox = { x: 0, y: 0, w: 100, h: 100, view: { cx: 0, cy: 0, k: 1 } };
-  const L: Layout = { m, reserve: 0, title: { x: m, y: m, w: 100 }, subtitle: { x: m, y: m, w: 100 }, source: { x: m, y: H - m - srcH, w: srcW }, legend: { x: m, y: m }, main: { ...blank }, inset: { ...blank } };
+  const L: Layout = { m, reserve: 0, title: { x: m, y: m, w: 100 }, subtitle: { x: m, y: m, w: 100 }, source: { x: m, y: H - m - srcH, w: srcW }, legend: { x: m, y: m }, main: { ...blank }, inset: { ...blank }, logo: { x: m, y: m, w: 100 } };
   const titleH = (w: number) => doc.texts.title.visible ? tb('title', w) + Math.round(12 * s) : 0;
   const subH = (w: number) => doc.texts.subtitle.visible ? tb('subtitle', w) : 0;
   const bottom = H - m - srcH - Math.round(16 * s);
@@ -76,7 +80,11 @@ export function makeLayout(doc: Doc, W: number, H: number, ts: number): Layout {
   if (lp && !land && !tall) {
     L.legend.x = Math.min(L.legend.x, L.main.x + L.main.w - lp.box.w);
     L.legend.y = Math.min(L.legend.y, L.main.y + L.main.h - lp.box.h - Math.round(8 * s));
+    // Breite Gebiete (Berlin, Bayern …) füllen die Breite besser, wenn die Legende unten rechts steht statt in der Spalte rechts
+    const bb = fokusBBox(doc), wide = (bb[2] - bb[0]) / Math.max(1, bb[3] - bb[1]) > 0.95 * L.main.w / L.main.h;
+    if (wide && !doc.inset.visible) L.legend.y = L.main.y + L.main.h - lp.box.h - Math.round(8 * s);
   }
+  L.logo = defaultLogoBox(L, W, H, logoRatio(doc.logo?.asset));   // unten links in der Hauptkarte
   return L;
 }
 export function makeVariant(doc: Doc, preset: string, w?: number, h?: number): Variant {

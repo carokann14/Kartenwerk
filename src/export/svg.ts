@@ -9,7 +9,8 @@ import { areaFill, hatchMap, hatchPathD } from '../render/hatch';
 import { annItems, elName } from '../render/annotations';
 import { bubbleSet } from '../render/bubbles';
 import { activeVariant, labelPrims, layoutLabels, legendPrims, Prims, TextPrim, textPrims } from '../render/elements';
-import { FrameId, activeOverlays, frameMeshes, frameSets, insetIdx, insetLabel, overlayParts } from '../render/scene';
+import { logoExportSvg } from '../model/logo';
+import { FrameId, activeOverlays, frameMeshes, frameSets, insetIdx, insetLabel, krLinesLabel, overlayParts } from '../render/scene';
 
 const q1 = (v: number) => Math.round(v * 10);
 function relD(rings: number[][][], closed: boolean) {
@@ -181,7 +182,7 @@ function exportFrame(doc: Doc, id: FrameId, o: ExportOpts) {
   s += `<g id="${id}-Grenzen">`;
   const ln = (lines: Pt[][], color: string, w: number, name: string, dash = false) => { const d = lineOut(lines); return d ? `<path id="${id}-${name}" d="${d}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="${dash ? 'butt' : 'round'}"${dash ? ` stroke-dasharray="${(w * 3.2).toFixed(1)} ${(w * 2.4).toFixed(1)}"` : ''}/>` : ''; };
   if (doc.layers.wkLines) s += ln(arcsL(krOn ? me.wk : [...me.wk, ...me.kr]), st.wkLine, st.wkLineW, 'Gebietsgrenzen');
-  if (krOn) s += ln(arcsL(me.kr), st.krLine, st.krLineW, 'Kreisgrenzen');
+  if (krOn) s += ln(arcsL(me.kr), st.krLine, st.krLineW, svgId(krLinesLabel(g)));
   if (me.linesMode) { s += ln(arcsL(me.wkU), '#C8C2B6', 0.6, 'Umfeldgrenzen'); s += ln(arcsL(me.outline), '#B9B2A5', 0.8, 'Umfeldumriss'); }
   if (doc.layers.landLines) s += ln(arcsL(me.land), st.landLine, st.landLineW, 'Laendergrenzen');
   for (const ov of activeOverlays(doc)) { const og = GEO[ov.geoSet]; s += ln(overlayParts(g, og).flatMap(p => arcLines(p.set, p.arcs, lodTol(p.set, vw.k * 2 * Math.max(1, o.scale)))), ov.color, ov.width, 'Grenzen-' + svgId(og.meta.label), ov.dash); }
@@ -218,12 +219,13 @@ function exportFrame(doc: Doc, id: FrameId, o: ExportOpts) {
 export function buildExportSvg(doc: Doc, opts: Partial<ExportOpts> = {}, transparent = doc.background === 'transparent') {
   const o: ExportOpts = { merge: false, scale: 1, ...opts };
   const v = activeVariant(doc), W = v.w, H = v.h;
-  let s = `<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
   if (!transparent) s += `<rect id="Hintergrund" x="0" y="0" width="${W}" height="${H}" fill="#FFFFFF"/>`;
   s += exportFrame(doc, 'main', o);
   if (doc.inset.visible) s += exportFrame(doc, 'inset', o);
   const lp = legendPrims(doc); if (lp) s += `<g id="Legende">${primsToPaths(lp)}</g>`;
   for (const [kind, name] of [['title', 'Titel'], ['subtitle', 'Unterzeile'], ['source', 'Quelle']] as const) { const p = textPrims(doc, kind); if (p) s += `<g id="${name}">${primsToPaths(p)}</g>`; }
+  s += logoExportSvg(doc, v);   // SVG-Logo als Vektor, Rasterlogo als Bild
   const items = annItems(doc, v);
   if (items.length) {
     s += `<g id="Marker-und-Texte">`;

@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { loadGeo } from './geo/geo';
 import { loadFonts } from './lib/fonts';
 import { scheduleAutosave, setOverride } from './model/actions';
-import { Step, getDoc, getUI, redo, setUI, undo, update, useStore } from './model/store';
+import { Step, getDoc, getUI, redo, setUI, toast, undo, update, useStore } from './model/store';
+import { setLogoVisible } from './model/logo';
 import { Canvas, fitViewToCanvas } from './ui/Canvas';
 import { Icon } from './ui/common';
 import { ImportWizard } from './ui/ImportWizard';
+import { GeoImportWizard } from './ui/GeoImportWizard';
 import { RightPanel } from './ui/RightPanel';
 import { StartDialog } from './ui/StartDialog';
 import { TopBar } from './ui/TopBar';
@@ -65,7 +67,7 @@ const isTyping = (e: KeyboardEvent) => { const t = e.target as HTMLElement; retu
 function useShortcuts() {
   useEffect(() => {
     const kd = (e: KeyboardEvent) => {
-      const u = getUI(); if (u.start || u.wizard || !getDoc()) return;
+      const u = getUI(); if (u.start || u.wizard || u.geoWizard || !getDoc()) return;
       const mod = e.ctrlKey || e.metaKey, key = e.key.toLowerCase();
       if (mod && key === 'z' && !isTyping(e)) { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
       if (mod && key === 'y' && !isTyping(e)) { e.preventDefault(); redo(); return; }
@@ -92,6 +94,7 @@ function useShortcuts() {
         update(d => { const V = d.variants[d.active]; const o = V.ann[id] || [0, 0]; V.ann[id] = [o[0] + dx, o[1] + dy]; }, { key: 'nudge-' + id });
         return;
       }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && u.sel.kind === 'el' && u.sel.id === 'logo') { e.preventDefault(); if (getDoc().logo.visible) { setLogoVisible(false); toast('Logo ausgeblendet · einblenden unter Ebenen oder „Elemente“'); } return; }
       if ((e.key === 'Delete' || e.key === 'Backspace') && u.sel.kind === 'ann') { e.preventDefault(); removeEl(u.sel.id); return; }
       if ((e.key === 'Delete' || e.key === 'Backspace') && u.sel.kind === 'overlay') { e.preventDefault(); removeOverlay(u.sel.id); return; }
       if (mod && key === 'd' && u.sel.kind === 'ann') { e.preventDefault(); duplicateEl(u.sel.id); return; }
@@ -113,6 +116,7 @@ export function App() {
   const hasDoc = useStore(s => !!s.doc);
   const start = useStore(s => s.ui.start);
   const wizard = useStore(s => s.ui.wizard);
+  const geoWizard = useStore(s => s.ui.geoWizard);
   const panelOpen = useStore(s => s.ui.panelOpen);
   useShortcuts();
   useAutosave();
@@ -134,6 +138,7 @@ export function App() {
       </> : <div className="boot" />}
       {(start || !hasDoc) && <StartDialog />}
       {wizard && hasDoc && <ImportWizard />}
+      {geoWizard && hasDoc && <GeoImportWizard />}
       <Toast />
       <Busy />
     </div>

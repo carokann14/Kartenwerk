@@ -32,6 +32,11 @@ function computeMapping(from: GeoSet, to: GeoSet): Int32Array | null {
     return out;
   }
   if (from.memberOf) return null;
+  // ausdrücklich hinterlegte Zugehörigkeit (z. B. Berliner Wahlbezirk → Wahlkreis, Briefwahlbezirk, Bezirk, Bundestagswahlkreis)
+  if (from.areas.some(a => a.par && to.meta.id in a.par)) {
+    for (let i = 0; i < n; i++) { const k = from.areas[i].par?.[to.meta.id]; const t = k != null ? to.byId.get(k) : undefined; out[i] = t ?? -1; }
+    return out;
+  }
   // Länder: jede Ebene kennt ihr Land (auch Wahlkreise)
   if (to.meta.level === 'lan') {
     for (let i = 0; i < n; i++) { const t = to.byId.get(from.areas[i].bl); out[i] = t ?? -1; }

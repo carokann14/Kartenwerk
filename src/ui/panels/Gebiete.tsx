@@ -5,7 +5,8 @@ import { setFokus, setGeoSet, refitMain } from '../../model/actions';
 import { setUI, update, useStore } from '../../model/store';
 import type { Fokus } from '../../model/types';
 import { colorModel, fillOf } from '../../render/colorModel';
-import { fokusIdx, geoOf } from '../../render/scene';
+import { fokusIdx, geoOf, allLabel } from '../../render/scene';
+import { ImportGeoButton, UserGeoSection } from './Geodaten';
 import { sisterSets, translateFokus } from '../../geo/relate';
 import { Check, GeoPicker, Icon, Section, Seg } from '../common';
 import { RegionsSection } from './Regionen';
@@ -24,7 +25,7 @@ function normFokus(ids: string[], geoId: string): Fokus {
 }
 /** Kreise eines Landes, wenn die Ebene darunter liegt (Gemeinden, Gemeindeverbände) */
 const kreiseOf = (g: GeoSet, bl: string) => g.meta.level === 'krs' || !Object.keys(g.byKr).length ? null
-  : Object.keys(g.byKr).filter(k => k.startsWith(bl)).sort((a, b) => (g.krName[a] || a).localeCompare(g.krName[b] || b, 'de'));
+  : Object.keys(g.byKr).filter(k => g.areas[g.byKr[k][0]]?.bl === bl).sort((a, b) => (g.krName[a] || a).localeCompare(g.krName[b] || b, 'de'));
 
 export function PanelGebiete() {
   const doc = useStore(s => s.doc!);
@@ -70,7 +71,7 @@ export function PanelGebiete() {
     hits.sort((x, y) => x.pre - y.pre);
   }
   const crumbs: React.ReactNode[] = [];
-  crumbs.push(f.kind === 'de' ? <span key="de" className="cur">Deutschland</span> : <button key="de" onClick={() => setFokus({ kind: 'de' })}>Deutschland</button>);
+  crumbs.push(f.kind === 'de' ? <span key="de" className="cur">{allLabel(g)}</span> : <button key="de" onClick={() => setFokus({ kind: 'de' })}>{allLabel(g)}</button>);
   if (f.kind === 'land') crumbs.push(<span key="l" className="cur">{LAENDER[f.bl][0]}</span>);
   if (f.kind === 'kreis') crumbs.push(<button key="l" onClick={() => setFokus({ kind: 'land', bl: f.kr.slice(0, 2) })}>{LAENDER[f.kr.slice(0, 2)]?.[0]}</button>, <span key="k" className="cur">{g.krName[f.kr] || f.kr}</span>);
   if (f.kind === 'area') { const i = g.byId.get(f.id); if (i != null) { const a = g.areas[i]; if (g.meta.level !== 'lan' && !g.memberOf) crumbs.push(<button key="l" onClick={() => setFokus({ kind: 'land', bl: a.bl })}>{LAENDER[a.bl][0]}</button>);
@@ -81,12 +82,13 @@ export function PanelGebiete() {
     <>
       <Section title="Gebietsebene" aside="Stand">
         <GeoPicker value={doc.geoSet} onChange={id => { void setGeoSet(id); }} customs={customOptions(doc)} />
+        <div className="row-btns"><ImportGeoButton /></div>
         <details className="hint-more"><summary>Warum mehrere Stände?</summary><p className="hint">Gemeinde- und Kreisgrenzen ändern sich zum Jahreswechsel (Fusionen, neue kreisfreie Städte). Daten passen zu den Grenzen ihres Stichtags: die Bundestagswahl 2025 zum Stand 2025, Landtagswahlen 2026 und aktuelle Statistiken zu 2026. Beim Import schlägt Kartenwerk den passenden Stand vor.</p></details>
       </Section>
       <Section title="Fokus" aside="was die Karte zeigt">
         <div className="crumbs">{crumbs.map((c, k) => <React.Fragment key={k}>{k > 0 && <span className="sep">›</span>}{c}</React.Fragment>)}</div>
         <div className="level-chips" role="group" aria-label="Fokus als andere Ebene zeigen"><span className="hint">zeigen als</span>
-          {sisterSets(g, doc).map(x => <button key={x.id} className={'chip-btn' + (x.id === doc.geoSet ? ' on' : '') + (x.custom ? ' custom' : '')} aria-pressed={x.id === doc.geoSet} onClick={() => { if (x.id !== doc.geoSet) void setGeoSet(x.id); }}>{x.label}</button>)}</div>
+          {sisterSets(g, doc).map((x, k, all) => <React.Fragment key={x.id}>{x.region && all[k - 1]?.region !== x.region && <span className="hint chip-group">{x.region}:</span>}<button className={'chip-btn' + (x.id === doc.geoSet ? ' on' : '') + (x.custom ? ' custom' : '')} aria-pressed={x.id === doc.geoSet} aria-label={(x.region ? x.region + ': ' : '') + x.label} onClick={() => { if (x.id !== doc.geoSet) void setGeoSet(x.id); }}>{x.label}</button></React.Fragment>)}</div>
         <div className="search"><Icon.search /><input type="text" id="fokus-search" value={ui.search} onChange={e => setUI({ search: e.target.value })}  placeholder={g.meta.showNr ? 'Name, Nummer oder Land' : 'Name, Kreis, Schlüssel oder Land'} autoComplete="off" aria-label="Gebiet suchen" /></div>
         {q && <div className="tree">{hits.slice(0, 12).map(h => (
           <div key={h.t + h.key} className="tnode" onClick={() => { if (h.t === 'land') { expand(h.key, true); setFokus({ kind: 'land', bl: h.key }); } else if (h.t === 'kreis') { setUI({ expanded: { ...ui.expanded, [h.key.slice(0, 2)]: true, ['kr:' + h.key]: true } }); setFokus({ kind: 'kreis', kr: h.key }); } else if (h.t === 'other') { const o = GEO[h.set!]; setFokus(translateFokus({ kind: 'area', id: h.key }, o, g)); } else setFokus({ kind: 'area', id: h.key }); }}>
@@ -96,12 +98,13 @@ export function PanelGebiete() {
           {!hits.length && <p className="hint">Kein Treffer. Gesucht werden Name, {g.meta.showNr ? 'Nummer' : 'Kreis, Schlüssel'} und Land.</p>}
         </div>}
       </Section>
+      <UserGeoSection />
       <RegionsSection />
       <Section title="Gebietsbaum" aside={GEO[doc.geoSet].meta.label}>
         <p className="hint">Name anklicken = dorthin wechseln. Häkchen = Gebiete frei kombinieren, auch über Ländergrenzen.</p>
         <div className="tree">
           <div className={'tnode' + (f.kind === 'de' ? ' cur' : '')} onClick={() => setFokus({ kind: 'de' })}>
-            <span /><input type="checkbox" readOnly checked={f.kind === 'de'} tabIndex={-1} aria-label="Deutschland" /><span className="tl"><b>Deutschland</b></span><span className="ta">{g.areas.length}</span>
+            <span /><input type="checkbox" readOnly checked={f.kind === 'de'} tabIndex={-1} aria-label={allLabel(g)} /><span className="tl"><b>{allLabel(g)}</b></span><span className="ta">{g.areas.length}</span>
           </div>
           {g.memberOf ? g.all.map(i => { const a = g.areas[i]; return (
             <div key={a.id} data-tree-id={a.id} className={'tnode lvl1' + (f.kind === 'area' && f.id === a.id ? ' cur' : '') + (selIds.has(a.id) ? ' picked' : '')}>
@@ -109,7 +112,8 @@ export function PanelGebiete() {
               <span className="tl" title={a.name} onClick={() => setFokus({ kind: 'area', id: a.id })}>{a.name}{a.free ? <small> · {LAENDER[a.bl]?.[1]}</small> : null}</span>
               <span className="sw" style={{ background: fillOf(doc, cm, i) }} />
             </div>); }) : BL_ORDER.map(bl => {
-            const idx = g.byBl[bl] || []; const ids = idx.map(i => g.areas[i].id);
+            const idx = g.byBl[bl] || []; if (!idx.length) return null;   // Karten nur einer Region (Berlin, Importe)
+            const ids = idx.map(i => g.areas[i].id);
             const n = ids.filter(id => S.has(id)).length, open = ui.expanded[bl];
             return (
               <React.Fragment key={bl}>

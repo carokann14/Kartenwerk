@@ -12,6 +12,9 @@ export const PARTY_DEFS: PartyDef[] = [
   { key: 'BSW', label: 'BSW', color: '#7D254F', variants: [['BSW', 'BSW'], ['Bündnis Sahra Wagenknecht – Vernunft und Gerechtigkeit', 'BSW'], ['Bündnis Sahra Wagenknecht - Vernunft und Gerechtigkeit', 'BSW'], ['Bündnis Sahra Wagenknecht', 'BSW']] },
   { key: 'FW', label: 'Freie Wähler', color: '#F29400', variants: [['FREIE WÄHLER', 'FW'], ['Freie Wähler', 'FW'], ['FW', 'FW']] },
   { key: 'SSW', label: 'SSW', color: '#003C8F', variants: [['SSW', 'SSW'], ['Südschleswigscher Wählerverband', 'SSW']] },
+  { key: 'Volt', label: 'Volt', color: '#502379', variants: [['Volt', 'Volt'], ['Volt Deutschland', 'Volt']] },
+  { key: 'Tierschutz', label: 'Tierschutzpartei', color: '#00857C', variants: [['Tierschutzpartei', 'Tierschutz'], ['PARTEI MENSCH UMWELT TIERSCHUTZ', 'Tierschutz'], ['PARTEI MENSCH KLIMA TIERSCHUTZ', 'Tierschutz'], ['Partei Mensch Umwelt Tierschutz', 'Tierschutz']] },
+  { key: 'PARTEI', label: 'Die PARTEI', color: '#B5152B', variants: [['Die PARTEI', 'PARTEI'], ['PARTEI', 'PARTEI']] },
   { key: 'Sonstige', label: 'Sonstige', color: '#9A9A9A', variants: [['Übrige', 'Übrige'], ['Sonstige', 'Sonstige'], ['Andere', 'Andere']] },
 ];
 const INDEX = new Map<string, { key: string; short: string }>();

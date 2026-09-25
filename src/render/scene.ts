@@ -14,9 +14,13 @@ export function fokusIdx(doc: Doc, f: Fokus = doc.fokus): number[] {
   if (f.kind === 'area') { const i = g.byId.get(f.id); return i == null ? [] : [i]; }
   return f.ids.map(id => g.byId.get(id)).filter((x): x is number => x != null);
 }
+/** Grenzen der Gruppierungsebene: Kreise, in Berlin die Bezirke */
+export const krLinesLabel = (g: GeoSet) => (g.meta.level.startsWith('be-') ? 'Bezirksgrenzen' : 'Kreisgrenzen');
+/** Fokus „alles“: Deutschland, bei importierten Geodaten deren Name */
+export const allLabel = (g: GeoSet) => (g.meta.level === 'user' ? g.meta.label : g.meta.level.startsWith('be-') ? 'Berlin' : 'Deutschland');
 export function fokusLabel(doc: Doc, f: Fokus = doc.fokus): string {
   const g = geoOf(doc);
-  if (f.kind === 'de') return 'Deutschland';
+  if (f.kind === 'de') return allLabel(g);
   if (f.kind === 'land') return LAENDER[f.bl]?.[0] || f.bl;
   if (f.kind === 'kreis') return g.krName[f.kr] || 'Kreis ' + f.kr;
   if (f.kind === 'area') { const i = g.byId.get(f.id); return i == null ? f.id : areaLabel(g, i); }
@@ -122,7 +126,7 @@ export const activeOverlays = (doc: Doc) => (doc.overlays || []).filter(o => o.v
 /** Singular für Legende und Ebenenliste: „Wahlkreisgrenze“, „Kreisgrenze“ … */
 export function overlayName(geoSet: string, plural = false): string {
   const m = GEO[geoSet]?.meta; if (!m) return 'Grenzen';
-  if (m.base) return plural ? 'Grenzen: ' + m.label : m.label;
+  if (m.base || m.level === 'user') return plural ? 'Grenzen: ' + m.label : m.label;
   const S: Record<string, [string, string]> = { 'btw-wk': ['Wahlkreisgrenze', 'Wahlkreisgrenzen'], lan: ['Landesgrenze', 'Landesgrenzen'], rbz: ['Bezirksgrenze', 'Bezirksgrenzen'], krs: ['Kreisgrenze', 'Kreisgrenzen'], vwg: ['Grenze der Gemeindeverbände', 'Grenzen der Gemeindeverbände'], gem: ['Gemeindegrenze', 'Gemeindegrenzen'] };
   const n = S[m.level]?.[plural ? 1 : 0] || 'Grenzen';
   return m.level === 'btw-wk' ? `${n} ${m.year}` : n;

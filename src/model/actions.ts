@@ -7,10 +7,12 @@ import type { ColorRule, Doc, Fokus, Variant } from './types';
 import type { Dataset } from '../data/types';
 import { GEO, ensureGeo, geoLabel } from '../geo/geo';
 import { translateFokus } from '../geo/relate';
-import { isCustom, syncRegions } from '../geo/regions';
+import { syncRegions } from '../geo/regions';
+import { isVirtualGeo, syncUserGeo } from '../geo/userGeo';
 import { datasetFor, usableDatasets } from '../data/aggregate';
 import { fokusLabel } from '../render/scene';
 import { saveLocal } from './persist';
+import { withDefaultLogo } from './logo';
 
 export const refit = (d: Draft<Doc>, which: 'main' | 'inset' | 'both' = 'main') => {
   const plain = current(d) as Doc;
@@ -24,7 +26,7 @@ export const refit = (d: Draft<Doc>, which: 'main' | 'inset' | 'both' = 'main') 
 
 /** Gebietsstände bei Bedarf nachladen (Gemeinden usw. werden erst geladen, wenn man sie braucht). */
 export async function loadGeoSets(ids: (string | null | undefined)[]): Promise<boolean> {
-  const need = [...new Set(ids.filter((x): x is string => !!x && !GEO[x] && !isCustom(x)))];   // Regionen entstehen aus ihren Bausteinen
+  const need = [...new Set(ids.filter((x): x is string => !!x && !GEO[x] && !isVirtualGeo(x)))];   // Regionen und importierte Geodaten liegen im Projekt
   if (!need.length) return true;
   setUI({ busy: 'Lade ' + need.map(geoLabel).join(', ') + ' …' });
   try { await ensureGeo(need); return true; }
@@ -32,14 +34,14 @@ export async function loadGeoSets(ids: (string | null | undefined)[]): Promise<b
   finally { setUI({ busy: null }); }
 }
 export function newProject(geoSet = 'btw-wk-2025', name = 'Neues Projekt') {
-  const d = defaultDoc(geoSet); d.name = name;
-  if (GEO[geoSet]?.meta.keyLen) d.inset.visible = false;   // Detail-Lupen sind für Wahlkreise gedacht
+  const d = withDefaultLogo(defaultDoc(geoSet)); d.name = name;   // gemerktes Logo gleich mit Platz in der Grafik
+  if (GEO[geoSet] && GEO[geoSet].meta.level !== 'btw-wk') d.inset.visible = false;   // Detail-Lupen sind für Bundestagswahlkreise gedacht
   d.variants = [makeVariant(d, '4:5')];
   setDoc(d); setUI({ start: false, sel: { kind: 'graphic' }, mapMode: null, step: 'gebiete', panelOpen: true });
 }
 export async function openDoc(d0: Doc) {
   await loadGeoSets([d0.geoSet, ...(d0.datasets || []).map(x => x.geoSet), ...(d0.overlays || []).map(o => o.geoSet), ...(d0.regions || []).map(r => r.base)]);
-  syncRegions(d0);
+  syncUserGeo(d0); syncRegions(d0);
   if (!GEO[d0.geoSet]) throw new Error('Unbekannter Gebietsstand: ' + d0.geoSet);
   const d = normalizeDoc(d0);
   setDoc(d); setUI({ start: false, sel: { kind: 'graphic' }, mapMode: null });
@@ -87,10 +89,10 @@ export function addDataset(ds: Dataset, useIt = true) {
   update(d => {
     d.datasets.push(ds as Draft<Dataset>);
     if (useIt) {
-      if (d.geoSet !== ds.geoSet) { d.geoSet = ds.geoSet; d.fokus = { kind: 'de' }; if (GEO[ds.geoSet]?.meta.keyLen && d.inset.visible) d.inset.visible = false; }
+      if (d.geoSet !== ds.geoSet) { d.geoSet = ds.geoSet; d.fokus = { kind: 'de' }; if (GEO[ds.geoSet] && GEO[ds.geoSet].meta.level !== 'btw-wk' && d.inset.visible) d.inset.visible = false; }
       d.color = autoRule(ds);
       if (d.texts.title.text === 'Titel der Grafik' && ds.groups.some(g => g.parties)) {
-        const SING: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Regierungsbezirk', krs: 'Kreis', vwg: 'Gemeindeverband', gem: 'Gemeinde', custom: 'Region' };
+        const SING: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Regierungsbezirk', krs: 'Kreis', vwg: 'Gemeindeverband', gem: 'Gemeinde', custom: 'Region', 'be-wk': 'Wahlkreis', 'be-bez': 'Bezirk', 'be-bwb': 'Briefwahlbezirk', 'be-wbz': 'Wahlbezirk' };
         d.texts.title.text = 'Stärkste Partei je ' + (SING[GEO[ds.geoSet]?.meta.level] || 'Gebiet');
         const grp = ds.groups.find(g => g.parties && /Zweit/.test(g.label)) || ds.groups.find(g => g.parties);
         d.texts.subtitle.text = `${grp && !ds.name.includes(grp.label) ? grp.label + ', ' : ''}${ds.name}. Je kräftiger die Farbe, desto höher der Anteil der stärksten Partei.`;

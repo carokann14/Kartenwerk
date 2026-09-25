@@ -33,6 +33,11 @@ export interface ColorModel {
 }
 export const partyColor = (doc: Doc, key: string | null) => (key && doc.partyColors[key]) || partyDef(key || '')?.color || OTHER_GREY;
 export const partyLabel = (key: string) => partyDef(key)?.label || key;
+/** Union: in Landesdaten steht nur CDU oder nur CSU – dann diesen Namen zeigen statt „CDU/CSU“ */
+export function unionLabelOf(ds: Dataset, grp: Group): string {
+  const sh = [...new Set(grp.columns.map(id => ds.columns.find(c => c.id === id)).filter(c => c?.party === 'Union').map(c => c!.short || ''))];
+  return sh.length === 1 && sh[0] ? sh[0] : partyLabel('Union');
+}
 
 const cache = new WeakMap<Doc['color'], { deps: unknown[]; cm: ColorModel }>();
 export function colorModel(doc: Doc): ColorModel {
@@ -101,7 +106,7 @@ function compute(doc: Doc): ColorModel {
         else { cm.cls[i] = 0; cm.fills[i] = base; }
       }
       const colorOfKey = (key: string) => colParty.includes(key) ? partyColor(doc, key) : doc.categoryColors[key] || CATEGORICAL[Math.max(0, others.indexOf(key)) % CATEGORICAL.length];
-      finishEntries(doc, cm, key => ({ label: colParty.includes(key) ? partyLabel(key) : key, color: colorOfKey(key) }));
+      finishEntries(doc, cm, key => ({ label: colParty.includes(key) ? (key === 'Union' ? unionLabelOf(ds, grp) : partyLabel(key)) : key, color: colorOfKey(key) }));
       return cm;
     }
   } else if (rule.mode === 'wert') {
@@ -147,7 +152,7 @@ function compute(doc: Doc): ColorModel {
     finishEntries(doc, cm, key => ({ label: labelOf(key), color: colorOf(key) }));
     return cm;
   }
-  finishEntries(doc, cm, key => ({ label: partyLabel(key), color: partyColor(doc, key) }));
+  finishEntries(doc, cm, key => ({ label: key === 'Union' && cm.dataset && cm.group ? unionLabelOf(cm.dataset, cm.group) : partyLabel(key), color: partyColor(doc, key) }));
   return cm;
 }
 /** Veränderung: Wert A minus Vergleichswert B je Gebiet, zweiseitige Klassen um 0 */

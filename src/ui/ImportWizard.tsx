@@ -2,14 +2,17 @@ import React, { useMemo, useRef, useState } from 'react';
 import { loadBinary } from '../lib/assets';
 import { fmtInt, norm } from '../lib/util';
 import { readFile } from '../data/parse';
-import { EXAMPLES } from '../data/examples';
-import { PRESET_LABELS, wbzTitle, buildDataset, buildTable, defaultSettings, issueLabel, shortTitle, suggestGeoSetAsync } from '../data/pipeline';
+import { EXAMPLES, exampleAvailable } from '../data/examples';
+import { PRESET_LABELS, beTitle, wbzTitle, buildDataset, buildTable, defaultSettings, issueLabel, shortTitle, suggestGeoSetAsync } from '../data/pipeline';
 import type { Cell, Dataset, ImportSettings, PresetId, RawInput, Role } from '../data/types';
 import { GEO, areaContext, areaTitle } from '../geo/geo';
 import { addDataset, loadGeoSets, replaceDataset } from '../model/actions';
 import { getDoc, setUI, useStore } from '../model/store';
 import { Check, Field, GeoPicker, Icon, Note, NumInput, Seg } from './common';
 import { customOptions } from '../model/regionActions';
+import { BE_EBENEN } from '../data/berlin';
+const beStimmeOf = (t: string) => t.match(/(Erst|Zweit)stimmen/)?.[0] || 'Zweitstimmen';
+const beDatumOf = (t: string) => t.match(/Stand (\d\d\.\d\d\.\d{4})/)?.[1] || '';
 
 const STEPS = ['Datei', 'Aufbau', 'Spalten', 'Gebiete', 'Zuordnung'];
 const ROLE_LABEL: Record<Role, string> = { id: 'Kennung', name: 'Name', value: 'Wert', category: 'Kategorie', label: 'Beschriftung', ignore: 'ignorieren' };
@@ -43,7 +46,7 @@ export function ImportWizard() {
         s = b.preset === 'allgemein' ? { ...fresh, ...b, sheet: fresh.sheet } : { ...fresh, ...keep };
       } else s = defaultSettings(r);
       const t = buildTable(r, s);
-      if (!s.geoSet) { const sug = await suggestGeoSetAsync(t, s, fileName, customOptions(getDoc())); s.geoSet = sug.id; setGeoReason(sug.reason); }
+      if (!s.geoSet) { const sug = await suggestGeoSetAsync(t, s, fileName, customOptions(getDoc()), getDoc().geoSet); s.geoSet = sug.id; setGeoReason(sug.reason); }
       if (!(await loadGeoSets([s.geoSet]))) return;
       setRaw(r); setSt(s); setName(base ? base.name : shortTitle(s.sourceTitle, fileName.replace(/\.[^.]+$/, '')));
       setStep(base ? 5 : 2);
@@ -51,7 +54,7 @@ export function ImportWizard() {
   }
   const onFile = async (f: File | undefined) => { if (f) await load(f.name, await f.arrayBuffer()); };
   const set = (patch: Partial<ImportSettings>) => setSt(s => (s ? { ...s, ...patch } : s));
-  const setPreset = async (p: PresetId) => { if (!raw) return; const s = defaultSettings(raw, p, st?.sheet || 0); const t = buildTable(raw, s); const sug = await suggestGeoSetAsync(t, s, raw.fileName, customOptions(getDoc())); s.geoSet = sug.id; setGeoReason(sug.reason); if (await loadGeoSets([s.geoSet])) setSt(s); };
+  const setPreset = async (p: PresetId) => { if (!raw) return; const s = defaultSettings(raw, p, st?.sheet || 0); const t = buildTable(raw, s); const sug = await suggestGeoSetAsync(t, s, raw.fileName, customOptions(getDoc()), getDoc().geoSet); s.geoSet = sug.id; setGeoReason(sug.reason); if (await loadGeoSets([s.geoSet])) setSt(s); };
   const setGeo = async (id: string) => { if (await loadGeoSets([id])) set({ geoSet: id }); };
 
   const finish = () => {
@@ -110,9 +113,9 @@ function StepFile({ onFile, fileRef, load, err, raw, base }: { onFile: (f: File 
       </div>
       {!base && <div>
         <h3 className="wiz-h">Beispieldateien</h3>
-        <p className="hint">Amtliche Dateien der Bundeswahlleiterin zum Ausprobieren. Weitere gibt es auf bundeswahlleiterin.de unter „Ergebnisse › Open Data“.</p>
+        <p className="hint">Amtliche Dateien zum Ausprobieren: Bundeswahlleiterin (bundeswahlleiterin.de, „Ergebnisse › Open Data“) und Abgeordnetenhauswahl Berlin 2026 (wahlen-berlin.de, „Downloads“).</p>
         <div className="ex-list">
-          {EXAMPLES.map(x => <button key={x.file} className="ex" onClick={async () => load(x.name, await loadBinary(x.file))}><Icon.file /><span><b>{x.label}</b><span className="hint">{x.hint}</span></span></button>)}
+          {EXAMPLES.filter(exampleAvailable).map(x => <button key={x.file} className="ex" onClick={async () => load(x.name, await loadBinary(x.file))}><Icon.file /><span><b>{x.label}</b><span className="hint">{x.hint}</span></span></button>)}
         </div>
       </div>}
     </div>
@@ -145,6 +148,14 @@ function StepStructure({ raw, st, set, setPreset, table }: { raw: RawInput; st: 
         {st.preset === 'bwl-wbz' && <div className="card muted stack-8">
           <Field label="Gemeinsame Briefwahl"><Seg items={[['anteilig', 'Anteilig verteilen'], ['gemeinsam', 'Als eine Fläche']]} value={st.wbz?.briefwahl || 'anteilig'} onChange={v => set({ wbz: { briefwahl: v }, sourceTitle: wbzTitle((st.sourceTitle.match(/(\d{4})/) || [''])[0], v) })} /></Field>
           <p className="hint">Viele Ämter, Samt- und Verbandsgemeinden zählen die Briefwahl gemeinsam für mehrere Gemeinden aus. <b>Anteilig</b> verteilt diese Stimmen nach der Zahl der Wahlscheine je Gemeinde; die Werte sind dann teils geschätzt und in der Spalte „Briefwahl“ gekennzeichnet. <b>Als eine Fläche</b> zeigt nur amtliche Summen, die Gemeinden erscheinen dann zusammengefasst.</p>
+        </div>}
+        {st.preset === 'be-wbz' && <div className="card muted stack-8">
+          <Field label="Briefwahl"><Seg items={[['anteilig', 'Anteilig verteilen'], ['gemeinsam', 'Briefwahlbezirke']]} value={st.wbz?.briefwahl || 'anteilig'} onChange={v => set({ wbz: { briefwahl: v }, geoSet: v === 'anteilig' ? 'be-wbz-2026' : 'be-bwb-2026', sourceTitle: beTitle(beStimmeOf(st.sourceTitle), beDatumOf(st.sourceTitle), v) })} /></Field>
+          <p className="hint">In Berlin zählt je Briefwahlbezirk ein eigener Wahlvorstand, zuständig für mehrere Urnenwahlbezirke. <b>Anteilig</b> verteilt die Briefwahlstimmen nach den Wahlscheinen je Urnenwahlbezirk (geschätzt, feinste Karte). <b>Briefwahlbezirke</b> zeigt amtliche Summen aus Urnen- und Briefwahl, auf der Karte der Briefwahlbezirke.</p>
+        </div>}
+        {st.preset === 'be-gebiete' && <div className="card muted stack-8">
+          <Field label="Gebiete"><Seg items={BE_EBENEN.map(e => [e[0], e[1]] as [string, string])} value={st.be?.ebene || BE_EBENEN[0][0]} onChange={v => set({ be: { ebene: v }, geoSet: BE_EBENEN.find(e => e[0] === v)![2], sourceTitle: beTitle(beStimmeOf(st.sourceTitle), beDatumOf(st.sourceTitle), v) })} /></Field>
+          <p className="hint">Die Datei enthält Wahlkreise, Bezirke, Bundestagswahlkreise und Summen für Berlin. Übernommen wird eine Gebietsart.</p>
         </div>}
         {st.format === 'long' && L && <div className="card muted stack-8">
           <p className="hint">Im Langformat steht jeder Wert in einer eigenen Zeile. Die Tabelle wird so gedreht, dass jede Gruppe (z. B. Partei) eine Spalte wird.</p>

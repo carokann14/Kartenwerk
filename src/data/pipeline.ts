@@ -5,6 +5,7 @@ import { partyOf } from './parties';
 import { GEO, GEO_INDEX, GeoIndexEntry, LAENDER, ensureGeo, normKey } from '../geo/geo';
 import { norm, uid } from '../lib/util';
 import { WbzResult, aggregateWbz } from './wbz';
+import { BE_EBENEN, BE_PARTIES_2026, aggregateBeWbz, beDatum, beStimme, isBeGebiete, isBeWbz } from './berlin';
 
 export const PRESET_LABELS: Record<PresetId, string> = {
   auto: 'Automatisch erkennen',
@@ -13,6 +14,8 @@ export const PRESET_LABELS: Record<PresetId, string> = {
   'bwl-umrechnung': 'Bundeswahlleiterin · Umrechnung auf neue Wahlkreise',
   'bwl-kreis': 'Bundeswahlleiterin · Ergebnisse nach Kreisen',
   'bwl-wbz': 'Bundeswahlleiterin · Wahlbezirke → Gemeinden',
+  'be-wbz': 'Berlin · Abgeordnetenhauswahl nach Wahlbezirken',
+  'be-gebiete': 'Berlin · Abgeordnetenhauswahl nach Wahlkreisen und Bezirken',
   allgemein: 'Allgemeine Tabelle',
 };
 
@@ -31,6 +34,8 @@ export function detectPreset(raw: RawInput, sheet = 0): PresetId {
   if (findRow(c, r => r[0] === 'Wkr-Nr.' && r.includes('Wahlkreisname')) >= 0) return 'bwl-umrechnung';
   if (findRow(c, r => r.includes('Statistische Kennziffer') && r.some(x => /^Kreisfreie Stadt/.test(x))) >= 0) return 'bwl-kreis';
   if (findRow(c, r => r.includes('Kennziffer Briefwahlzugehörigkeit') && r.includes('Bezirksart')) >= 0) return 'bwl-wbz';
+  if (findRow(c, isBeWbz, 5) >= 0) return 'be-wbz';
+  if (findRow(c, isBeGebiete, 5) >= 0) return 'be-gebiete';
   return 'allgemein';
 }
 export function detectHeader(cells: Cell[][]) {
@@ -58,6 +63,9 @@ export function detectHeader(cells: Cell[][]) {
 }
 
 export const wbzTitle = (year: string, mode: 'anteilig' | 'gemeinsam') => `Bundestagswahl ${year}, Wahlbezirksstatistik nach Gemeinden` + (mode === 'anteilig' ? '; gemeinsam ausgezählte Briefwahl anteilig auf die Gemeinden verteilt (geschätzt)' : '; Gemeinden mit gemeinsamer Briefwahl zusammengefasst');
+/** Quellentitel Berlin: Stimme, Stand der Auszählung, Ebene bzw. Briefwahl */
+export const beTitle = (stimme: string, datum: string, how: string) => `Abgeordnetenhauswahl Berlin 2026, ${stimme}${datum ? `, Stand ${datum}` : ''}` + (
+  how === 'anteilig' ? ', nach Wahlbezirken; Briefwahl anteilig verteilt (geschätzt)' : how === 'gemeinsam' ? ', nach Briefwahlbezirken (Urnen- und Briefwahl)' : `, nach ${(BE_EBENEN.find(e => e[0] === how) || BE_EBENEN[0])[3]}`);
 export function defaultSettings(raw: RawInput, preset: PresetId = 'auto', sheet = 0): ImportSettings {
   const p = preset === 'auto' ? detectPreset(raw, sheet) : preset;
   const cells = raw.sheets[sheet].cells;
@@ -81,6 +89,13 @@ export function defaultSettings(raw: RawInput, preset: PresetId = 'auto', sheet 
     const copy = pre.find(x => /^\(c\)|^©/i.test(x)) || '© Die Bundeswahlleiterin';
     const y = (pre.find(x => /Bundestagswahl/.test(x)) || '').match(/(\d{4})/)?.[1] || '';
     return { ...base, headerStart: h, headerRows: 1, wbz: { briefwahl: 'anteilig' }, sourceTitle: wbzTitle(y, 'anteilig'), attribution: copy.replace(/^\(c\)\s*|^©\s*/i, '') };
+  }
+  if (p === 'be-wbz' || p === 'be-gebiete') {
+    const h = findRow(cells, p === 'be-wbz' ? isBeWbz : isBeGebiete, 5), H = rowText(cells[h]);
+    const first = cells[h + 1] || [], stimme = beStimme(first[H.indexOf('StimmArt')]), datum = beDatum(first[H.indexOf('Datum')]);
+    const attribution = 'Amt für Statistik Berlin-Brandenburg (CC BY 3.0 DE)';
+    if (p === 'be-wbz') return { ...base, headerStart: h, headerRows: 1, wbz: { briefwahl: 'anteilig' }, geoSet: 'be-wbz-2026', sourceTitle: beTitle(stimme, datum, 'anteilig'), attribution };
+    return { ...base, headerStart: h, headerRows: 1, be: { ebene: BE_EBENEN[0][0] }, geoSet: BE_EBENEN[0][2], sourceTitle: beTitle(stimme, datum, BE_EBENEN[0][0]), attribution };
   }
   if (p === 'bwl-kreis') {
     const h = findRow(cells, r => r.includes('Statistische Kennziffer'));
@@ -175,6 +190,12 @@ export interface TableResult {
   joint?: Record<string, string>;
 }
 const wbzCache = new WeakMap<Cell[][], Map<string, WbzResult>>();
+const beCache = new WeakMap<Cell[][], Map<string, ReturnType<typeof aggregateBeWbz>>>();
+function beWbzOf(cells: Cell[][], h: number, mode: 'anteilig' | 'gemeinsam') {
+  let m = beCache.get(cells); if (!m) { m = new Map(); beCache.set(cells, m); }
+  const k = h + mode; let r = m.get(k); if (!r) { r = aggregateBeWbz(cells, h, mode); m.set(k, r); }
+  return r;
+}
 function wbzOf(cells: Cell[][], h: number, mode: 'anteilig' | 'gemeinsam') {
   let m = wbzCache.get(cells); if (!m) { m = new Map(); wbzCache.set(cells, m); }
   const k = h + mode; let r = m.get(k); if (!r) { r = aggregateWbz(cells, h, mode); m.set(k, r); }
@@ -192,6 +213,21 @@ export function buildTable(raw: RawInput, st: ImportSettings): TableResult {
     const w = wbzOf(cells, st.headerStart, st.wbz?.briefwahl || 'anteilig');
     header = mergeHeaders([w.header], st.preset); body = w.body; joint = Object.keys(w.joint).length ? w.joint : undefined;
     notes.push(...w.notes);
+  } else if (st.preset === 'be-wbz') {
+    const w = beWbzOf(cells, st.headerStart, st.wbz?.briefwahl || 'anteilig');
+    header = w.header; body = w.body; joint = Object.keys(w.joint).length ? w.joint : undefined;
+    notes.push(...w.notes);
+  } else if (st.preset === 'be-gebiete') {
+    // eine Gebietsart auswählen, Parteien benennen, Prozentspalten weglassen
+    const H = header, ix = (n: string) => H.indexOf(n), ga = ix('Gebietsart'), ebene = st.be?.ebene || BE_EBENEN[0][0];
+    const stimme = beStimme(body[0]?.[ix('StimmArt')] ?? 2);
+    const rows = body.filter(r => txt(r[ga]) === ebene);
+    const pcols = H.map((c, i) => [c, i] as const).filter(([c, i]) => /^P\d+$/.test(c) && rows.some(r => Number(txt(r[i]).replace(',', '.')) > 0));
+    const keep: [string, number][] = [['Nummer', ix('Nummer')], ['Gebietsname', ix('Gebietsname')], ['Wahlberechtigte', ix('WberIns')], ['Wählende', ix('Waehler')], ['Wahlbeteiligung', ix('Waehlerp')], ['Wählende mit Wahlschein', ix('Wahlsch')], [`Gültige Stimmen · ${stimme}`, ix('Gueltig')], [`Ungültige Stimmen · ${stimme}`, ix('Unguelt')],
+      ...pcols.map(([c, i]) => [`${BE_PARTIES_2026[c] || 'Wahlvorschlag ' + c} · ${stimme}`, i] as [string, number])];
+    header = keep.map(k => k[0]);
+    body = rows.map(r => keep.map(([, i]) => (i >= 0 ? r[i] ?? null : null)));
+    notes.push(`${rows.length} Zeilen der Gebietsart „${ebene}“; ${pcols.length} Wahlvorschläge mit Stimmen.`);
   } else if (st.preset === 'bwl-kreis') {
     // Berlin steht getrennt nach West und Ost (11200, 11100); die Karte kennt nur das Land Berlin (11000)
     const ki = header.indexOf('Statistische Kennziffer');
@@ -249,6 +285,10 @@ function autoRoles(columns: Column[], body: Cell[][], preset: PresetId) {
     set(columns[0], 'id'); set(columns[1], 'name');
   } else if (preset === 'bwl-wbz') {
     set(by(c => c.label === 'Gemeindeschlüssel'), 'id'); set(by(c => c.label === 'Gemeinde'), 'name'); set(by(c => c.label === 'Briefwahl'), 'category'); set(by(c => c.label === 'Auszählungseinheit'), 'label'); set(by(c => c.label === 'Enthält'), 'ignore');
+  } else if (preset === 'be-wbz') {
+    set(columns[0], 'id'); set(by(c => c.label === 'Name'), 'name'); set(by(c => c.label === 'Bezirk'), 'category'); set(by(c => c.label === 'Briefwahl'), 'category'); set(by(c => c.label === 'Wahlkreis'), 'ignore');
+  } else if (preset === 'be-gebiete') {
+    set(by(c => c.label === 'Nummer'), 'id'); set(by(c => c.label === 'Gebietsname'), 'name');
   } else if (preset === 'bwl-kreis') {
     set(by(c => c.label === 'Statistische Kennziffer'), 'id'); set(by(c => /^Kreisfreie Stadt/.test(c.label)), 'name'); set(by(c => c.label === 'Land'), 'ignore');
   } else {
@@ -270,7 +310,7 @@ function autoGroups(columns: Column[], st: ImportSettings, kinds: Record<string,
   const vals = columns.filter(c => c.role === 'value' && c.kind === 'number');
   const out: Group[] = [];
   const NONPARTY = /^(Wahlberechtigte|Wählende|Wähler|Ungültig|Gültig|Nr|Wahlbeteiligung|Übrige|Briefwahl|Anteil)/;
-  if (st.preset === 'bwl-kerg' || st.preset === 'bwl-umrechnung' || st.preset === 'bwl-kerg2' || st.preset === 'bwl-kreis' || st.preset === 'bwl-wbz') {
+  if (st.preset === 'bwl-kerg' || st.preset === 'bwl-umrechnung' || st.preset === 'bwl-kerg2' || st.preset === 'bwl-kreis' || st.preset === 'bwl-wbz' || st.preset === 'be-wbz' || st.preset === 'be-gebiete') {
     const isParty = (c: Column) => {
       if (st.preset === 'bwl-kerg2') { const k = kinds[colGroup[c.label]] || ''; return k === 'Partei' || k.startsWith('Einzelbewerber'); }
       return !NONPARTY.test(c.label);
@@ -307,7 +347,7 @@ function isSummaryRow(r: Cell[], columns: Column[], st: ImportSettings) {
   if (st.preset === 'bwl-kerg') { const g = get(c => c.label.startsWith('gehört')); return !/^(0[1-9]|1[0-6])$/.test(g); }
   if (st.preset === 'bwl-umrechnung') { const n = Number(get(c => c.label === 'Wkr-Nr.')); return !(n >= 1 && n <= 299); }
   if (st.preset === 'bwl-kreis') return !/^\d{4,5}$/.test(get(c => c.label === 'Statistische Kennziffer'));
-  if (st.preset === 'bwl-wbz') return false;
+  if (st.preset === 'bwl-wbz' || st.preset === 'be-wbz' || st.preset === 'be-gebiete') return false;
   const name = get(c => c.role === 'name');
   if (/^(deutschland|bund|bundesgebiet|insgesamt|summe|gesamt|total)$/i.test(name)) return true;
   // Landesnamen sind Summenzeilen, außer die Kennung ist ein Kreis- oder Gemeindeschlüssel (Berlin, Hamburg)
@@ -366,10 +406,18 @@ export function suggestGeoSet(t: TableResult, st?: ImportSettings, fileName = ''
   return { id: best, reason };
 }
 /** Wie oben; ohne Kennungen werden die Namen auch mit Kreisen und Gemeinden verglichen (lädt deren Grenzen). */
-export async function suggestGeoSetAsync(t: TableResult, st?: ImportSettings, fileName = '', custom: { id: string; label: string }[] = []): Promise<{ id: string; reason: string }> {
+export async function suggestGeoSetAsync(t: TableResult, st?: ImportSettings, fileName = '', custom: { id: string; label: string }[] = [], current = ''): Promise<{ id: string; reason: string }> {
   const s1 = suggestGeoSet(t, st, fileName);
   const idc = t.columns.find(c => c.role === 'id'), nmc = t.columns.find(c => c.role === 'name');
-  if (idc || !nmc) return s1;
+  if (idc) {
+    // importierte Geodaten und eigene Regionen: passen die Kennungen, sind sie gemeint
+    const ids = t.body.filter((_, i) => !t.summary[i]).map(r => txt(r[+idc.id.slice(1)])).filter(Boolean);
+    const idRate = (id: string) => { const g = GEO[id]; if (!g || !ids.length) return 0; return ids.filter(x => g.byId.has(normKey(g.meta, x))).length / ids.length; };
+    // bei Gleichstand gewinnt die Karte, die gerade offen ist
+    for (const c of custom) { const r = idRate(c.id), r1 = idRate(s1.id); if (r >= 0.6 && (r > r1 || (r === r1 && c.id === current))) return { id: c.id, reason: `${Math.round(r * 100)} % der Kennungen passen zu „${c.label}“` }; }
+    return s1;
+  }
+  if (!nmc) return s1;
   const names = t.body.filter((_, i) => !t.summary[i]).map(r => norm(txt(r[+nmc.id.slice(1)]))).filter(Boolean);
   const hitRate = (id: string) => { const g = GEO[id]; if (!g) return 0; const set = new Set(g.areas.map(a => norm(a.name))); return names.filter(n => set.has(n)).length / Math.max(1, names.length); };
   // eigene Regionen des Projekts: passen die Namen, sind sie gemeint
@@ -490,5 +538,7 @@ export function shortTitle(title: string, fallback = 'Daten'): string {
     const rest = t.replace(/^Bundestagswahl \d{4},?\s*/, '');
     return `Bundestagswahl ${bt[1]}${rest && rest !== t ? ', ' + rest : ''}`;
   }
+  const ag = t.match(/^Abgeordnetenhauswahl Berlin (\d{4}), (Erst|Zweit)stimmen(?:, Stand ([\d.]+))?/);
+  if (ag) return `Abgeordnetenhauswahl Berlin ${ag[1]}, ${ag[2]}stimmen${ag[3] ? ', Stand ' + ag[3] : ''}`;
   return t.length > 70 ? t.slice(0, 67).replace(/\s+\S*$/, '') + ' …' : t;
 }

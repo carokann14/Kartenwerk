@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { EXAMPLES } from '../data/examples';
+import { EXAMPLES, berlinExample } from '../data/examples';
 import { GEO_INDEX } from '../geo/geo';
 import { GeoPicker } from './common';
 import { ProjectMeta, listLocal } from '../model/persist';
@@ -37,6 +37,7 @@ export function StartDialog() {
             <div className="row-btns start-more"><span className="hint">Weitere Beispiele:</span>
               <button className="btn small" disabled={busy} onClick={async () => { setBusy(true); await startExample(1); setBusy(false); }}>nach Kreisen</button>
               <button className="btn small" disabled={busy} onClick={async () => { setBusy(true); await startExample(2); setBusy(false); }}>nach Gemeinden</button>
+              <button className="btn small" disabled={busy} onClick={async () => { setBusy(true); await startExample(berlinExample()); setBusy(false); }}>Berlin 2026</button>
             </div>
             <div className="start-card">
               <Icon.gebiete size={22} />

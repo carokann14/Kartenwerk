@@ -11,12 +11,14 @@ import { setUI, update, useStore } from '../model/store';
 import type { Doc, Sel } from '../model/types';
 import { ColorModel, colorModel, legendTitleAuto, partyColor } from '../render/colorModel';
 import { activeVariant, layoutLabels, sourceText } from '../render/elements';
-import { INSET_DEFS, fokusLabel, geoOf, insetLabel, overlayName } from '../render/scene';
+import { INSET_DEFS, fokusLabel, geoOf, insetLabel, krLinesLabel, overlayName } from '../render/scene';
 import { Check, Field, Icon, Note, NumInput, Section, Seg } from './common';
 import { AreaHatch, HatchList, HatchProps, LegendProps } from './annotationsUI';
 import { AnnProps, ArrowIcon, MarkerIcon } from './elementsUI';
 import { BubbleSection } from './panels/Blasen';
 import { elName } from '../render/annotations';
+import { LogoProps } from './LogoUI';
+import { setLogoVisible } from '../model/logo';
 
 // ---------- Ebenen ----------
 function Layers() {
@@ -46,7 +48,7 @@ function Layers() {
       <Row lvl={1} s={{ kind: 'frame', id: 'main' }} icon={<Icon.frame />} name={<>Hauptkarte <small>{fokusLabel(doc)}</small></>} extra={v.locked.main ? <span className="lock" title="Ausschnitt gesperrt"><Icon.lock /></span> : null} />
       <Row lvl={2} s={{ kind: 'layer', id: 'wk' }} icon={<Icon.layer />} name={g.meta.levelLabel || g.meta.label} extra={<>{tog(L.wkFill, on => update(d => { d.layers.wkFill = on; }), 'F', 'Fläche')}{tog(L.wkLines, on => update(d => { d.layers.wkLines = on; }), 'G', 'Grenze')}{tog(L.wkLabels, on => update(d => { d.layers.wkLabels = on; }), 'B', 'Beschriftung')}</>} />
       <Row lvl={2} s={{ kind: 'layer', id: 'hatches' }} icon={<Icon.layer />} name={<>Schraffuren <small>{doc.hatches.length}</small></>} hidden={!L.hatches} extra={eye(L.hatches, on => update(d => { d.layers.hatches = on; }), 'Schraffuren')} />
-      {Object.keys(g.byKr).length > 0 && g.meta.level !== 'krs' && <Row lvl={2} s={{ kind: 'layer', id: 'kr' }} icon={<Icon.layer />} name="Kreisgrenzen" hidden={!L.krLines} extra={eye(L.krLines, on => update(d => { d.layers.krLines = on; }), 'Kreisgrenzen')} />}
+      {Object.keys(g.byKr).length > 0 && g.meta.level !== 'krs' && <Row lvl={2} s={{ kind: 'layer', id: 'kr' }} icon={<Icon.layer />} name={krLinesLabel(g)} hidden={!L.krLines} extra={eye(L.krLines, on => update(d => { d.layers.krLines = on; }), 'Kreisgrenzen')} />}
       <Row lvl={2} s={{ kind: 'layer', id: 'land' }} icon={<Icon.layer />} name="Ländergrenzen" hidden={!L.landLines} extra={eye(L.landLines, on => update(d => { d.layers.landLines = on; }), 'Ländergrenzen')} />
       {doc.overlays.map(o => <Row key={o.id} lvl={2} s={{ kind: 'overlay', id: o.id }} icon={<span className="ov-swatch" style={{ borderTopColor: o.color, borderTopStyle: o.dash ? 'dashed' : 'solid' }} />} name={<>{overlayName(o.geoSet, true)} <small>{GEO[o.geoSet]?.meta.stand ? GEO[o.geoSet]?.meta.stand?.slice(-4) : ''}</small></>} hidden={!o.visible} extra={eye(o.visible, on => updateOverlay(o.id, { visible: on }), overlayName(o.geoSet, true))} />)}
       {doc.bubbles && <Row lvl={2} s={{ kind: 'bubbles' }} icon={<span className="bub-icon" />} name={<>Blasen <small>{doc.datasets.find(d => d.id === doc.bubbles!.dataset)?.columns.find(c => c.id === doc.bubbles!.column)?.label || ''}</small></>} hidden={!doc.bubbles.visible} extra={eye(doc.bubbles.visible, on => update(d => { if (d.bubbles) d.bubbles.visible = on; }), 'Blasen')} />}
@@ -54,6 +56,7 @@ function Layers() {
       <Row lvl={2} s={{ kind: 'layer', id: 'neighbors' }} icon={<Icon.layer />} name={<>Nachbarstaaten <small>Kontext</small></>} hidden={!L.neighbors} extra={eye(L.neighbors, on => update(d => { d.layers.neighbors = on; }), 'Nachbarstaaten')} />
       <Row lvl={1} s={{ kind: 'frame', id: 'inset' }} icon={<Icon.frame />} name={<>Inset „{insetLabel(doc)}“</>} hidden={!doc.inset.visible} extra={eye(doc.inset.visible, on => { update(d => { d.inset.visible = on; d.inset.autoHidden = false; }); refitAfterInset(); }, 'Inset')} />
       <Row lvl={1} s={{ kind: 'el', id: 'legend' }} icon={<Icon.legend />} name="Legende" hidden={!doc.legend.visible} extra={eye(doc.legend.visible, on => update(d => { d.legend.visible = on; }), 'Legende')} />
+      <Row lvl={1} s={{ kind: 'el', id: 'logo' }} icon={<Icon.image />} name={<>Logo{!doc.logo.asset && <small>keines geladen</small>}</>} hidden={!doc.logo.visible || !doc.logo.asset} extra={doc.logo.asset ? eye(doc.logo.visible, setLogoVisible, 'Logo') : null} />
       {doc.els.map(el => <Row key={el.id} lvl={1} s={{ kind: 'ann', id: el.id }} icon={el.type === 'marker' ? <MarkerIcon m={el} s={14} /> : el.type === 'arrow' ? <ArrowIcon /> : <Icon.text />} name={elName(el)} hidden={!!el.hidden} extra={eye(!el.hidden, on => update(d => { const x = d.els.find(q => q.id === el.id); if (x) x.hidden = !on; }), elName(el))} />)}
     </div>
   );
@@ -180,10 +183,10 @@ function LayerProps({ doc, id }: { doc: Doc; id: 'wk' | 'labels' | 'kr' | 'land'
     <HatchList doc={doc} />
   </>;
   if (id === 'kr') return <>
-    <Head t="Kreisgrenzen" sub="aus den Gemeinden abgeleitet, gleicher Gebietsstand" />
+    <Head t={krLinesLabel(g)} sub={g.meta.level.startsWith('be-') ? 'aus den Wahlbezirken abgeleitet' : 'aus den Gemeinden abgeleitet, gleicher Gebietsstand'} />
     <Check checked={doc.layers.krLines} onChange={on => update(d => { d.layers.krLines = on; })}>Kräftiger zeichnen</Check>
     <Field label="Farbe · Stärke">{colW(st.krLine, st.krLineW, 'krLine', 'krLineW', 6)}</Field>
-    <p className="hint">Ausgeschaltet erscheinen Kreisgrenzen wie die übrigen Gebietsgrenzen.</p>
+    <p className="hint">Ausgeschaltet erscheinen die {krLinesLabel(g)} wie die übrigen Gebietsgrenzen.</p>
   </>;
   if (id === 'land') return <>
     <Head t="Ländergrenzen" sub="aus den Gebieten abgeleitet" />
@@ -251,6 +254,7 @@ function Props() {
       <Note icon={<Icon.lock />}>Der Pflichtteil ist fest. Weil die Geometrien vereinfacht sind, steht der Hinweis „vereinfacht“ darin.</Note>
     </>;
   } else if (s.kind === 'el' && s.id === 'legend') body = <LegendProps doc={doc} />;
+  else if (s.kind === 'el' && s.id === 'logo') body = <LogoProps doc={doc} />;
   else if (s.kind === 'hatch') body = <HatchProps doc={doc} id={s.id} />;
   else if (s.kind === 'ann') body = <AnnProps doc={doc} id={s.id} />;
   else if (s.kind === 'frame') body = <FrameProps doc={doc} id={s.id} />;

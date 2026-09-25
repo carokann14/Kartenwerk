@@ -18,6 +18,7 @@ import { bubbleSet } from '../render/bubbles';
 import { groupMetrics, areaRowIndex } from '../data/derive';
 import { LAENDER } from '../geo/geo';
 import { Icon } from './common';
+import { logoRatio, logoRect } from '../model/logo';
 
 // Zeiger-Zustand außerhalb des Dokuments (kein Neuzeichnen der Panels)
 const useHover = create<{ i: number | null; x: number; y: number }>(() => ({ i: null, x: 0, y: 0 }));
@@ -127,6 +128,8 @@ function Elements() {
     const p = textPrims(doc, kind);
     if (p) items.push(<g key={kind} data-el={kind}>{p.texts.map((t, k) => textEl(t, k))}<rect x={p.box.x} y={p.box.y} width={p.box.w} height={p.box.h} fill="#FFFFFF" fillOpacity={0} /></g>);
   }
+  const lr = logoRect(doc, activeVariant(doc));
+  if (lr) items.push(<g key="logo" data-el="logo"><image href={doc.logo.asset!.data} x={+lr.x.toFixed(1)} y={+lr.y.toFixed(1)} width={+lr.w.toFixed(1)} height={+lr.h.toFixed(1)} preserveAspectRatio="none" opacity={doc.logo.opacity < 1 ? doc.logo.opacity : undefined} /><rect x={lr.x} y={lr.y} width={lr.w} height={lr.h} fill="#FFFFFF" fillOpacity={0} /></g>);
   const lp = legendPrims(doc);
   if (lp) items.push(<g key="legend" data-el="legend">{lp.rects.map((r, k) => <rect key={'r' + k} x={+r.x.toFixed(1)} y={+r.y.toFixed(1)} width={+r.w.toFixed(1)} height={+r.h.toFixed(1)} fill={r.fill} />)}{(lp.paths || []).map((q, k) => <path key={'p' + k} d={q.d} fill={q.fill} stroke={q.stroke} strokeWidth={q.width} />)}{lp.texts.map((t, k) => textEl(t, 't' + k))}<rect x={lp.box.x} y={lp.box.y} width={lp.box.w} height={lp.box.h} fill="#FFFFFF" fillOpacity={0} /></g>);
   return <g>{items}</g>;
@@ -149,6 +152,7 @@ function Annotations() {
 function elementBox(doc: Doc, id: string) {
   const v = activeVariant(doc);
   if (id === 'legend') return legendPrims(doc)?.box || null;
+  if (id === 'logo') return logoRect(doc, v);
   if (id === 'main' || id === 'inset') { const F = v.L[id]; return { x: F.x, y: F.y, w: F.w, h: F.h }; }
   return textPrims(doc, id as 'title')?.box || null;
 }
@@ -158,7 +162,11 @@ function Overlay() {
   const v = activeVariant(doc), z = ui.view.z, a = 'var(--accent)';
   const out: React.ReactNode[] = [];
   const box = (b: { x: number; y: number; w: number; h: number }, key: string, dash: boolean, w = 1.5) => <rect key={key} x={b.x - 3 / z} y={b.y - 3 / z} width={b.w + 6 / z} height={b.h + 6 / z} fill="none" stroke={a} strokeWidth={w / z} strokeDasharray={dash ? `${5 / z} ${4 / z}` : undefined} />;
-  if (ui.sel.kind === 'el') { const b = elementBox(doc, ui.sel.id); if (b) out.push(box(b, 'el', false)); }
+  if (ui.sel.kind === 'el') {
+    const b = elementBox(doc, ui.sel.id); if (b) out.push(box(b, 'el', false));
+    // Logo: Griff oben rechts ändert die Größe, die Unterkante bleibt
+    if (b && ui.sel.id === 'logo') { const hs = 10 / z; out.push(<rect key="lh" data-logo-handle="1" x={b.x + b.w + 3 / z - hs / 2} y={b.y - 3 / z - hs / 2} width={hs} height={hs} fill="var(--panel)" stroke={a} strokeWidth={1.5 / z} style={{ pointerEvents: 'all', cursor: 'nesw-resize' }} />); }
+  }
   const draft = useArrowDraft();
   if (draft.a && draft.b) out.push(<line key="draft" x1={draft.a[0]} y1={draft.a[1]} x2={draft.b[0]} y2={draft.b[1]} stroke={a} strokeWidth={2 / z} strokeDasharray={`${6 / z} ${4 / z}`} />);
   if (ui.sel.kind === 'ann') {
@@ -328,6 +336,7 @@ export function Canvas() {
     if (e.button !== 0) return;
     if (u.tool === 'arrow') { const from = snapEnd(d, e.clientX, e.clientY, a, null); useArrowDraft.setState({ a: [a[0], a[1]], b: [a[0], a[1]] }); drag.current = { ...base, type: 'arrowNew', from }; return; }
     if (u.tool) { placeTool(d, u.tool, a); return; }
+    if (t.closest('[data-logo-handle]')) { const b = activeVariant(d).L.logo; drag.current = { ...base, type: 'logoSize', ow: b.w, bottom: b.y + b.w * logoRatio(d.logo.asset), r: logoRatio(d.logo.asset) }; return; }
     const ah = t.closest('[data-arrow-handle]') as SVGElement | null;
     if (ah) {
       const id = ah.dataset.id!, which = ah.dataset.arrowHandle as 'from' | 'to' | 'mid', el = d.els.find(x => x.id === id);
@@ -401,6 +410,11 @@ export function Canvas() {
       case 'map': { const id = dg.id as FrameId; const d = getDoc(); if (activeVariant(d).locked[id]) break; update(dd => { const V = dd.variants[dd.active].L[id].view; V.cx = (dg.ocx as number) - dx / V.k; V.cy = (dg.ocy as number) - dy / V.k; }, { history: false }); break; }
       case 'el': update(dd => { const L = dd.variants[dd.active].L[dg.id as 'title']; L.x = Math.round((dg.ox as number) + dx); L.y = Math.round((dg.oy as number) + dy); }, { history: false }); break;
       case 'frame': update(dd => { const F = dd.variants[dd.active].L[dg.id as FrameId]; F.x = Math.round((dg.ox as number) + dx); F.y = Math.round((dg.oy as number) + dy); }, { history: false }); break;
+      case 'logoSize': {
+        // entlang der Diagonale (rechts oben = größer); linke Kante und Unterkante bleiben
+        const r = dg.r as number, w = clamp((dg.ow as number) + (dx - dy * r) / (1 + r * r), 16, activeVariant(getDoc()).w);
+        update(dd => { const b = dd.variants[dd.active].L.logo; b.w = Math.round(w); b.y = Math.round((dg.bottom as number) - b.w * r); }, { history: false }); break;
+      }
       case 'resize': update(dd => { const F = dd.variants[dd.active].L[dg.id as FrameId]; F.w = Math.max(80, Math.round((dg.ow as number) + dx)); F.h = Math.max(80, Math.round((dg.oh as number) + dy)); }, { history: false }); break;
       case 'annAt': {
         if (dg.board) { const vv = activeVariant(getDoc()); const o = dg.oat as number[]; update(dd => { const el = dd.els.find(x => x.id === dg.id); if (el && el.type === 'text') el.at = [clamp(o[0] + dx / vv.w, 0, 1), clamp(o[1] + dy / vv.h, 0, 1)]; }, { history: false }); break; }
@@ -450,7 +464,7 @@ export function Canvas() {
         const steps: Fokus[] = [...(g.memberOf ? [] : [{ kind: 'land', bl: ar.bl } as Fokus]), ...(ar.kr && g.meta.level !== 'krs' ? [{ kind: 'kreis', kr: ar.kr } as Fokus] : []), { kind: 'area', id: ar.id }];
         const next = steps.find(f => { const n = fokusIdx(d, f).length; return n >= 1 && n < cur; });
         if (next) { if (next.kind === 'land') setUI({ expanded: { ...u.expanded, [ar.bl]: true } }); setFokus(next); toast('Fokus: ' + fokusLabel(getDoc())); }
-        else { const fs = finerSet(g); if (fs) void setGeoSet(fs, { from: { kind: 'area', id: ar.id } }); else toast('Feinste Ebene erreicht'); }
+        else { const fs = finerSet(g, ar.i); if (fs) void setGeoSet(fs, { from: { kind: 'area', id: ar.id } }); else toast('Feinste Ebene erreicht'); }
       }
       return;
     }

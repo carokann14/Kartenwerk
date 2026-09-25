@@ -2,6 +2,7 @@
 import type { Draft } from 'immer';
 import { GEO, GeoSet } from '../geo/geo';
 import { EG, isCustom } from '../geo/regions';
+import { UG } from '../geo/userGeo';
 import { relateIds } from '../geo/relate';
 import { uid } from '../lib/util';
 import { refit, setGeoSet } from './actions';
@@ -117,6 +118,9 @@ export async function editDivision(rsId: string) {
   if (!getDoc().overlays.some(o => o.geoSet === EG + rsId)) update(d => { d.overlays.push(regionOverlay(rsId)); });
   setUI({ regionEdit: rsId });
 }
-export const customOptions = (doc: Doc) => doc.regions.filter(rs => GEO[EG + rs.id]).map(rs => ({ id: EG + rs.id, label: rs.name, base: rs.base, sub: baseLabel(rs) }));
+export const customOptions = (doc: Doc) => [
+  ...(doc.geodata || []).filter(u => GEO[UG + u.id]).map(u => ({ id: UG + u.id, label: u.label, base: '', sub: `${u.raw.areas.length.toLocaleString('de-DE')} ${u.levelLabel}`, kind: 'import' as const })),
+  ...doc.regions.filter(rs => GEO[EG + rs.id]).map(rs => ({ id: EG + rs.id, label: rs.name, base: rs.base, sub: baseLabel(rs), kind: 'region' as const })),
+];
 export const divisionsFor = (doc: Doc, geoId: string) => doc.regions.filter(r => r.base === geoId);
 export const currentDivision = (doc: Doc) => isCustom(doc.geoSet) ? doc.regions.find(r => EG + r.id === doc.geoSet) || null : null;

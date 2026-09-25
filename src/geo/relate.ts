@@ -3,6 +3,7 @@
 // alles andere (Wahlkreise ↔ Gemeinden, verschiedene Stände) wird räumlich über Beschriftungspunkte bestimmt.
 import { GEO, GEO_INDEX, GeoSet, LAENDER, Pt, areaLabel, polysAt } from './geo';
 import { EG } from './regions';
+import { UG } from './userGeo';
 import type { Doc, Fokus } from '../model/types';
 
 /** Länder mit Regierungsbezirken (in den anderen steht auf dieser Ebene das Land) */
@@ -120,9 +121,13 @@ export function translateFokus(f: Fokus, from: GeoSet, to: GeoSet): Fokus {
 }
 
 /** Nächstfeinere Ebene für den Drilldown (gleicher Stand; Wahlkreise → Gemeinden) */
-export function finerSet(g: GeoSet): string | null {
+export function finerSet(g: GeoSet, i?: number): string | null {
   if (g.meta.base) return g.meta.base;   // Regionen → ihre Bausteine
   const L = g.meta.level;
+  // Berlin: Gemeinde Berlin → Bezirke → Wahlkreise → Wahlbezirke (Abgeordnetenhauswahl)
+  if (L === 'gem' && i != null && g.areas[i]?.bl === '11') { const b = GEO_INDEX.find(e => e.level === 'be-bez'); if (b) return b.id; }
+  const be: Record<string, string> = { 'be-bez': 'be-wk', 'be-wk': 'be-wbz', 'be-bwb': 'be-wbz' };
+  if (be[L]) return GEO_INDEX.find(e => e.level === be[L] && e.file === g.meta.file)?.id || null;
   const next: Record<string, string> = { lan: 'krs', rbz: 'krs', krs: 'gem', vwg: 'gem', 'btw-wk': 'gem' };
   const lv = next[L]; if (!lv) return null;
   const cands = GEO_INDEX.filter(e => e.level === lv).sort((a, b) => b.year - a.year);
@@ -130,8 +135,16 @@ export function finerSet(g: GeoSet): string | null {
   return (same || cands[0])?.id || null;
 }
 /** Passende Gebietsstände anderer Ebenen für die Schnellwahl (gleicher Stand bzw. Wahljahr) */
-export function sisterSets(g: GeoSet, doc?: Doc): { id: string; label: string; custom?: boolean }[] {
-  const year = g.meta.year, out: { id: string; label: string; custom?: boolean }[] = [];
+const fokusIdxOf = (doc: Doc, g: GeoSet): number[] => {
+  const f = doc.fokus;
+  if (f.kind === 'de') return g.all;
+  if (f.kind === 'land') return g.byBl[f.bl] || [];
+  if (f.kind === 'kreis') return g.byKr[f.kr] || [];
+  if (f.kind === 'area') { const i = g.byId.get(f.id); return i == null ? [] : [i]; }
+  return f.ids.map(id => g.byId.get(id)).filter((x): x is number => x != null);
+};
+export function sisterSets(g: GeoSet, doc?: Doc): { id: string; label: string; custom?: boolean; region?: string }[] {
+  const year = g.meta.year, out: { id: string; label: string; custom?: boolean; region?: string }[] = [];
   const LBL: Record<string, string> = { 'btw-wk': 'Wahlkreise', lan: 'Länder', rbz: 'Bezirke', krs: 'Kreise', vwg: 'Verbände', gem: 'Gemeinden' };
   for (const lv of ['btw-wk', 'lan', 'rbz', 'krs', 'vwg', 'gem']) {
     const c = GEO_INDEX.filter(e => e.level === lv);
@@ -139,7 +152,15 @@ export function sisterSets(g: GeoSet, doc?: Doc): { id: string; label: string; c
     const pick = (lv === g.meta.level ? c.find(e => e.id === g.meta.id) : null) || (g.meta.file ? c.find(e => e.file === g.meta.file) : null) || c.find(e => e.year === year) || [...c].sort((a, b) => b.year - a.year)[0];
     out.push({ id: pick.id, label: LBL[lv] || pick.levelLabel });
   }
-  // eigene Einteilungen auf derselben Kartengrundlage
+  // Regionen wie Berlin: nur, wenn Karte oder Fokus dort liegen
+  const bls = doc ? new Set(fokusIdxOf(doc, g).map(i => g.areas[i].bl)) : new Set<string>();
+  for (const e of GEO_INDEX) {
+    if (!e.region || out.some(o => o.id === e.id)) continue;
+    const bl = Object.entries(LAENDER).find(([, v]) => v[0] === e.region)?.[0];
+    if (e.file === g.meta.file || (bl && bls.size === 1 && bls.has(bl))) out.push({ id: e.id, label: e.levelLabel.replace(' (Abgeordnetenhaus)', ' AGH'), region: e.region });
+  }
+  // importierte Geodaten (räumlich zugeordnet) und eigene Einteilungen auf derselben Kartengrundlage
+  for (const u of doc?.geodata || []) if (GEO[UG + u.id]) out.push({ id: UG + u.id, label: u.label, custom: true });
   for (const rs of doc?.regions || []) { const b = GEO[rs.base]; if (b && (b.meta.file === g.meta.file || rs.base === g.meta.id)) out.push({ id: EG + rs.id, label: rs.name, custom: true }); }
   return out;
 }

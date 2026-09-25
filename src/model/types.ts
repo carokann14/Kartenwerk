@@ -41,6 +41,7 @@ export interface Layout {
   m: number; reserve: number;
   title: Box; subtitle: Box; source: Box; legend: { x: number; y: number };
   main: FrameBox; inset: FrameBox;
+  logo: Box;                                 // x, y = linke obere Ecke, w = Breite in px; die Höhe folgt dem Seitenverhältnis des Logos
 }
 export interface Variant {
   id: string; preset: string; w: number; h: number; ts: number;
@@ -71,10 +72,22 @@ export interface Doc {
   overlays: Overlay[];                      // Grenzen anderer Ebenen über der Karte (z. B. Wahlkreise über Gemeinden)
   bubbles: Bubbles | null;                  // Blasen aus Tabellenwerten
   regions: RegionSet[];                     // eigene Einteilungen (Regionen aus Gebieten eines Gebietsstands)
+  geodata: UserGeo[];                       // importierte Geodaten (GeoJSON, Shapefile …), als Gebietsstand „ug:<id>“
   inset: { visible: boolean; preset: string; autoHidden: boolean };
+  logo: LogoSettings;                       // eigenes Logo (Bilddatei im Projekt), Platz je Variante in Layout.logo
   background: 'white' | 'transparent';
   variants: Variant[];
   active: number;
+}
+/** Logo als Bilddatei: SVG (entschärft) oder PNG/JPG (zugeschnitten, höchstens 1600 px breit) */
+export interface LogoAsset { name: string; mime: 'image/svg+xml' | 'image/png' | 'image/jpeg'; data: string; w: number; h: number }   // data = Data-URL, w/h = Seitenverhältnis (px bzw. viewBox)
+export interface LogoSettings { visible: boolean; asset: LogoAsset | null; opacity: number }
+/** Importierte Geodaten: Flächen im Kartenwerk-Raster (Bögen deltakodiert), mit Quelle und Einstellungen des Imports */
+export interface UserGeo {
+  id: string; label: string; levelLabel: string;        // Name der Ebene, z. B. „Wahlbezirke Berlin 2026“ / „Wahlbezirke“
+  attribution: string; source: string;                   // Quellenvermerk (Pflicht), Fundstelle
+  year: number; fileName: string; crs: string; tol: number; idField: string | null; nameField: string | null; created: string;
+  raw: { arcs: number[][]; areas: import('../geo/geo').RawArea[]; keyLen?: number };
 }
 /** Eigene Einteilung: Regionen aus Bausteinen eines Gebietsstands (z. B. Kreise → „Ruhrgebiet“).
  *  Als Karte ist sie der Gebietsstand „eg:<id>“; Daten der Bausteine werden je Region addiert. */
@@ -147,7 +160,7 @@ export type AnnEl = MarkerEl | TextBoxEl | ArrowEl;
 export type Sel =
   | { kind: 'graphic' }
   | { kind: 'area'; ids: string[] }
-  | { kind: 'el'; id: 'title' | 'subtitle' | 'source' | 'legend' }
+  | { kind: 'el'; id: 'title' | 'subtitle' | 'source' | 'legend' | 'logo' }
   | { kind: 'frame'; id: 'main' | 'inset' }
   | { kind: 'layer'; id: 'wk' | 'labels' | 'kr' | 'land' | 'water' | 'neighbors' | 'hatches' }
   | { kind: 'hatch'; id: string }

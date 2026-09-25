@@ -1,6 +1,7 @@
 import { DEFAULT_PARTY_COLORS } from '../data/parties';
 import type { Doc, HatchStyle, LegendSettings } from './types';
 import { uid } from '../lib/util';
+import { defaultLogo, defaultLogoBox, logoRatio } from './logo';
 
 export const PRESETS: Record<string, { w: number; h: number; label: string }> = {
   '4:5': { w: 1080, h: 1350, label: 'Instagram 4:5' },
@@ -52,7 +53,9 @@ export function defaultDoc(geoSet = 'btw-wk-2025'): Doc {
     overlays: [],
     bubbles: null,
     regions: [],
+    geodata: [],
     inset: { visible: true, preset: 'berlin', autoHidden: false },
+    logo: defaultLogo(),
     background: 'white',
     variants: [],
     active: 0,
@@ -82,6 +85,8 @@ export function normalizeDoc(d: Doc): Doc {
   x.overlays ||= [];
   if (x.bubbles === undefined) x.bubbles = null;
   x.regions ||= [];
-  for (const v of x.variants) v.ann ||= {};
+  x.geodata ||= [];
+  x.logo = { ...defaultLogo(), ...(x.logo || {}) };
+  for (const v of x.variants) { v.ann ||= {}; v.L.logo ||= defaultLogoBox(v.L, v.w, v.h, logoRatio(x.logo.asset)); }
   return x;
 }

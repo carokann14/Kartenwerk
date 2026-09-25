@@ -12,6 +12,7 @@ import { markerD } from './annotations';
 import { LegEntry, legendModel } from './legend';
 import { bubbleLegendValues, bubbleSet, circleD } from './bubbles';
 import { FrameId, frameSets, geoOf, jointOf } from './scene';
+import { logoRect } from '../model/logo';
 
 export interface TextPrim { x: number; y: number; text: string; cut: Cut; size: number; color: string; anchor: 'start' | 'middle' | 'end'; halo?: boolean }
 export interface RectPrim { x: number; y: number; w: number; h: number; fill: string }
@@ -217,6 +218,8 @@ export function layoutLabels(doc: Doc, id: FrameId, v: Variant = activeVariant(d
     if (doc.inset.visible) { const I = v.L.inset; obstacles.push([I.x - F.x - 6, I.y - F.y - 6, I.x - F.x + I.w + 6, I.y - F.y + I.h + 6]); }
     const lp = legendPrims(doc, v.L.legend, v.L.main.w, v.ts);
     if (lp) { const b = lp.box; obstacles.push([b.x - F.x - 6, b.y - F.y - 6, b.x - F.x + b.w + 6, b.y - F.y + b.h + 6]); }
+    const lr = logoRect(doc, v);
+    if (lr) obstacles.push([lr.x - F.x - 6, lr.y - F.y - 6, lr.x - F.x + lr.w + 6, lr.y - F.y + lr.h + 6]);
   }
   // Gebiete, die im Maßstab kleiner als eine Zeile sind, bekommen keine automatische Beschriftung (wichtig bei Gemeinden)
   const minA = (size * 1.6) ** 2 / (F.view.k * F.view.k) * g.meta.grid * g.meta.grid / 1e6;
