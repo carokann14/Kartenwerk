@@ -11,7 +11,7 @@ import { syncRegions } from '../geo/regions';
 import { isVirtualGeo, syncUserGeo } from '../geo/userGeo';
 import { datasetFor, usableDatasets } from '../data/aggregate';
 import { fokusLabel } from '../render/scene';
-import { autoSourceText, textBlock } from '../render/elements';
+import { activeVariant, autoSourceText, textBlock } from '../render/elements';
 import { saveLocal } from './persist';
 import { withDefaultLogo } from './logo';
 
@@ -39,7 +39,9 @@ export async function loadGeoSets(ids: (string | null | undefined)[]): Promise<b
 export function newProject(geoSet = 'btw-wk-2025', name = 'Neues Projekt') {
   const d = withDefaultLogo(defaultDoc(geoSet)); d.name = name;   // gemerktes Logo gleich mit Platz in der Grafik
   if (GEO[geoSet] && GEO[geoSet].meta.level !== 'btw-wk') d.inset.visible = false;   // Detail-Lupen sind für Bundestagswahlkreise gedacht
-  d.variants = [makeVariant(d, '4:5')];
+  const v0 = makeVariant(d, '4:5');
+  v0.guides = { x: [80, 1000], y: [80, 1270], visible: true };   // Standardformat 1080×1350: 80 px Rand als Hilfslinien vorgegeben
+  d.variants = [v0];
   setDoc(d); setUI({ start: false, sel: { kind: 'graphic' }, mapMode: null, step: 'gebiete', panelOpen: true });
 }
 export async function openDoc(d0: Doc) {
@@ -228,6 +230,29 @@ export function removeVariant(k: number) {
 export function resizeVariant(w: number, h: number) {
   update(d => { const plain = current(d) as Doc; const copy: Variant = JSON.parse(JSON.stringify(plain.variants[plain.active])); copy.w = w; copy.h = h; relayout(plain, copy); d.variants[d.active] = copy as Draft<Variant>; });
 }
+
+// ---------- Hilfslinien (nur im Editor, nicht im Export) ----------
+export function addGuide(axis: 'x' | 'y', pos: number) {
+  update(d => { d.variants[d.active].guides[axis].push(pos); });
+}
+export function setGuide(axis: 'x' | 'y', idx: number, pos: number) {
+  update(d => { const arr = d.variants[d.active].guides[axis]; if (arr[idx] != null) arr[idx] = pos; }, { key: 'guide-' + axis + idx });
+}
+export function removeGuide(axis: 'x' | 'y', idx: number) {
+  update(d => { d.variants[d.active].guides[axis].splice(idx, 1); });
+}
+export function clearGuides() {
+  update(d => { const g = d.variants[d.active].guides; g.x = []; g.y = []; });   // Sichtbarkeit bleibt wie eingestellt
+}
+/** Hilfslinien ein-/ausblenden, ohne sie zu löschen (Tastenkürzel Umschalt+R). */
+export function setGuidesVisible(on: boolean) {
+  update(d => { d.variants[d.active].guides.visible = on; });
+}
+export function toggleGuidesVisible() {
+  const on = !activeVariant(getDoc()).guides.visible;
+  setGuidesVisible(on);
+  toast(on ? 'Hilfslinien eingeblendet' : 'Hilfslinien ausgeblendet');
+}
 export function setTextScale(ts: number) {
   update(d => { d.variants[d.active].ts = ts; }, { key: 'ts' });
 }
@@ -261,9 +286,4 @@ export function resetSourceText() {
   const before = getDoc();
   update(d => { d.texts.source.text = null; delete d.texts.source.autoBase; keepSourceBottom(before, d); });
   toast('Quellenzeile wieder automatisch');
-}
-/** Eigenen Zusatz zum automatischen Vermerk ändern */
-export function setSourceExtra(extra: string) {
-  const before = getDoc();
-  update(d => { d.texts.source.extra = extra; keepSourceBottom(before, d); }, { key: 'src-extra' });
 }

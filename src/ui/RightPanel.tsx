@@ -6,7 +6,7 @@ import { areaRowIndex, groupMetrics } from '../data/derive';
 import { GEO, areaContext, areaTitle } from '../geo/geo';
 import { removeOverlay, updateOverlay } from '../model/overlays';
 import { LABEL_PRESETS, PRESETS } from '../model/defaults';
-import { refitAfterInset, refitFrame, setFokus, relayoutActive, removeVariant, resizeVariant, resetSourceText, setOverride, setSourceExtra, setSourceText, setTextScale } from '../model/actions';
+import { addGuide, clearGuides, refitAfterInset, refitFrame, setFokus, relayoutActive, removeGuide, removeVariant, resizeVariant, resetSourceText, setGuide, setGuidesVisible, setOverride, setSourceText, setTextScale } from '../model/actions';
 import { setUI, update, useStore } from '../model/store';
 import type { Doc, Sel } from '../model/types';
 import { ColorModel, colorModel, legendTitleAuto, partyColor } from '../render/colorModel';
@@ -131,8 +131,9 @@ function TextProps({ doc, id }: { doc: Doc; id: 'title' | 'subtitle' }) {
     <Field label="Größe (px)"><NumInput min={8} max={200} value={t.size} onChange={n => update(d => { d.texts[id].size = n; }, { key: 'size-' + id })} ariaLabel="Schriftgröße" /></Field>
     <Field label="Schnitt"><select value={t.cut} onChange={e => { const c = e.target.value as Cut; update(d => { d.texts[id].cut = c; }); }} aria-label="Schriftschnitt">{(['display', 'bold', 'text'] as Cut[]).map(c => <option key={c} value={c}>Merriweather · {CUTS[c].label}</option>)}</select></Field>
     <Field label="Farbe"><Seg items={[['ink', 'Dunkel'], ['inkSoft', 'Grau']]} value={t.color} onChange={c => update(d => { d.texts[id].color = c; })} /></Field>
+    <Field label="Ausrichtung"><Seg items={[['start', 'Links'], ['middle', 'Mitte'], ['end', 'Rechts']]} value={t.align} onChange={a => update(d => { d.texts[id].align = a; })} /></Field>
     <Field label="Breite (px)"><NumInput min={100} max={v.w} value={Math.round(v.L[id].w)} onChange={n => update(d => { d.variants[d.active].L[id].w = n; }, { key: 'w-' + id })} ariaLabel="Breite des Textblocks" /></Field>
-    <p className="hint">Doppelklick auf den Text in der Grafik springt hierher. Ziehen auf der Arbeitsfläche verschiebt den Block, Pfeiltasten verschieben um 1 px, mit Umschalt um 10 px.</p>
+    <p className="hint">Doppelklick auf den Text in der Grafik springt hierher. Ziehen auf der Arbeitsfläche verschiebt den Block, an den seitlichen Griffen ändert sich die Breite. Pfeiltasten verschieben um 1 px, mit Umschalt um 10 px.</p>
   </>;
 }
 
@@ -147,12 +148,12 @@ function SourceProps({ doc }: { doc: Doc }) {
       : <p className="hint">Wenn du den Text änderst, gilt deine Fassung. Sie wird dann bei neuen Daten nicht mehr angepasst; „Automatisch erzeugen“ holt den Vermerk zurück.</p>}
     {changed && <Note kind="warn">Seit deiner Bearbeitung haben sich Daten oder Ebene geändert. Automatisch stünde jetzt da: „{auto}“</Note>}
     {missing.length > 0 && <Note kind="warn">Im Text fehlt der Lizenzvermerk für {missing.map((m, k) => <React.Fragment key={m}>{k ? ' und ' : ''}„{m}“</React.Fragment>)}. Offene Daten (CC BY, dl-de/by) verlangen die Nennung der Quelle.</Note>}
-    {!manual && <Field stack label="Eigener Zusatz" htmlFor="p-extra"><textarea id="p-extra" rows={2} value={t.extra} placeholder="z. B. Grafik: Name" onChange={e => setSourceExtra(e.target.value)} /></Field>}
     <Field label="Größe (px)"><NumInput min={8} max={40} value={t.size} onChange={n => update(d => { d.texts.source.size = n; }, { key: 'src-size' })} ariaLabel="Schriftgröße der Quellenzeile" /></Field>
     <Field label="Schnitt"><select value={t.cut} onChange={e => { const c = e.target.value as Cut; update(d => { d.texts.source.cut = c; }); }} aria-label="Schriftschnitt der Quellenzeile">{(['display', 'bold', 'text'] as Cut[]).map(c => <option key={c} value={c}>Merriweather · {CUTS[c].label}</option>)}</select></Field>
     <Field label="Farbe"><Seg items={[['ink', 'Dunkel'], ['inkSoft', 'Grau']]} value={t.color} onChange={c => update(d => { d.texts.source.color = c; })} /></Field>
+    <Field label="Ausrichtung"><Seg items={[['start', 'Links'], ['middle', 'Mitte'], ['end', 'Rechts']]} value={t.align} onChange={a => update(d => { d.texts.source.align = a; })} /></Field>
     <Field label="Breite (px)"><NumInput min={100} max={v.w} value={Math.round(v.L.source.w)} onChange={n => update(d => { d.variants[d.active].L.source.w = n; }, { key: 'w-source' })} ariaLabel="Breite der Quellenzeile" /></Field>
-    <p className="hint">Doppelklick auf die Quellenzeile in der Grafik springt hierher. Ziehen verschiebt sie, Pfeiltasten um 1 px, mit Umschalt um 10 px.</p>
+    <p className="hint">Doppelklick auf die Quellenzeile in der Grafik springt hierher. Ziehen verschiebt sie, an den seitlichen Griffen ändert sich die Breite. Pfeiltasten um 1 px, mit Umschalt um 10 px.</p>
   </>;
 }
 
@@ -251,8 +252,37 @@ function GraphicProps({ doc }: { doc: Doc }) {
       <button className="btn small" onClick={relayoutActive}>Layout neu anordnen</button>
       {doc.variants.length > 1 && <button className="btn small ghost danger" onClick={() => removeVariant(doc.active)}><Icon.trash /> Variante entfernen</button>}
     </div>
+    <Section title="Hilfslinien" aside={<span className="hint">nicht im Export</span>}>
+      <p className="hint">Zum Ausrichten beim Gestalten. Erscheinen nicht in PNG- oder SVG-Exporten. Elemente rasten beim Ziehen daran ein.</p>
+      <Check checked={v.guides.visible} onChange={setGuidesVisible}>Hilfslinien anzeigen <span className="kbd">Umschalt</span>+<span className="kbd">R</span></Check>
+      <Field label="Senkrecht (X)" stack>
+        <div className="stack-8">
+          {v.guides.x.map((gx, k) => (
+            <div className="row-btns nowrap" key={'gx' + k}>
+              <NumInput min={0} max={v.w} value={gx} onChange={n => setGuide('x', k, Math.round(clamp(n, 0, v.w)))} ariaLabel={`Senkrechte Hilfslinie ${k + 1}, Abstand vom linken Rand in Pixeln`} />
+              <span className="hint">px vom linken Rand</span>
+              <button className="btn icon ghost small" onClick={() => removeGuide('x', k)} aria-label="Hilfslinie entfernen" title="Hilfslinie entfernen"><Icon.x size={13} /></button>
+            </div>
+          ))}
+          <button className="btn small ghost" onClick={() => addGuide('x', Math.round(v.w / 2))}><Icon.plus /> Senkrechte Hilfslinie</button>
+        </div>
+      </Field>
+      <Field label="Waagerecht (Y)" stack>
+        <div className="stack-8">
+          {v.guides.y.map((gy, k) => (
+            <div className="row-btns nowrap" key={'gy' + k}>
+              <NumInput min={0} max={v.h} value={gy} onChange={n => setGuide('y', k, Math.round(clamp(n, 0, v.h)))} ariaLabel={`Waagerechte Hilfslinie ${k + 1}, Abstand vom oberen Rand in Pixeln`} />
+              <span className="hint">px vom oberen Rand</span>
+              <button className="btn icon ghost small" onClick={() => removeGuide('y', k)} aria-label="Hilfslinie entfernen" title="Hilfslinie entfernen"><Icon.x size={13} /></button>
+            </div>
+          ))}
+          <button className="btn small ghost" onClick={() => addGuide('y', Math.round(v.h / 2))}><Icon.plus /> Waagerechte Hilfslinie</button>
+        </div>
+      </Field>
+      {(v.guides.x.length + v.guides.y.length) > 0 && <button className="btn small ghost danger" onClick={clearGuides}><Icon.trash /> Alle Hilfslinien entfernen</button>}
+    </Section>
     <Section title="Bedienung">
-      <p className="hint">Klick auf ein Gebiet wählt es aus, <span className="kbd">Umschalt</span> + Klick ergänzt. <b>Doppelklick auf die Karte</b> startet den Kartenmodus. Titel, Legende und Rahmen lassen sich ziehen. <span className="kbd">Strg</span>+<span className="kbd">Z</span> macht rückgängig, <span className="kbd">Leertaste</span> + Ziehen verschiebt die Ansicht, <span className="kbd">Strg</span>+<span className="kbd">0</span> passt sie ein.</p>
+      <p className="hint">Klick auf ein Gebiet wählt es aus, <span className="kbd">Umschalt</span> + Klick ergänzt. <b>Doppelklick auf die Karte</b> startet den Kartenmodus. Titel, Legende und Rahmen lassen sich ziehen. <span className="kbd">Strg</span>+<span className="kbd">Z</span> macht rückgängig, <span className="kbd">Leertaste</span> + Ziehen verschiebt die Ansicht, <span className="kbd">Strg</span>+<span className="kbd">0</span> passt sie ein, <span className="kbd">Umschalt</span>+<span className="kbd">R</span> blendet die Hilfslinien ein oder aus.</p>
     </Section>
   </>;
 }

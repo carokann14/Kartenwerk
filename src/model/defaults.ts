@@ -6,6 +6,7 @@ import { defaultLogo, defaultLogoBox, logoRatio } from './logo';
 export const PRESETS: Record<string, { w: number; h: number; label: string }> = {
   '4:5': { w: 1080, h: 1350, label: 'Instagram 4:5' },
   '1:1': { w: 1080, h: 1080, label: 'Quadrat 1:1' },
+  '3:4': { w: 1080, h: 1440, label: 'Feed / Karussell 3:4' },
   '9:16': { w: 1080, h: 1920, label: 'Story / Reel 9:16' },
   '16:9': { w: 1600, h: 900, label: 'X / Bluesky 16:9' },
   LinkedIn: { w: 1200, h: 627, label: 'LinkedIn 1,91:1' },
@@ -40,9 +41,9 @@ export function defaultDoc(geoSet = 'btw-wk-2025'): Doc {
     },
     labels: { preset: 'partei', template: '{partei}\n{anteil}', size: 13, halo: true },
     texts: {
-      title: { text: 'Titel der Grafik', visible: true, size: 54, cut: 'display', color: 'ink' },
-      subtitle: { text: 'Unterzeile: Was zeigt die Karte, welche Wahl, welcher Stand?', visible: true, size: 24, cut: 'text', color: 'inkSoft' },
-      source: { visible: true, extra: '', size: 13, cut: 'text', color: 'inkSoft' },
+      title: { text: 'Titel der Grafik', visible: true, size: 54, cut: 'display', color: 'ink', align: 'start' },
+      subtitle: { text: 'Unterzeile: Was zeigt die Karte, welche Wahl, welcher Stand?', visible: true, size: 24, cut: 'text', color: 'inkSoft', align: 'start' },
+      source: { visible: true, size: 13, cut: 'text', color: 'inkSoft', align: 'start' },
     },
     legend: defaultLegend(),
     categoryColors: {},
@@ -87,6 +88,8 @@ export function normalizeDoc(d: Doc): Doc {
   x.regions ||= [];
   x.geodata ||= [];
   x.logo = { ...defaultLogo(), ...(x.logo || {}) };
-  for (const v of x.variants) { v.ann ||= {}; v.L.logo ||= defaultLogoBox(v.L, v.w, v.h, logoRatio(x.logo.asset)); }
+  x.texts.title.align ||= 'start'; x.texts.subtitle.align ||= 'start'; x.texts.source.align ||= 'start';
+  delete (x.texts.source as unknown as Record<string, unknown>).extra;   // „Eigener Zusatz“ entfallen (Text lässt sich direkt bearbeiten)
+  for (const v of x.variants) { v.ann ||= {}; v.guides ||= { x: [], y: [], visible: true }; v.guides.visible ??= true; v.L.logo ||= defaultLogoBox(v.L, v.w, v.h, logoRatio(x.logo.asset)); }
   return x;
 }

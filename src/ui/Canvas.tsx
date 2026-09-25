@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import React, { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { create } from 'zustand';
 import { CONTEXT, GEO, GeoSet, areaContext, areaD, areaTitle, arcLines, bboxOfIds, linesD, lodTol } from '../geo/geo';
 import { CUTS, measureW } from '../lib/fonts';
@@ -22,6 +22,8 @@ import { logoRatio, logoRect } from '../model/logo';
 
 // Zeiger-Zustand außerhalb des Dokuments (kein Neuzeichnen der Panels)
 const useHover = create<{ i: number | null; x: number; y: number }>(() => ({ i: null, x: 0, y: 0 }));
+// Aktive Hilfslinie(n) beim Ziehen (für das Hervorheben in `Guides`, kein Teil des Dokuments)
+const useSnapGuides = create<{ x: number | null; y: number | null }>(() => ({ x: null, y: null }));
 
 export function textEl(t: TextPrim, key?: React.Key) {
   const halo = t.halo ? { stroke: '#FFFFFF', strokeWidth: +(t.size * 0.24).toFixed(2), strokeLinejoin: 'round' as const, paintOrder: 'stroke' } : {};
@@ -156,6 +158,65 @@ function elementBox(doc: Doc, id: string) {
   if (id === 'main' || id === 'inset') { const F = v.L[id]; return { x: F.x, y: F.y, w: F.w, h: F.h }; }
   return textPrims(doc, id as 'title')?.box || null;
 }
+/** Hilfslinien: nur eine Bearbeitungshilfe (wie Rand um die Karte), nie Teil von SVG- oder PNG-Export, die beide unabhängig vom DOM aus dem Dokument gebaut werden.
+ *  Beim Ziehen (Textkasten, Kartenrahmen) rastet die Linie ein, an der gerade eingerastet ist, wird sie hervorgehoben (dick, durchgezogen statt gestrichelt). */
+function Guides() {
+  const doc = useStore(s => s.doc!);
+  const z = useStore(s => s.ui.view.z);
+  const snap = useSnapGuides();
+  const v = activeVariant(doc), gd = v.guides;
+  if (!gd || !gd.visible || (!gd.x.length && !gd.y.length)) return null;
+  const sw = 1 / z, dash = `${4 / z} ${3 / z}`;
+  const hitX = (x: number) => snap.x != null && Math.abs(snap.x - x) < 0.01;
+  const hitY = (y: number) => snap.y != null && Math.abs(snap.y - y) < 0.01;
+  return (
+    <svg id="guides" width={v.w} height={v.h} viewBox={`0 0 ${v.w} ${v.h}`} aria-hidden="true">
+      {gd.x.map((x, k) => <line key={'gx' + k} x1={x} y1={0} x2={x} y2={v.h} stroke={hitX(x) ? 'var(--accent)' : 'var(--guide)'} strokeWidth={hitX(x) ? 1.6 / z : sw} strokeDasharray={hitX(x) ? undefined : dash} />)}
+      {gd.y.map((y, k) => <line key={'gy' + k} x1={0} y1={y} x2={v.w} y2={y} stroke={hitY(y) ? 'var(--accent)' : 'var(--guide)'} strokeWidth={hitY(y) ? 1.6 / z : sw} strokeDasharray={hitY(y) ? undefined : dash} />)}
+    </svg>
+  );
+}
+/** Kante/Mitte eines gezogenen Elements an den Hilfslinien einrasten (wie in Canva): `edges` sind die unverschobenen Kanten- und Mittelwerte
+ *  (z. B. links/rechts/Mitte), `delta` die rohe Zeigerverschiebung auf dieser Achse. Liegt eine Kante nach Anwenden von `delta` nah an einer
+ *  Hilfslinie (Fangradius in Bildschirm-Pixeln, unabhängig vom Zoom), wird `delta` so korrigiert, dass die Kante genau auf der Linie liegt. */
+const SNAP_PX = 6;
+function snapDelta(edges: number[], guides: number[], z: number, delta: number): { d: number; hit: number | null } {
+  if (!guides.length) return { d: delta, hit: null };
+  const th = SNAP_PX / z;
+  let best: { corr: number; dist: number; hit: number } | null = null;
+  for (const e of edges) for (const g of guides) {
+    const dist = Math.abs(g - (e + delta));
+    if (dist <= th && (!best || dist < best.dist)) best = { corr: g - (e + delta), dist, hit: g };
+  }
+  return best ? { d: delta + best.corr, hit: best.hit } : { d: delta, hit: null };
+}
+
+/** Zwei Griffe links/rechts, um die Breite eines Textblocks per Ziehen zu ändern (Höhe folgt dem Text und ist nicht frei wählbar). `kind` unterscheidet Textblock (Titel/Unterzeile/Quellenzeile) von Textkasten in den Handlern. */
+function widthHandles(b: { x: number; y: number; w: number; h: number }, z: number, a: string, kind: 'textw' | 'annw', id: string) {
+  const hs = 10 / z, cy = b.y + b.h / 2;
+  return (['w', 'e'] as const).map(dir => {
+    const cx = dir === 'w' ? b.x : b.x + b.w;
+    const common = { x: cx - hs / 2, y: cy - hs / 2, width: hs, height: hs, fill: 'var(--panel)', stroke: a, strokeWidth: 1.5 / z, style: { pointerEvents: 'all' as const, cursor: 'ew-resize' } };
+    return kind === 'textw'
+      ? <rect key={'tw' + dir} data-textw-handle={id} data-dir={dir} {...common} />
+      : <rect key={'aw' + dir} data-annw-handle={id} data-dir={dir} {...common} />;
+  });
+}
+const FRAME_HANDLES: { dir: string; cursor: string }[] = [
+  { dir: 'nw', cursor: 'nwse-resize' }, { dir: 'n', cursor: 'ns-resize' }, { dir: 'ne', cursor: 'nesw-resize' },
+  { dir: 'w', cursor: 'ew-resize' }, { dir: 'e', cursor: 'ew-resize' },
+  { dir: 'sw', cursor: 'nesw-resize' }, { dir: 's', cursor: 'ns-resize' }, { dir: 'se', cursor: 'nwse-resize' },
+];
+/** Acht Griffe rund um einen Rahmen (Karte): Ecken ändern beide Maße, Kanten nur eine. */
+function frameHandles(b: { x: number; y: number; w: number; h: number }, id: string, z: number, a: string) {
+  const hs = 10 / z;
+  return FRAME_HANDLES.map(({ dir, cursor }) => {
+    const cx = dir.includes('w') ? b.x : dir.includes('e') ? b.x + b.w : b.x + b.w / 2;
+    const cy = dir.includes('n') ? b.y : dir.includes('s') ? b.y + b.h : b.y + b.h / 2;
+    return <rect key={'fh' + dir} data-handle={id} data-dir={dir} x={cx - hs / 2} y={cy - hs / 2} width={hs} height={hs} fill="var(--panel)" stroke={a} strokeWidth={1.5 / z} style={{ pointerEvents: 'all', cursor }} />;
+  });
+}
+
 function Overlay() {
   const doc = useStore(s => s.doc!);
   const ui = useStore(s => s.ui);
@@ -166,6 +227,8 @@ function Overlay() {
     const b = elementBox(doc, ui.sel.id); if (b) out.push(box(b, 'el', false));
     // Logo: Griff oben rechts ändert die Größe, die Unterkante bleibt
     if (b && ui.sel.id === 'logo') { const hs = 10 / z; out.push(<rect key="lh" data-logo-handle="1" x={b.x + b.w + 3 / z - hs / 2} y={b.y - 3 / z - hs / 2} width={hs} height={hs} fill="var(--panel)" stroke={a} strokeWidth={1.5 / z} style={{ pointerEvents: 'all', cursor: 'nesw-resize' }} />); }
+    // Titel/Unterzeile/Quellenzeile: seitliche Griffe ändern die Breite, die Höhe folgt dem Text
+    if (b && (ui.sel.id === 'title' || ui.sel.id === 'subtitle' || ui.sel.id === 'source')) out.push(...widthHandles(b, z, a, 'textw', ui.sel.id));
   }
   const draft = useArrowDraft();
   if (draft.a && draft.b) out.push(<line key="draft" x1={draft.a[0]} y1={draft.a[1]} x2={draft.b[0]} y2={draft.b[1]} stroke={a} strokeWidth={2 / z} strokeDasharray={`${6 / z} ${4 / z}`} />);
@@ -180,8 +243,10 @@ function Overlay() {
       return <svg id="overlay" width={v.w} height={v.h} viewBox={`0 0 ${v.w} ${v.h}`}>{out}</svg>;
     }
     annItems(doc, v).filter(it => it.id === sid).forEach((it, k) => {
-      out.push(box({ x: it.body[0], y: it.body[1], w: it.body[2] - it.body[0], h: it.body[3] - it.body[1] }, 'ab' + k, false));
+      const b = { x: it.body[0], y: it.body[1], w: it.body[2] - it.body[0], h: it.body[3] - it.body[1] };
+      out.push(box(b, 'ab' + k, false));
       if (it.label) out.push(box({ x: it.label[0], y: it.label[1], w: it.label[2] - it.label[0], h: it.label[3] - it.label[1] }, 'al' + k, true, 1));
+      if (it.el.type === 'text') out.push(...widthHandles(b, z, a, 'annw', sid));
     });
   }
   if (ui.sel.kind === 'frame' || ui.mapMode) {
@@ -189,7 +254,7 @@ function Overlay() {
     const b = elementBox(doc, id);
     if (b) {
       out.push(box(b, 'fr', !ui.mapMode, ui.mapMode ? 3 : 1.5));
-      if (!ui.mapMode) { const hs = 10 / z; out.push(<rect key="h" data-handle={id} x={b.x + b.w - hs / 2} y={b.y + b.h - hs / 2} width={hs} height={hs} fill="var(--panel)" stroke={a} strokeWidth={1.5 / z} style={{ pointerEvents: 'all', cursor: 'nwse-resize' }} />); }
+      if (!ui.mapMode) out.push(...frameHandles(b, id, z, a));
     }
   }
   return <svg id="overlay" width={v.w} height={v.h} viewBox={`0 0 ${v.w} ${v.h}`}>{out}</svg>;
@@ -287,6 +352,8 @@ export function Canvas() {
   const space = useRef(false);
   const v = activeVariant(doc);
   const cm = colorModel(doc);
+  const [noDataHint, setNoDataHint] = useState(true);
+  useEffect(() => { if (cm.dataset) setNoDataHint(true); }, [!!cm.dataset]);
 
   useLayoutEffect(() => { fitViewToCanvas(); }, [doc.active, v.w, v.h, panelOpen]);
   useEffect(() => { const r = () => fitViewToCanvas(); window.addEventListener('resize', r); return () => window.removeEventListener('resize', r); }, []);
@@ -337,6 +404,20 @@ export function Canvas() {
     if (u.tool === 'arrow') { const from = snapEnd(d, e.clientX, e.clientY, a, null); useArrowDraft.setState({ a: [a[0], a[1]], b: [a[0], a[1]] }); drag.current = { ...base, type: 'arrowNew', from }; return; }
     if (u.tool) { placeTool(d, u.tool, a); return; }
     if (t.closest('[data-logo-handle]')) { const b = activeVariant(d).L.logo; drag.current = { ...base, type: 'logoSize', ow: b.w, bottom: b.y + b.w * logoRatio(d.logo.asset), r: logoRatio(d.logo.asset) }; return; }
+    const twh = t.closest('[data-textw-handle]') as SVGElement | null;
+    if (twh) { const id = twh.dataset.textwHandle as 'title' | 'subtitle' | 'source', dir = twh.dataset.dir as 'w' | 'e', L = activeVariant(d).L[id]; drag.current = { ...base, type: 'textWidth', id, dir, ow: L.w, ox: L.x }; return; }
+    const awh = t.closest('[data-annw-handle]') as SVGElement | null;
+    if (awh) {
+      const id = awh.dataset.annwHandle!, dir = awh.dataset.dir as 'w' | 'e', el = d.els.find(x => x.id === id);
+      if (el && el.type === 'text') {
+        const vv = activeVariant(d), it = annItems(d, vv).find(x => x.id === id);
+        const ow = it ? it.body[2] - it.body[0] : (el.width || 120);
+        const dflt = el.anchor === 'map' && el.leader ? it : null;
+        const oOff = vv.ann[id] || (dflt ? [dflt.body[0] - dflt.anchor[0], dflt.body[1] - dflt.anchor[1]] : [0, 0]);
+        drag.current = { ...base, type: 'annWidth', id, dir, ow, oOff };
+      }
+      return;
+    }
     const ah = t.closest('[data-arrow-handle]') as SVGElement | null;
     if (ah) {
       const id = ah.dataset.id!, which = ah.dataset.arrowHandle as 'from' | 'to' | 'mid', el = d.els.find(x => x.id === id);
@@ -356,7 +437,7 @@ export function Canvas() {
         if (el.type === 'arrow') { drag.current = { ...base, type: 'none' }; return; }
         if (el.type === 'marker' && part === 'body') drag.current = { ...base, type: 'annAt', id, oat: [...el.at], k: vv.L[fr === 'inset' ? 'inset' : 'main'].view.k };
         else if (el.type === 'text' && el.anchor === 'board' && part === 'body' && e.altKey) drag.current = { ...base, type: 'annAt', id, oat: [...el.at], board: true };
-        else { const dflt = el.type === 'text' && el.anchor === 'map' && el.leader ? annItems(d, vv).find(it => it.id === id) : null; const off = vv.ann[id] || (dflt ? [dflt.body[0] - dflt.anchor[0], dflt.body[1] - dflt.anchor[1]] : [0, 0]); drag.current = { ...base, type: 'annOff', id, o: [...off] }; }
+        else { const it0 = annItems(d, vv).find(x => x.id === id); const dflt = el.type === 'text' && el.anchor === 'map' && el.leader ? it0 : null; const off = vv.ann[id] || (dflt ? [dflt.body[0] - dflt.anchor[0], dflt.body[1] - dflt.anchor[1]] : [0, 0]); drag.current = { ...base, type: 'annOff', id, o: [...off], body0: it0 ? [...it0.body] : null }; }
         return;
       }
     }
@@ -368,8 +449,9 @@ export function Canvas() {
     } else if (u.mapMode && !inFrame(d, u.mapMode, a)) {
       setUI({ mapMode: null }); return onPointerDown(e);
     } else if (t.closest('[data-handle]')) {
-      const id = (t.closest('[data-handle]') as SVGElement).dataset.handle as FrameId, F = activeVariant(d).L[id];
-      drag.current = { ...base, type: 'resize', id, ow: F.w, oh: F.h };
+      const hEl = t.closest('[data-handle]') as SVGElement;
+      const id = hEl.dataset.handle as FrameId, dir = (hEl.dataset.dir || 'se') as string, F = activeVariant(d).L[id];
+      drag.current = { ...base, type: 'resize', id, dir, ow: F.w, oh: F.h, ox: F.x, oy: F.y };
     } else if (t.closest('g.lbl')) {
       const key = (t.closest('g.lbl') as SVGElement).dataset.lbl!, fid = key.split(':')[0] as FrameId;
       const it = layoutLabels(d, fid).items.find(x => x.key === key);
@@ -409,13 +491,48 @@ export function Canvas() {
       case 'view': setUI({ view: { ...getUI().view, x: (dg.ox as number) + dxs, y: (dg.oy as number) + dys } }); break;
       case 'map': { const id = dg.id as FrameId; const d = getDoc(); if (activeVariant(d).locked[id]) break; update(dd => { const V = dd.variants[dd.active].L[id].view; V.cx = (dg.ocx as number) - dx / V.k; V.cy = (dg.ocy as number) - dy / V.k; }, { history: false }); break; }
       case 'el': update(dd => { const L = dd.variants[dd.active].L[dg.id as 'title']; L.x = Math.round((dg.ox as number) + dx); L.y = Math.round((dg.oy as number) + dy); }, { history: false }); break;
-      case 'frame': update(dd => { const F = dd.variants[dd.active].L[dg.id as FrameId]; F.x = Math.round((dg.ox as number) + dx); F.y = Math.round((dg.oy as number) + dy); }, { history: false }); break;
+      case 'frame': {
+        // An den Hilfslinien einrasten: linke/rechte Kante und Mitte gegen senkrechte, obere/untere Kante und Mitte gegen waagerechte Linien.
+        const ox = dg.ox as number, oy = dg.oy as number, vv = activeVariant(getDoc()), F0 = vv.L[dg.id as FrameId];
+        const gx = vv.guides.visible ? vv.guides.x : [], gy = vv.guides.visible ? vv.guides.y : [];
+        const sx = snapDelta([ox, ox + F0.w, ox + F0.w / 2], gx, z, dx), sy = snapDelta([oy, oy + F0.h, oy + F0.h / 2], gy, z, dy);
+        useSnapGuides.setState({ x: sx.hit, y: sy.hit });
+        update(dd => { const F = dd.variants[dd.active].L[dg.id as FrameId]; F.x = Math.round(ox + sx.d); F.y = Math.round(oy + sy.d); }, { history: false });
+        break;
+      }
       case 'logoSize': {
         // entlang der Diagonale (rechts oben = größer); linke Kante und Unterkante bleiben
         const r = dg.r as number, w = clamp((dg.ow as number) + (dx - dy * r) / (1 + r * r), 16, activeVariant(getDoc()).w);
         update(dd => { const b = dd.variants[dd.active].L.logo; b.w = Math.round(w); b.y = Math.round((dg.bottom as number) - b.w * r); }, { history: false }); break;
       }
-      case 'resize': update(dd => { const F = dd.variants[dd.active].L[dg.id as FrameId]; F.w = Math.max(80, Math.round((dg.ow as number) + dx)); F.h = Math.max(80, Math.round((dg.oh as number) + dy)); }, { history: false }); break;
+      case 'resize': {
+        // Acht Griffe: Ecken ändern beide Maße, Kanten eine; die jeweils gegenüberliegende Kante bleibt fest (auch wenn die Mindestgröße greift).
+        const dir = dg.dir as string, ow = dg.ow as number, oh = dg.oh as number, ox = dg.ox as number, oy = dg.oy as number;
+        let w = ow, h = oh, x = ox, y = oy;
+        if (dir.includes('e')) w = Math.max(80, ow + dx);
+        if (dir.includes('w')) { w = Math.max(80, ow - dx); x = ox + (ow - w); }
+        if (dir.includes('s')) h = Math.max(80, oh + dy);
+        if (dir.includes('n')) { h = Math.max(80, oh - dy); y = oy + (oh - h); }
+        update(dd => { const F = dd.variants[dd.active].L[dg.id as FrameId]; F.w = Math.round(w); F.h = Math.round(h); F.x = Math.round(x); F.y = Math.round(y); }, { history: false });
+        break;
+      }
+      case 'textWidth': {
+        // Nur die Breite folgt dem Griff, die Höhe ergibt sich weiter aus dem Textumbruch.
+        const dir = dg.dir as 'w' | 'e', cw = activeVariant(getDoc()).w, ow = dg.ow as number, ox = dg.ox as number;
+        let w = ow, x = ox;
+        if (dir === 'e') w = clamp(ow + dx, 100, cw);
+        else { w = clamp(ow - dx, 100, cw); x = ox + (ow - w); }
+        update(dd => { const L = dd.variants[dd.active].L[dg.id as 'title']; L.w = Math.round(w); L.x = Math.round(x); }, { history: false });
+        break;
+      }
+      case 'annWidth': {
+        const dir = dg.dir as 'w' | 'e', ow = dg.ow as number, oOff = dg.oOff as number[];
+        let w = ow, offX = oOff[0];
+        if (dir === 'e') w = Math.max(24, Math.min(2000, ow + dx));
+        else { w = Math.max(24, Math.min(2000, ow - dx)); offX = oOff[0] + (ow - w); }
+        update(dd => { const el = dd.els.find(x => x.id === dg.id); if (el && el.type === 'text') el.width = Math.round(w); dd.variants[dd.active].ann[dg.id as string] = [Math.round(offX), Math.round(oOff[1])]; }, { history: false });
+        break;
+      }
       case 'annAt': {
         if (dg.board) { const vv = activeVariant(getDoc()); const o = dg.oat as number[]; update(dd => { const el = dd.els.find(x => x.id === dg.id); if (el && el.type === 'text') el.at = [clamp(o[0] + dx / vv.w, 0, 1), clamp(o[1] + dy / vv.h, 0, 1)]; }, { history: false }); break; }
         const o = dg.oat as number[], k = dg.k as number;
@@ -429,13 +546,27 @@ export function Canvas() {
         let bend = ((cx - mx) * (-ddy / L) + (cy - my) * (ddx / L)) / L; if (Math.abs(bend) < 0.03) bend = 0;
         update(dd => { const x = dd.els.find(q => q.id === dg.id); if (x && x.type === 'arrow') x.bend = Math.round(clamp(bend, -1.5, 1.5) * 100) / 100; }, { history: false }); break;
       }
-      case 'annOff': { const o = dg.o as number[]; update(dd => { dd.variants[dd.active].ann[dg.id as string] = [Math.round(o[0] + dx), Math.round(o[1] + dy)]; }, { history: false }); break; }
+      case 'annOff': {
+        // Textkasten: an den Hilfslinien einrasten, sofern der Ausgangsrahmen bekannt ist (bei Text immer der Fall).
+        const o = dg.o as number[], body0 = dg.body0 as number[] | null;
+        let ddx = dx, ddy = dy;
+        if (body0) {
+          const vv = activeVariant(getDoc());
+          const gx = vv.guides.visible ? vv.guides.x : [], gy = vv.guides.visible ? vv.guides.y : [];
+          const sx = snapDelta([body0[0], body0[2], (body0[0] + body0[2]) / 2], gx, z, dx), sy = snapDelta([body0[1], body0[3], (body0[1] + body0[3]) / 2], gy, z, dy);
+          ddx = sx.d; ddy = sy.d;
+          useSnapGuides.setState({ x: sx.hit, y: sy.hit });
+        }
+        update(dd => { dd.variants[dd.active].ann[dg.id as string] = [Math.round(o[0] + ddx), Math.round(o[1] + ddy)]; }, { history: false });
+        break;
+      }
       case 'label': { const o = dg.o as number[]; update(dd => { dd.variants[dd.active].labelOffsets[dg.key as string] = [Math.round(o[0] + dx), Math.round(o[1] + dy)]; }, { history: false }); break; }
     }
   };
   const onPointerUp = (e?: React.PointerEvent) => {
     const dg = drag.current; drag.current = null;
     wrap.current?.classList.remove('dragging');
+    useSnapGuides.setState({ x: null, y: null });
     if (dg?.type === 'arrowNew') {
       useArrowDraft.setState({ a: null, b: null });
       const d = getDoc(), v = activeVariant(d);
@@ -492,12 +623,14 @@ export function Canvas() {
           <Annotations />
         </svg>
         <Overlay />
+        <Guides />
       </div>
       <div className="canvas-tip"><span>Klick: auswählen</span><span>Doppelklick auf Karte: Kartenmodus</span><span>Leertaste + Ziehen: Ansicht verschieben</span></div>
       {cm.mismatch && <div className="canvas-banner" role="status"><Icon.warn /> Die Farbregel nutzt Daten für „{GEO[cm.mismatch]?.meta.label}“, die Karte zeigt „{GEO[doc.geoSet].meta.label}“. Daten passen nur zu ihrem Gebietsstand.
         <button className="btn small" onClick={() => setGeoSet(cm.mismatch!)}>Karte auf „{GEO[cm.mismatch]?.meta.label}“ umstellen</button></div>}
-      {!cm.dataset && doc.color.mode === 'none' && <div className="canvas-banner soft"><Icon.info /> Noch keine Daten. Importiere eine CSV- oder Excel-Datei im Schritt „Daten“.
-        <button className="btn small primary" onClick={() => setUI({ wizard: { mode: 'new' } })}><Icon.upload /> Daten importieren</button></div>}
+      {!cm.dataset && doc.color.mode === 'none' && noDataHint && <div className="canvas-banner soft"><Icon.info /> Noch keine Daten. Importiere eine CSV- oder Excel-Datei im Schritt „Daten“.
+        <button className="btn small primary" onClick={() => setUI({ wizard: { mode: 'new' } })}><Icon.upload /> Daten importieren</button>
+        <button className="btn icon ghost small" onClick={() => setNoDataHint(false)} aria-label="Hinweis schließen" title="Hinweis schließen"><Icon.x size={13} /></button></div>}
       {tool && <div className="mapmode-bar tool-bar"><b>{tool === 'marker' ? 'Marker setzen' : tool === 'arrow' ? 'Pfeil zeichnen' : 'Textkasten setzen'}</b><span style={{ opacity: .75 }}>{tool === 'marker' ? 'Klick in die Karte setzt den Marker' : tool === 'arrow' ? 'Vom Start zum Ziel ziehen; über Markern, Textkästen und Gebietsmitten rastet das Ende ein' : 'Klick in die Karte hängt ihn an diesen Punkt, Klick daneben an die Fläche'}</span><button className="btn small" onClick={() => setUI({ tool: null })}>Abbrechen <span className="kbd kbd-inv">Esc</span></button></div>}
       <MapModeBar wrap={wrap} />
       <Tooltip />

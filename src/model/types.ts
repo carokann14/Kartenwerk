@@ -6,7 +6,7 @@ export type Umfeld = 'none' | 'neighbors' | 'parent' | 'all';
 
 export type ColorRule =
   | { mode: 'none' }
-  | { mode: 'siegerStaerke'; dataset: string; group: string; basis: 'anteil' | 'vorsprung'; steps: 3 | 4 }
+  | { mode: 'siegerStaerke'; dataset: string; group: string; basis: 'anteil' | 'vorsprung'; steps: 1 | 2 | 3 | 4 }
   | { mode: 'sieger'; dataset: string; group: string }
   | { mode: 'anteil'; dataset: string; group: string; party: string; stetig?: boolean }
   | { mode: 'wert'; dataset: string; column: string; method: 'rund' | 'quantil' | 'gleich' | 'stetig'; classes: number; hue: string }
@@ -43,15 +43,17 @@ export interface Layout {
   main: FrameBox; inset: FrameBox;
   logo: Box;                                 // x, y = linke obere Ecke, w = Breite in px; die Höhe folgt dem Seitenverhältnis des Logos
 }
+export interface Guides { x: number[]; y: number[]; visible: boolean }   // Hilfslinien in Pixeln der Grafik, nicht exportiert; visible: Umschalt+R
 export interface Variant {
   id: string; preset: string; w: number; h: number; ts: number;
   L: Layout; labelOffsets: Record<string, [number, number]>; locked: { main: boolean; inset: boolean };
   ann: Record<string, [number, number]>;   // Versatz je Element: Marker → Beschriftung, Textkasten → Kasten
+  guides: Guides;
 }
-export interface TextEl { text: string; visible: boolean; size: number; cut: Cut; color: 'ink' | 'inkSoft' }
+export interface TextEl { text: string; visible: boolean; size: number; cut: Cut; color: 'ink' | 'inkSoft'; align: 'start' | 'middle' | 'end' }
 /** Quellenzeile: automatisch aus Daten und Geometrien; `text` gesetzt = von Hand bearbeitet (wird dann nicht mehr angepasst) */
 export interface SourceEl {
-  visible: boolean; extra: string; size: number; cut: Cut; color: 'ink' | 'inkSoft';
+  visible: boolean; size: number; cut: Cut; color: 'ink' | 'inkSoft'; align: 'start' | 'middle' | 'end';
   text?: string | null;      // eigene Fassung (null/fehlt = automatisch)
   autoBase?: string;         // automatischer Text beim Beginn der Bearbeitung, um spätere Änderungen zu melden
 }

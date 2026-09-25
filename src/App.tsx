@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { loadGeo } from './geo/geo';
 import { loadFonts } from './lib/fonts';
-import { scheduleAutosave, setOverride } from './model/actions';
+import { scheduleAutosave, setOverride, toggleGuidesVisible } from './model/actions';
 import { Step, getDoc, getUI, redo, setUI, toast, undo, update, useStore } from './model/store';
 import { setLogoVisible } from './model/logo';
 import { Canvas, fitViewToCanvas } from './ui/Canvas';
@@ -74,6 +74,7 @@ function useShortcuts() {
       if (mod && key === 's') { e.preventDefault(); saveProjectFile(); return; }
       if (mod && e.key === '0') { e.preventDefault(); fitViewToCanvas(); return; }
       if (isTyping(e)) return;
+      if (key === 'r' && e.shiftKey && !mod) { e.preventDefault(); toggleGuidesVisible(); return; }
       if (e.key === 'Escape') {
         if (u.tool) { setUI({ tool: null }); return; }
         if (u.menu) { setUI({ menu: null }); return; }
