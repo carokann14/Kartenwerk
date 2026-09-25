@@ -10,9 +10,14 @@ const SVGNS = 'http://www.w3.org/2000/svg';
 export const defaultLogo = (): LogoSettings => ({ visible: false, asset: null, opacity: 1 });
 export const logoRatio = (a: LogoAsset | null | undefined) => (a && a.w > 0 && a.h > 0 ? a.h / a.w : DEFAULT_RATIO);
 
-/** Standardplatz: unten links in der Hauptkarte. Breite 21 % der kurzen Seite (höchstens 10 % hoch), Abstand 2,5 %.
- *  Bei 1080 × 1350: x 92, Breite 227. */
+/** Fester Standardplatz für einzelne Formate (Breite/Höhe in px als Schlüssel) statt der Formel darunter –
+ *  z. B. Yukis eigener Platz für 1080×1350, an dem jedes neue Projekt in diesem Format das Logo bekommt. */
+const PRESET_LOGO_BOX: Partial<Record<string, Box>> = { '1080x1350': { x: 85, y: 1222, w: 238 } };
+
+/** Standardplatz: unten links in der Hauptkarte. Breite 21 % der kurzen Seite (höchstens 10 % hoch), Abstand 2,5 %. */
 export function defaultLogoBox(L: Pick<Layout, 'main'>, W: number, H: number, ratio: number): Box {
+  const fixed = PRESET_LOGO_BOX[`${W}x${H}`];
+  if (fixed) return { ...fixed };
   const s = Math.min(W, H), gap = Math.round(s * 0.025), w = Math.round(Math.min(s * 0.21, s * 0.10 / ratio));
   return { x: L.main.x + gap, y: Math.round(L.main.y + L.main.h - gap - w * ratio), w };
 }

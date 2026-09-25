@@ -47,8 +47,9 @@ export function defaultDoc(geoSet = 'btw-wk-2025'): Doc {
     },
     labels: { preset: 'partei', template: '{partei}\n{anteil}', size: 13, halo: true },
     texts: {
-      title: { text: 'Titel der Grafik', visible: true, size: 54, cut: 'display', color: 'ink', align: 'start' },
-      subtitle: { text: 'Unterzeile: Was zeigt die Karte, welche Wahl, welcher Stand?', visible: true, size: 24, cut: 'text', color: 'inkSoft', align: 'start' },
+      // Größen als Vorgabe für ein neues Projekt (Standardformat 1080×1350, ts ≈ 1 – siehe defaultTS): 60/30 px, nur hier als Ausgangswert.
+      title: { text: 'Titel der Grafik', visible: true, size: 60, cut: 'display', color: 'ink', align: 'start' },
+      subtitle: { text: 'Unterzeile: Was zeigt die Karte, welche Wahl, welcher Stand?', visible: true, size: 30, cut: 'text', color: 'inkSoft', align: 'start' },
       source: { visible: true, size: 13, cut: 'text', color: 'inkSoft', align: 'start' },
     },
     legend: defaultLegend(),
