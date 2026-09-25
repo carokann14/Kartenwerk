@@ -69,7 +69,7 @@ export function ElementsSection({ doc }: { doc: Doc }) {
       <Section title="Textkästen" aside={texts.length ? `${texts.length}` : undefined}>
         <div className="row-btns">
           <button className={'btn small' + (tool === 'text' ? ' on' : '')} onClick={() => setUI({ tool: tool === 'text' ? null : 'text', mapMode: null })}><Icon.target /> An einen Kartenpunkt</button>
-          <button className="btn small" onClick={() => { const v = activeVariant(getDoc()), L = v.L; addTextBox('board', [L.m / v.w, Math.max(0.05, (L.source.y - 26 * v.ts * 2.2) / v.h)]); }}><Icon.text /> Frei auf der Fläche</button>
+          <button className="btn small" onClick={() => { const v = activeVariant(getDoc()), L = v.L; addTextBox('board', [L.m.left / v.w, Math.max(0.05, (L.source.y - 26 * v.ts * 2.2) / v.h)]); }}><Icon.text /> Frei auf der Fläche</button>
         </div>
         <p className="hint">An der Karte: Der Kasten hängt an einem Ort, mit Führungslinie. Auf der Fläche: Er bleibt an seiner Stelle der Grafik, unabhängig vom Kartenausschnitt.</p>
         {texts.length > 0 && <ElList doc={doc} list={texts} />}

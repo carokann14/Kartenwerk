@@ -37,8 +37,9 @@ export interface Bubbles {
 export interface View { cx: number; cy: number; k: number }
 export interface Box { x: number; y: number; w: number }
 export interface FrameBox { x: number; y: number; w: number; h: number; view: View }
+export interface Margin { left: number; top: number; right: number; bottom: number }   // Rand für die Standardplatzierung, je Seite einzeln (z. B. ungleiche Safe Zone bei Reels)
 export interface Layout {
-  m: number; reserve: number;
+  m: Margin; reserve: number;
   title: Box; subtitle: Box; source: Box; legend: { x: number; y: number };
   main: FrameBox; inset: FrameBox;
   logo: Box;                                 // x, y = linke obere Ecke, w = Breite in px; die Höhe folgt dem Seitenverhältnis des Logos

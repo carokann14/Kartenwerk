@@ -12,6 +12,12 @@ export const PRESETS: Record<string, { w: number; h: number; label: string }> = 
   LinkedIn: { w: 1200, h: 627, label: 'LinkedIn 1,91:1' },
   Frei: { w: 1200, h: 1200, label: 'Freies Format' },
 };
+/** Vorgegebene Hilfslinien je Formatvorlage (Safe Zone): gelten, sobald eine Variante dieses Formats angelegt wird –
+ *  beim „Neuen Projekt“ ebenso wie bei „+ Format“. Formate ohne Eintrag bekommen weiterhin keine Hilfslinien. */
+export const PRESET_GUIDES: Partial<Record<string, { x: number[]; y: number[] }>> = {
+  '4:5': { x: [80, 1000], y: [80, 1270] },     // Instagram 4:5: 80 px Rand rundum
+  '9:16': { x: [65, 1015], y: [269, 1248] },   // Story/Reel 9:16: Safe Zone, oben schmal (269 px), unten breit (1920 − 1248 = 672 px) für Bedienelemente
+};
 export const LABEL_PRESETS: Record<string, { label: string; template: string | null }> = {
   nr: { label: 'Wahlkreisnummer', template: '{nr}' },
   partei: { label: 'Partei + Anteil', template: '{partei}\n{anteil}' },
@@ -90,6 +96,10 @@ export function normalizeDoc(d: Doc): Doc {
   x.logo = { ...defaultLogo(), ...(x.logo || {}) };
   x.texts.title.align ||= 'start'; x.texts.subtitle.align ||= 'start'; x.texts.source.align ||= 'start';
   delete (x.texts.source as unknown as Record<string, unknown>).extra;   // „Eigener Zusatz“ entfallen (Text lässt sich direkt bearbeiten)
-  for (const v of x.variants) { v.ann ||= {}; v.guides ||= { x: [], y: [], visible: true }; v.guides.visible ??= true; v.L.logo ||= defaultLogoBox(v.L, v.w, v.h, logoRatio(x.logo.asset)); }
+  for (const v of x.variants) {
+    v.ann ||= {}; v.guides ||= { x: [], y: [], visible: true }; v.guides.visible ??= true;
+    v.L.logo ||= defaultLogoBox(v.L, v.w, v.h, logoRatio(x.logo.asset));
+    if (typeof v.L.m === 'number') { const mm = v.L.m as number; v.L.m = { left: mm, top: mm, right: mm, bottom: mm }; }   // altes Projekt: ein Rand für alle vier Seiten
+  }
   return x;
 }

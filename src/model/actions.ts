@@ -39,9 +39,8 @@ export async function loadGeoSets(ids: (string | null | undefined)[]): Promise<b
 export function newProject(geoSet = 'btw-wk-2025', name = 'Neues Projekt') {
   const d = withDefaultLogo(defaultDoc(geoSet)); d.name = name;   // gemerktes Logo gleich mit Platz in der Grafik
   if (GEO[geoSet] && GEO[geoSet].meta.level !== 'btw-wk') d.inset.visible = false;   // Detail-Lupen sind für Bundestagswahlkreise gedacht
-  // Standardformat 1080×1350: 80 px Rand als Hilfslinien vorgegeben; vor der Layout-Berechnung übergeben,
-  // damit Titel, Unterzeile, Quelle, Legende und Logo standardmäßig innerhalb dieser Hilfslinien liegen.
-  const v0 = makeVariant(d, '4:5', undefined, undefined, { x: [80, 1000], y: [80, 1270], visible: true });
+  // Standardformat 1080×1350: die Safe Zone aus PRESET_GUIDES (defaults.ts) greift automatisch in makeVariant.
+  const v0 = makeVariant(d, '4:5');
   d.variants = [v0];
   setDoc(d); setUI({ start: false, sel: { kind: 'graphic' }, mapMode: null, step: 'gebiete', panelOpen: true });
 }
@@ -269,7 +268,7 @@ export function keepSourceBottom(before: Doc, d: Draft<Doc>) {
   before.variants.forEach((v, k) => {
     const L = v.L.source, w = d.variants[k]?.L.source; if (!w) return;
     const h0 = textBlock(before, 'source', L.w, v.ts).height, h1 = textBlock(after, 'source', L.w, v.ts).height;
-    if (Math.abs(h0 - h1) > 0.5 && L.y + h0 >= v.h - v.L.m - Math.max(4, v.h * 0.02)) w.y = Math.round((L.y + h0 - h1) * 10) / 10;
+    if (Math.abs(h0 - h1) > 0.5 && L.y + h0 >= v.h - v.L.m.bottom - Math.max(4, v.h * 0.02)) w.y = Math.round((L.y + h0 - h1) * 10) / 10;
   });
 }
 /** Quellenzeile von Hand ändern: ab dann gilt die eigene Fassung */
