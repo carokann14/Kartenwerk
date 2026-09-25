@@ -15,7 +15,8 @@ for (const f of fs.readdirSync('public/data')) {
   add(path.join('data', f), false);
 }
 for (const f of fs.readdirSync('public/fonts')) add(path.join('fonts', f), true);
-for (const f of fs.readdirSync('public/beispiele')) add(path.join('beispiele', f), true);
+// große Beispieldateien (Berliner Wahlbezirke, 3,5 MB) nur in der GitHub-Fassung
+for (const f of fs.readdirSync('public/beispiele')) if (fs.statSync(path.join('public/beispiele', f)).size < 3e6) add(path.join('beispiele', f), true);
 let html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
 const json = JSON.stringify(assets).replace(/</g, '\\u003c');
 html = html.replace('<head>', () => `<head>\n<script>window.__KW_ASSETS__=${json};</script>`);

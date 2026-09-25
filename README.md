@@ -4,7 +4,7 @@ Karten zur deutschen Politik für Social Media. Daten aus CSV oder Excel importi
 
 Kartenwerk läuft komplett im Browser. Deine Dateien werden nirgendwohin hochgeladen, es gibt keinen Server, kein Konto, keine Cookies und keine Anfragen an Dritte.
 
-**Stand: M3 · Etappe 4 (eigene Gebiete, Summen auf höheren Ebenen) · M3 abgeschlossen**
+**Stand: M4 · Etappe 1 (eigene Geodaten importieren, Berlin 2026 mit Wahlkreisen und Wahlbezirken)**
 
 ## Was Kartenwerk kann
 
@@ -21,11 +21,14 @@ Kartenwerk läuft komplett im Browser. Deine Dateien werden nirgendwohin hochgel
 - **Blasen:** Kreise an den Gebieten, deren Fläche einem Wert entspricht (etwa Wählende), Farbe wie die Färbung oder fest, fester Bezugswert für vergleichbare Karten, Legende mit verschachtelten Kreisen. Mit neutralen Flächen entsteht eine reine Blasenkarte.
 - **Summen auf höheren Ebenen:** Daten feiner Ebenen färben auch gröbere. Gemeindeergebnisse werden beim Wechsel auf Kreise, Bezirke, Verbände oder Länder automatisch addiert, Wahlkreisergebnisse auf Länder. Gleiche Farbregel, gleiche Spalten; Anteile, Quoten und Mittelwerte lassen sich nicht addieren und bleiben leer. Gemeinsam ausgezählte Briefwahl wird je Gruppe nur einmal gezählt. Die Quellenzeile vermerkt „Werte aus Gemeinden summiert“. Geprüft: BTW 2025 aus der Wahlbezirksstatistik ergibt je Kreis genau das amtliche Kreisergebnis.
 - **Eigene Gebiete:** Gebiete einer Ebene zu eigenen Regionen zusammenfassen, etwa „Ruhrgebiet“ aus Kreisen, Landtagswahlkreise aus Gemeinden oder Ost/West aus Ländern. Regionen aus der Auswahl in der Karte (Umschalt + Klick) oder aus dem Fokus anlegen, Gebiete per Klick einer Region zuordnen, umbenennen, löschen. Übrige Gebiete bleiben neutral oder bilden eine eigene Region. „Als Karte zeigen“ macht aus der Einteilung eine eigene Ebene: Daten der Bausteine (auch feinerer, etwa Gemeinden unter Kreis-Regionen) werden je Region addiert; Daten lassen sich auch direkt für die Regionen importieren (Zuordnung über Name oder Nummer). Die Regionsgrenzen lassen sich über jeder Karte einblenden. Einteilungen werden mit dem Projekt gespeichert.
+- **Eigene Geodaten:** Shapefile (auch als ZIP, wie Ämter sie anbieten), GeoJSON, KML/KMZ und GeoPackage importieren. Das Koordinatensystem wird aus der `.prj`-Datei bzw. der Datei gelesen oder nach den Zahlen erkannt (Länge/Breite, UTM 32 und 33, auch mit Zonenpräfix, Gauß-Krüger mit Umrechnung von DHDN, Web-Mercator, LAEA); eine Vorschau über den Wahlkreisen zeigt, ob die Lage stimmt. Kartenwerk bildet gemeinsame Grenzen, vereinfacht wahlweise auf 10, 30 oder 100 m und fragt Kennung, Namen und Quellenvermerk ab. Die Ebene wird im Projekt gespeichert und funktioniert wie jede andere: Fokus, Tabellen importieren (Zuordnung über die Kennung), Grenzen einblenden, eigene Gebiete.
+- **Berlin 2026:** Wahlbezirke (2.542), Briefwahlbezirke (1.572), Wahlkreise zum Abgeordnetenhaus (78) und Bezirke (12) sind eingebaut (Open Data, CC BY 3.0 DE). Vorlagen für die Datenexporte von wahlen-berlin.de: nach Wahlbezirken (Briefwahl anteilig verteilt oder je Briefwahlbezirk) und nach Wahlkreisen, Bezirken oder Bundestagswahlkreisen. Ergebnisse der Wahlbezirke werden automatisch auf Wahlkreise, Bezirke, Bundestagswahlkreise und das Land summiert; geprüft gegen die amtlichen Wahlkreisergebnisse. Beispiel im Startdialog: „Berlin 2026“.
 - **Navigation über Ebenen:** Unter dem Fokus-Pfad wechselst du mit „zeigen als“ zwischen Wahlkreisen, Ländern, Bezirken, Kreisen, Verbänden und Gemeinden; der Fokus bleibt dabei erhalten (Kreis Görlitz als Kreis, als Gemeinden oder als Wahlkreis 156). Im Kartenmodus geht ein Doppelklick eine Stufe tiefer und am Ende in die nächstfeinere Ebene (Land › Kreise › Gemeinden, Wahlkreis › Gemeinden). Die Suche findet auch Gebiete anderer Ebenen, etwa „Wahlkreis 211“ in einer Gemeindekarte. Ein Klick auf ein Gebiet zeigt es im Gebietsbaum.
 - **Grenzen einblenden:** Grenzen anderer Ebenen über der Karte, etwa Wahlkreise über Gemeinden oder Kreise über Wahlkreisen; Farbe, Stärke, gestrichelt, mit Legendeneintrag. Wahlkreisgrenzen über Gemeinden folgen genau den Gemeindegrenzen.
 - **Stände:** Auswahl in zwei Schritten (Ebene, dann Stand). Der neueste Stand ist als „aktuell“ markiert, 2025 als „passt zur Bundestagswahl 2025“.
 - **Kreisgrenzen:** In Gemeindekarten als eigene, kräftigere Linienebene. Gemeindefreie Gebiete (Forste, Truppenübungsplätze) erscheinen neutral und nicht als „keine Daten“.
 - **Elemente:** Titel, Unterzeile, Quellenzeile (Pflichtteil automatisch), Legende, Detail-Lupe (Berlin, Hamburg, München, Köln, Frankfurt, Bremen), Beschriftungen mit Vorlagen und Kollisionsprüfung.
+- **Logo:** eigenes Logo als SVG, PNG oder JPG, standardmäßig unten links in der Karte; verschieben, Größe am Griff oben rechts ändern (die Unterkante bleibt), Deckkraft. Bei PNG und JPG werden transparente oder weiße Ränder abgeschnitten und große Bilder auf höchstens 1600 px verkleinert; SVG-Logos werden von Skripten und Verweisen nach außen befreit und bleiben im SVG-Export Vektoren. Mit „Für neue Grafiken merken“ speichert der Browser das Logo (nur lokal, nicht im Repo) und setzt es in jede neue Grafik. In der Projektdatei ist es enthalten.
 - **Schraffuren:** schräg, gegenläufig, Kreuz, waagrecht, senkrecht, Punkte; Farbe, Stärke und Abstand einstellbar, über der Datenfarbe oder auf eigener Fläche. Zuweisung aus Daten (Spalte hat einen Wert bzw. liegt über oder unter einer Schwelle), für alle Gebiete ohne Daten oder von Hand. Im SVG echte Linien und Punkte.
 - **Legende bearbeiten:** Texte ändern, Einträge ausblenden und sortieren, Farben von Parteien und Kategorien ändern, eigene Einträge (Fläche, Schraffur, Linie), Anordnung untereinander, nebeneinander oder als Raster.
 - **Ortsmarker:** Ortssuche über das amtliche Gemeindeverzeichnis (10.749 Gemeinden), Klick in die Karte oder Koordinaten. Formen Kreis, Quadrat, Dreieck, Raute, Stern, Stecknadel oder eigenes einfarbiges SVG-Symbol; Beschriftung mit Position, verschiebbar mit Führungslinie; Marker mit gleichem Legendentext bilden einen Legendeneintrag.
@@ -35,7 +38,7 @@ Kartenwerk läuft komplett im Browser. Deine Dateien werden nirgendwohin hochgel
 - **Export:** PNG zum direkten Posten (Voreinstellung 2×, bis 10.000 px breit, auch mit transparentem Hintergrund) und SVG mit echten Vektoren für Illustrator, Affinity, Figma oder Inkscape (Text als Pfade, Ebenen als benannte Gruppen). Auf Wunsch fasst das SVG Gebiete gleicher Farbe zu einer Fläche zusammen, sinnvoll bei Gemeinden.
 - **Speichern:** Jedes Projekt wird laufend im Browser gesichert. Zusätzlich lässt es sich als Projektdatei (`.kartenwerk.json`) speichern und wieder öffnen.
 
-Als Nächstes: M4 mit eigenen Geodaten und Landtagswahlkreisen.
+Als Nächstes: M4 · Etappe 2 mit den Landtagswahlkreisen der übrigen Länder.
 
 ## Einrichten auf GitHub Pages (einmalig)
 
@@ -77,7 +80,7 @@ Browserdaten können beim Aufräumen oder in privaten Fenstern verloren gehen. W
 | Leertaste + Ziehen | Ansicht verschieben |
 | Doppelklick auf die Karte | Kartenmodus (Esc beendet) |
 | Pfeiltasten (mit Umschalt) | ausgewähltes Element um 1 (10) px verschieben |
-| Entf | ausgewählten Marker, Textkasten oder Pfeil löschen bzw. manuelle Farbe der ausgewählten Gebiete entfernen |
+| Entf | ausgewählten Marker, Textkasten oder Pfeil löschen, Logo ausblenden bzw. manuelle Farbe der ausgewählten Gebiete entfernen |
 | Strg+D | ausgewählten Marker, Textkasten oder Pfeil duplizieren |
 
 ## Für Entwickler
@@ -93,6 +96,7 @@ npm run geodata        # Geodaten neu aufbereiten (Quelldateien in data-src/, si
 npm run orte           # Ortsliste aus dem Gemeindeverzeichnis (data-src/AuszugGV….xlsx)
 npm run vg250          # Verwaltungsgrenzen aus data-src/vg250-<Jahr>.zip (BKG)
 npm run beispiele      # Beispiel „nach Gemeinden“ aus data-src/btw25_wbz.zip
+npm run berlin         # Berliner Wahlgebiete aus data-src/berlin/RBS_OD_UWB_AH26.zip (und Namen aus …_A_BE.csv)
 ```
 
 Bekannte Einschränkung: Excel wird mit SheetJS 0.18.5 gelesen, der letzten Fassung auf npm. Sie hat bekannte Schwachstellen bei präparierten Dateien (CVE-2023-30533, CVE-2024-22363). Weil alles lokal im Browser läuft, ist das Risiko gering. Excel-Dateien aus unbekannten Quellen besser vorher als CSV speichern. Das Update auf 0.20 folgt, sobald es sich hier einbinden lässt.

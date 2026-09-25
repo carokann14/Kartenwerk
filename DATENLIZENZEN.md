@@ -22,6 +22,16 @@ Lizenztext dl-de/by-2-0: https://www.govdata.de/dl-de/by-2-0
 
 Bezug: https://daten.gdz.bkg.bund.de/produkte/vg/ (Shapefile, UTM32s, „ebenen“, Stand 01.01.). Aufbereitung für Kartenwerk: nur Landflächen (GF = 4), auf rund 40 m vereinfacht, nach ETRS89 / UTM 32 auf ein 10-m-Raster gebracht. Kreise, Regierungsbezirke, Länder und Gemeindeverbände sind aus den Gemeinden zusammengefasst, damit alle Grenzen exakt aufeinanderliegen; ihre Namen stammen aus den VG250-Ebenen. In Ländern ohne Regierungsbezirke steht auf dieser Ebene das Land. Die Quellenzeile nennt den Vermerk des BKG samt Gebietsstand und den Veränderungshinweis „vereinfacht“.
 
+## Berlin: Wahlgebiete der Abgeordnetenhauswahl 2026
+
+| Datei | Inhalt | Quelle | Lizenz |
+| --- | --- | --- | --- |
+| `public/data/berlin-2026.json` | 2.542 Urnenwahlbezirke, daraus 1.572 Briefwahlbezirke, 78 Wahlkreise und 12 Bezirke | Amt für Statistik Berlin-Brandenburg, Geometrien der Wahlbezirke (`RBS_OD_UWB_AH26`, Stand 04.05.2026) | Creative Commons Namensnennung 3.0 Deutschland (CC BY 3.0 DE) |
+
+Bezug: https://daten.berlin.de/datensaetze/geometrien-der-wahlbezirke-fur-die-wahl-zum-20-abgeordnetenhaus-von-berlin-und-bvv-2026 (Shapefile, ETRS89 / UTM 33). Aufbereitung für Kartenwerk (`npm run berlin`): nach ETRS89 / UTM 32 auf ein 10-m-Raster gebracht, auf rund 10 m vereinfacht. Briefwahlbezirke, Wahlkreise und Bezirke sind aus den Wahlbezirken zusammengesetzt (sie bestehen aus ihnen) und gegen die amtliche Wahlkreisdatei `RBS_OD_Wahlkreise_AH2026` geprüft (Flächenabweichung höchstens 0,3 %). Namen der Wahlkreise aus dem Datenexport der Ergebnisse. Die Quellenzeile nennt den Vermerk und „vereinfacht“.
+
+Lizenztext CC BY 3.0 DE: https://creativecommons.org/licenses/by/3.0/de/
+
 ## Ortsliste für Marker
 
 `public/data/orte.json` stammt aus dem Gemeindeverzeichnis-Informationssystem GV-ISys des Statistischen Bundesamts (Auszug „Alle politisch selbständigen Gemeinden“, Gebietsstand 30.09.2026): Name, Gemeindeschlüssel, Einwohnerzahl und geografischer Mittelpunkt, umgerechnet nach ETRS89 / UTM 32. © Statistisches Bundesamt (Destatis), 2026; Vervielfältigung und Verbreitung mit Quellenangabe gestattet. Die Quellenzeile nennt das Gemeindeverzeichnis, sobald ein Marker aus der Ortssuche verwendet wird.
@@ -60,3 +70,5 @@ React, zustand, immer, opentype.js (MIT) und SheetJS Community Edition 0.18.5 (A
 `npm run vg250` liest `data-src/vg250-2025.zip` und `data-src/vg250-2026.zip` (die Shapefile-ZIPs des BKG, umbenannt) und schreibt `public/data/vg250-<Jahr>.json` sowie die Einträge in `index.json`. `npm run vg250:preview` erzeugt eine gröbere Fassung nur für die Vorschau-Datei.
 
 `npm run beispiele` erzeugt `btw2025_gemeinden.csv` aus `data-src/btw25_wbz.zip` und kopiert `data-src/btw2025kreis.csv`.
+| `public/beispiele/berlin2026_wahlbezirke.csv` | Abgeordnetenhauswahl Berlin 2026, Zweitstimmen nach Urnen- und Briefwahlbezirken, vorläufig (`Datenexport_AGH2026_Zweitstimme_W_BE.csv`, Stand 20.09.2026) | Amt für Statistik Berlin-Brandenburg, CC BY 3.0 DE, wahlen-berlin.de |
+| `public/beispiele/berlin2026_wahlkreise.csv` | dieselbe Wahl nach Wahlkreisen, Bezirken und Bundestagswahlkreisen (`Datenexport_AGH2026_Zweitstimme_A_BE.csv`, Stand 21.09.2026) | Amt für Statistik Berlin-Brandenburg, CC BY 3.0 DE |
