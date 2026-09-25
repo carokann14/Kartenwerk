@@ -1,14 +1,16 @@
 // Legendenmodell: automatische Einträge aus Farbregel und Schraffuren, dazu die Bearbeitungen aus doc.legend
+import { regionSetOf } from '../geo/regions';
 import type { Doc, HatchStyle, MarkerEl } from '../model/types';
 import { colorModel, legendTitleAuto, partyColor } from './colorModel';
 import { hatchMap } from './hatch';
+import { activeOverlays, overlayName } from './scene';
 import { partyDef, partyOf } from '../data/parties';
 
-export type ColorTarget = { type: 'party'; key: string } | { type: 'category'; key: string } | { type: 'hatch'; id: string } | { type: 'extra'; id: string } | { type: 'markers'; key: string } | { type: 'nodata' } | null;
+export type ColorTarget = { type: 'overlay'; id: string } | { type: 'party'; key: string } | { type: 'category'; key: string } | { type: 'hatch'; id: string } | { type: 'extra'; id: string } | { type: 'markers'; key: string } | { type: 'nodata' } | null;
 export interface LegEntry {
   key: string; label: string; auto: string; color: string; count: number | null;
   kind: 'fill' | 'hatch' | 'line' | 'nodata' | 'marker'; hatch: HatchStyle | null; bg: string | null; marker?: MarkerEl;
-  hidden: boolean; target: ColorTarget; removable: boolean;
+  hidden: boolean; target: ColorTarget; removable: boolean; dash?: boolean;
 }
 export interface LegModel {
   main: 'matrix' | 'list' | 'bar' | null;
@@ -33,7 +35,9 @@ function compute(doc: Doc): LegModel | null {
   const hasData = c.mode !== 'none' && !cm.mismatch && !!cm.dataset;
   const markerGroups = new Map<string, MarkerEl[]>();
   for (const e of doc.els) if (e.type === 'marker' && !e.hidden && e.legend.trim()) { const k = e.legend.trim(); markerGroups.set(k, [...(markerGroups.get(k) || []), e]); }
-  if (!hasData && !markerGroups.size && !L.extra.length) return null;
+  const ovs = activeOverlays(doc).filter(o => o.legend);
+  const bub = !!(doc.bubbles?.visible && doc.bubbles.legend);
+  if (!hasData && !markerGroups.size && !L.extra.length && !ovs.length && !bub) return null;
   const hidden = new Set(L.hidden);
   const lab = (key: string, auto: string) => L.labels[key] ?? auto;
   const mk = (key: string, auto: string, rest: Partial<LegEntry>): LegEntry => ({ key, auto, label: lab(key, auto), color: '#000', count: null, kind: 'fill', hatch: null, bg: null, hidden: hidden.has(key), target: null, removable: false, ...rest });
@@ -53,12 +57,15 @@ function compute(doc: Doc): LegModel | null {
   }
   for (const [k, ms] of markerGroups) more.push(mk('m:' + k, k, { kind: 'marker', marker: ms[0], color: ms[0].fill, count: ms.length, target: { type: 'markers', key: k } }));
   if (hasData && cm.missing) more.push(mk('nodata', 'keine Daten', { kind: 'nodata', color: doc.style.noData, hatch: ndHatch, count: cm.missing, target: { type: 'nodata' } }));
-  if (hasData && cm.free) more.push(mk('free', 'gemeindefreies Gebiet', { kind: 'fill', color: doc.style.noData, count: cm.free, target: { type: 'nodata' } }));
+  const rs = regionSetOf(doc, doc.geoSet);
+  if (hasData && cm.free) more.push(mk('free', rs ? rs.restName || 'Übriges Gebiet' : 'gemeindefreies Gebiet', { kind: 'fill', color: doc.style.noData, count: rs ? null : cm.free, target: { type: 'nodata' } }));
+  for (const o of ovs) more.push(mk('o:' + o.geoSet, overlayName(o.geoSet), { kind: 'line', color: o.color, dash: o.dash, target: { type: 'overlay', id: o.id } }));
   for (const x of L.extra) {
     const hs = x.kind === 'hatch' ? doc.hatches.find(h => h.id === x.hatch) || null : null;
     more.push(mk('x:' + x.id, x.label, { label: x.label, kind: x.kind, color: x.color, hatch: hs, bg: hs?.bg ?? null, target: { type: 'extra', id: x.id }, removable: true }));
   }
-  const capAuto = !hasData ? '' : c.mode === 'siegerStaerke' ? (c.basis === 'anteil' ? 'Anteil der stärksten Partei in %' : 'Vorsprung auf Platz 2 in Prozentpunkten') : c.mode === 'anteil' ? 'Anteil in %' : '';
+  const capAuto = !hasData ? '' : c.mode === 'siegerStaerke' ? (c.basis === 'anteil' ? 'Anteil der stärksten Partei in %' : 'Vorsprung auf Platz 2 in Prozentpunkten') : c.mode === 'anteil' ? 'Anteil in %'
+    : c.mode === 'veraenderung' && cm.diverging ? `Veränderung${cm.diverging.unit ? ' in ' + cm.diverging.unit : ''} gegenüber ${cm.diverging.against}` : '';
   const caption = capAuto || L.caption ? { key: 'caption' as const, auto: capAuto, text: L.caption ?? capAuto, hidden: hidden.has('caption') } : null;
   const nOv = Object.keys(doc.overrides).filter(k => k.startsWith(doc.geoSet + ':')).length;
   const ovNote = nOv ? { key: 'ov' as const, text: `${nOv} Gebiet${nOv > 1 ? 'e' : ''} manuell eingefärbt`, hidden: hidden.has('ov') } : null;
@@ -68,6 +75,7 @@ function compute(doc: Doc): LegModel | null {
 /** Farbe eines Eintrags ändern: Partei (projektweit), Kategorie, Schraffur, eigener Eintrag oder „keine Daten“. */
 export function entryColorSetter(t: ColorTarget): ((d: Doc, v: string) => void) | null {
   if (!t) return null;
+  if (t.type === 'overlay') return (d, v) => { const o = d.overlays.find(x => x.id === t.id); if (o) o.color = v; };
   if (t.type === 'party') return (d, v) => { d.partyColors[t.key] = v; };
   if (t.type === 'category') return (d, v) => { d.categoryColors[t.key] = v; };
   if (t.type === 'hatch') return (d, v) => { const h = d.hatches.find(x => x.id === t.id); if (h) h.color = v; };

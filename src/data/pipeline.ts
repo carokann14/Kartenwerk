@@ -254,9 +254,13 @@ function autoRoles(columns: Column[], body: Cell[][], preset: PresetId) {
   } else {
     // Kennung: ganze Zahlen oder Ziffernfolgen, überwiegend eindeutig
     const vals = (c: Column) => body.map(r => txt(r[+c.id.slice(1)]));
-    const idCol = columns.find(c => { const v = vals(c).filter(Boolean); return v.length > 3 && v.every(x => /^\d{1,12}$/.test(x)) && new Set(v).size >= v.length * 0.9; });
+    // kleine Tabellen (etwa eigene Regionen): Kennung nur, wenn die Überschrift danach klingt
+    const small = body.length < 4, ID_LBL = /^(nr\.?|nummer|schlüssel|kennziffer|id|ags|ars|wkr[- ]?nr\.?)$|schlüssel|kennziffer/i;
+    const idOk = (c: Column) => { const v = vals(c).filter(Boolean); return (small ? v.length >= 1 && ID_LBL.test(c.label) : v.length > 3) && v.every(x => /^\d{1,12}$/.test(x)) && new Set(v).size >= v.length * 0.9; };
+    const idCol = columns.find(c => ID_LBL.test(c.label) && idOk(c)) || columns.find(idOk);
     if (idCol) idCol.role = 'id';
-    const nameCol = columns.find(c => c.kind === 'text' && c !== idCol && (() => { const v = vals(c).filter(Boolean); return v.length > 3 && new Set(v).size >= v.length * 0.8; })());
+    const nameOk = (c: Column) => c.kind === 'text' && c !== idCol && (() => { const v = vals(c).filter(Boolean); return v.length >= Math.min(4, body.length) && v.length > 0 && new Set(v).size >= v.length * 0.8; })();
+    const nameCol = columns.find(c => /name|gebiet|region|bezeichnung|kreis|gemeinde|land|wahlkreis|stadt|ort\b/i.test(c.label) && nameOk(c)) || columns.find(nameOk);
     if (nameCol) nameCol.role = 'name';
     for (const c of columns) if (c !== idCol && c !== nameCol && c.kind === 'text') c.role = 'category';
   }
@@ -362,12 +366,14 @@ export function suggestGeoSet(t: TableResult, st?: ImportSettings, fileName = ''
   return { id: best, reason };
 }
 /** Wie oben; ohne Kennungen werden die Namen auch mit Kreisen und Gemeinden verglichen (lädt deren Grenzen). */
-export async function suggestGeoSetAsync(t: TableResult, st?: ImportSettings, fileName = ''): Promise<{ id: string; reason: string }> {
+export async function suggestGeoSetAsync(t: TableResult, st?: ImportSettings, fileName = '', custom: { id: string; label: string }[] = []): Promise<{ id: string; reason: string }> {
   const s1 = suggestGeoSet(t, st, fileName);
   const idc = t.columns.find(c => c.role === 'id'), nmc = t.columns.find(c => c.role === 'name');
   if (idc || !nmc) return s1;
   const names = t.body.filter((_, i) => !t.summary[i]).map(r => norm(txt(r[+nmc.id.slice(1)]))).filter(Boolean);
   const hitRate = (id: string) => { const g = GEO[id]; if (!g) return 0; const set = new Set(g.areas.map(a => norm(a.name))); return names.filter(n => set.has(n)).length / Math.max(1, names.length); };
+  // eigene Regionen des Projekts: passen die Namen, sind sie gemeint
+  for (const c of custom) { const r = hitRate(c.id); if (r >= 0.6 && r > hitRate(s1.id)) return { id: c.id, reason: `${Math.round(r * 100)} % der Namen passen zu den eigenen Gebieten „${c.label}“` }; }
   if (hitRate(s1.id) >= 0.6) return s1;
   const vg = GEO_INDEX.filter(s => s.lazy && s.level !== 'btw-wk');
   if (!vg.length) return s1;
@@ -463,7 +469,7 @@ export function buildDataset(raw: RawInput, st: ImportSettings, t: TableResult, 
   }
   const nAlias = Object.keys(alias).length;
   if (nAlias) rep.included = nAlias;
-  rep.missing = g.areas.filter(a => !matched.has(a.id) && !alias[a.id]).sort((x, y) => x.nr - y.nr).map(a => a.id);
+  rep.missing = g.areas.filter(a => !matched.has(a.id) && !alias[a.id] && !(g.memberOf && a.free)).sort((x, y) => x.nr - y.nr).map(a => a.id);
   return {
     id: keepId || uid('ds'), name, fileName: raw.fileName, importedAt: new Date().toISOString(), geoSet: st.geoSet, preset: st.preset,
     settings: { ...st, roles: Object.fromEntries(t.columns.map(c => [c.label, c.role])) },

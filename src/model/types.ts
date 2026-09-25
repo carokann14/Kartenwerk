@@ -1,16 +1,38 @@
 import type { Dataset } from '../data/types';
 import type { Cut } from '../lib/fonts';
 
-export type Fokus = { kind: 'de' } | { kind: 'land'; bl: string } | { kind: 'kreis'; kr: string } | { kind: 'area'; id: string } | { kind: 'custom'; ids: string[] };
+export type Fokus = { kind: 'de' } | { kind: 'land'; bl: string } | { kind: 'kreis'; kr: string } | { kind: 'area'; id: string } | { kind: 'custom'; ids: string[]; label?: string };   // label: Herkunft, z. B. „Wahlkreis 156 Görlitz“
 export type Umfeld = 'none' | 'neighbors' | 'parent' | 'all';
 
 export type ColorRule =
   | { mode: 'none' }
   | { mode: 'siegerStaerke'; dataset: string; group: string; basis: 'anteil' | 'vorsprung'; steps: 3 | 4 }
   | { mode: 'sieger'; dataset: string; group: string }
-  | { mode: 'anteil'; dataset: string; group: string; party: string }
-  | { mode: 'wert'; dataset: string; column: string; method: 'rund' | 'quantil' | 'gleich'; classes: number; hue: string }
-  | { mode: 'kategorie'; dataset: string; column: string };
+  | { mode: 'anteil'; dataset: string; group: string; party: string; stetig?: boolean }
+  | { mode: 'wert'; dataset: string; column: string; method: 'rund' | 'quantil' | 'gleich' | 'stetig'; classes: number; hue: string }
+  | { mode: 'kategorie'; dataset: string; column: string }
+  | VeraenderungRule;
+/** Wert, der verglichen wird: Parteianteil einer Gruppe oder eine Zahlenspalte, aus einem Datensatz desselben Gebietsstands */
+export interface WertRef { dataset: string; group: string; column: string }
+export interface VeraenderungRule {
+  mode: 'veraenderung'; dataset: string;       // dataset = a.dataset (für Gebietsstand, Quelle)
+  kind: 'anteil' | 'wert';
+  party: string;                               // bei kind 'anteil'
+  a: WertRef; b: WertRef;                      // neu, Vergleich
+  rel: boolean;                                // bei kind 'wert': Veränderung in % statt absolut
+  palette: 'partei' | 'blaurot';
+  classes: 4 | 6 | 8; step: number | null;     // Klassen je Seite ergeben sich; null = automatisch
+}
+/** Proportionale Kreise an den Gebieten, Größe aus einer Zahlenspalte */
+export interface Bubbles {
+  visible: boolean; dataset: string; column: string;
+  maxR: number;                                // Radius des größten Werts in px der Grafik
+  ref: number | null;                          // Bezugswert für maxR (null = größter Wert im Fokus)
+  color: 'regel' | string;                     // wie die Färbung oder feste Farbe
+  stroke: string; strokeW: number;
+  opacity?: number;                            // Deckkraft der Füllung (1 = deckend)
+  legend: boolean; title: string;              // Titel in der Legende, leer = Spaltenname
+}
 
 export interface View { cx: number; cy: number; k: number }
 export interface Box { x: number; y: number; w: number }
@@ -46,10 +68,28 @@ export interface Doc {
   hatchAssign: Record<string, string>;      // "<geoSet>:<id>" → Schraffur-ID, "" = ausdrücklich keine
   hatchRules: HatchRule[];
   els: AnnEl[];                             // Marker und Textkästen (Reihenfolge = Stapelung)
+  overlays: Overlay[];                      // Grenzen anderer Ebenen über der Karte (z. B. Wahlkreise über Gemeinden)
+  bubbles: Bubbles | null;                  // Blasen aus Tabellenwerten
+  regions: RegionSet[];                     // eigene Einteilungen (Regionen aus Gebieten eines Gebietsstands)
   inset: { visible: boolean; preset: string; autoHidden: boolean };
   background: 'white' | 'transparent';
   variants: Variant[];
   active: number;
+}
+/** Eigene Einteilung: Regionen aus Bausteinen eines Gebietsstands (z. B. Kreise → „Ruhrgebiet“).
+ *  Als Karte ist sie der Gebietsstand „eg:<id>“; Daten der Bausteine werden je Region addiert. */
+export interface RegionSet {
+  id: string; name: string;
+  base: string;                            // Gebietsstand der Bausteine
+  regions: Region[];
+  rest: boolean;                           // übrige Bausteine als eigene Region (sonst neutral, ohne Daten)
+  restName: string;
+}
+export interface Region { id: string; name: string; members: string[] }   // id = Nummer (Schlüssel beim Import)
+export interface Overlay {
+  id: string; geoSet: string;              // Gebietsstand, dessen innere Grenzen gezeichnet werden
+  color: string; width: number; dash: boolean; visible: boolean;
+  legend: boolean;                         // als Linie in der Legende
 }
 export type HatchPattern = 'diag' | 'diag2' | 'kreuz' | 'horizontal' | 'vertikal' | 'punkte';
 export interface HatchStyle {
@@ -111,4 +151,6 @@ export type Sel =
   | { kind: 'frame'; id: 'main' | 'inset' }
   | { kind: 'layer'; id: 'wk' | 'labels' | 'kr' | 'land' | 'water' | 'neighbors' | 'hatches' }
   | { kind: 'hatch'; id: string }
-  | { kind: 'ann'; id: string };
+  | { kind: 'ann'; id: string }
+  | { kind: 'overlay'; id: string }
+  | { kind: 'bubbles' };

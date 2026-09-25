@@ -69,14 +69,37 @@ export function NumInput({ value, onChange, min, max, step, id, ariaLabel }: { v
 }
 export const ratioIcon = (w: number, h: number) => { const s = 14 / Math.max(w, h); return <span className="ratio-ico"><i style={{ width: (w * s).toFixed(1) + 'px', height: (h * s).toFixed(1) + 'px' }} /></span>; };
 
-/** Auswahl eines Gebietsstands, gruppiert nach Ebene (Wahlkreise, Länder, Kreise, Gemeinden …) */
+/** Auswahl eines Gebietsstands in zwei Teilen: Ebene (Wahlkreise, Länder … Gemeinden) und Stand bzw. Wahljahr */
+export interface CustomGeo { id: string; label: string; base: string; sub: string }
+export function GeoPicker({ value, onChange, label = 'Gebietsstand', customs = [] }: { value: string; onChange: (id: string) => void; label?: string; customs?: CustomGeo[] }) {
+  const custom = customs.find(c => c.id === value);
+  const cur = GEO_INDEX.find(e => e.id === (custom ? custom.base : value)) || GEO_INDEX[0];
+  const levels = [...new Set(GEO_INDEX.map(e => e.level))].sort((a, b) => LEVEL_ORDER.indexOf(a) - LEVEL_ORDER.indexOf(b));
+  const stands = GEO_INDEX.filter(e => e.level === cur.level).sort((a, b) => b.year - a.year);
+  // Ebenenwechsel: innerhalb der Verwaltungsgebiete den Stand behalten, sonst den neuesten nehmen
+  const pickLevel = (l: string) => { const L = GEO_INDEX.filter(e => e.level === l).sort((a, b) => b.year - a.year); onChange(((cur.stand ? L.find(e => e.year === cur.year) : null) || L[0]).id); };
+  const standLabel = (e: GeoIndexEntry) => e.stand ? e.stand.slice(-4) + (e.hint === 'aktuell' ? ' · aktuell' : '') : 'Wahl ' + e.year;
+  return (
+    <div className="geo-picker stack-8">
+      <select value={custom ? custom.id : cur.level} onChange={e => { const x = e.target.value; if (customs.some(c => c.id === x)) onChange(x); else pickLevel(x); }} aria-label={label + ': Ebene'}>
+        {levels.map(l => { const e = GEO_INDEX.find(x => x.level === l)!; return <option key={l} value={l}>{e.levelLabel}</option>; })}
+        {customs.length > 0 && <optgroup label="Eigene Gebiete">{customs.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</optgroup>}
+      </select>
+      {!custom && stands.length > 1 && <Seg full items={stands.map(e => [e.id, standLabel(e)] as [string, string])} value={cur.id} onChange={onChange} />}
+      <p className="hint geo-hint">{custom ? <>Eigene Einteilung aus {custom.sub}</> : cur.stand
+        ? <>Grenzen vom {cur.stand}{cur.hint && cur.hint !== 'aktuell' ? <> · <b>{cur.hint}</b></> : cur.hint === 'aktuell' ? <> · neuester Stand</> : null}</>
+        : <>Wahlkreise der {cur.election || 'Wahl ' + cur.year}</>}</p>
+    </div>
+  );
+}
+/** Kompakte Auswahl (eine Liste), gruppiert nach Ebene */
 export function GeoSelect({ value, onChange, label = 'Gebietsstand', filter }: { value: string; onChange: (id: string) => void; label?: string; filter?: (e: GeoIndexEntry) => boolean }) {
   const list = GEO_INDEX.filter(e => !filter || filter(e));
   const levels = [...new Set(list.map(e => e.level))].sort((a, b) => LEVEL_ORDER.indexOf(a) - LEVEL_ORDER.indexOf(b));
   return (
     <select value={value} onChange={e => onChange(e.target.value)} aria-label={label}>
       {levels.map(l => { const L = list.filter(e => e.level === l).sort((a, b) => b.year - a.year); return (
-        <optgroup key={l} label={L[0].levelLabel}>{L.map(e => <option key={e.id} value={e.id}>{e.stand ? `${e.levelLabel} · ${e.stand}` : e.label}</option>)}</optgroup>); })}
+        <optgroup key={l} label={L[0].levelLabel}>{L.map(e => <option key={e.id} value={e.id}>{e.stand ? `${e.levelLabel} · ${e.stand}${e.hint ? ' (' + e.hint + ')' : ''}` : e.label}</option>)}</optgroup>); })}
     </select>
   );
 }

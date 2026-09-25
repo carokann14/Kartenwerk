@@ -69,3 +69,36 @@ export function shortRangeLabels(br: number[], unit = '') {
 /** Feste Reihenfolge für Kategorien ohne Parteifarbe (nie zyklisch neu erzeugt). */
 export const CATEGORICAL = ['#3A6EA5', '#D08C2F', '#5E9C6B', '#A34E6E', '#6C5FA8', '#2F8F95', '#B25B3A', '#7A8B3A'];
 export const OTHER_GREY = '#A7A29A';
+
+/** Kleinster „runder“ Schritt ≥ x (1, 2, 2,5, 5 × 10^k) */
+export function niceStep(x: number, nearest = false): number {
+  if (!(x > 0) || !isFinite(x)) return 1;
+  const e = Math.floor(Math.log10(x)), f = x / 10 ** e;
+  if (nearest) {   // nächstgelegener runder Wert (logarithmisch)
+    const c = [1, 2, 2.5, 5, 10].reduce((b, m) => Math.abs(Math.log(m / f)) < Math.abs(Math.log(b / f)) ? m : b, 1);
+    return +(c * 10 ** e).toPrecision(6);
+  }
+  const m = f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10;
+  return +(m * 10 ** e).toPrecision(6);
+}
+/** Zweiseitige Klassen um 0: Grenzen −(n/2−1)·s … +(n/2−1)·s, Schritt aus dem 5- bis 95-%-Bereich */
+export function divergingBreaks(values: (number | null)[], classes: number, step: number | null): { breaks: number[]; step: number } {
+  const v = values.filter((x): x is number => x != null && isFinite(x)).sort((a, b) => a - b);
+  const half = classes / 2;
+  const q = (p: number) => v.length ? v[Math.min(v.length - 1, Math.max(0, Math.round(p * (v.length - 1))))] : 0;
+  const s = step && step > 0 ? step : niceStep(Math.max(Math.abs(q(0.05)), Math.abs(q(0.95)), 1e-6) / half, true);
+  const breaks: number[] = [];
+  for (let k = -(half - 1); k <= half - 1; k++) breaks.push(+(k * s).toPrecision(6));
+  return { breaks, step: s };
+}
+/** Farbtiefe je Abstand von 0 (1 = nächste Klasse an 0) */
+export const DIV_T: Record<number, number[]> = { 2: [0.4, 1], 3: [0.3, 0.65, 1], 4: [0.24, 0.5, 0.75, 1] };
+export function divergingColors(neg: string, pos: string, classes: number): string[] {
+  const half = classes / 2, T = DIV_T[half] || DIV_T[3], out: string[] = [];
+  for (let c = 0; c < classes; c++) { const d = c < half ? half - c : c - half + 1; out.push(mixWhite(c < half ? neg : pos, T[d - 1])); }
+  return out;
+}
+/** Stetige Skala: Farbe wächst gleichmäßig mit dem Wert (Legende als feiner Streifen aus CONT_STEPS Teilen) */
+export const CONT_STEPS = 96;
+export const contColor = (hue: string, t: number) => mixWhite(hue, +(0.1 + 0.9 * clamp(t, 0, 1)).toFixed(3));
+export const signed = (x: number) => (x > 0 ? '+' : x < 0 ? '−' : '') + Math.abs(x).toLocaleString('de-DE', { maximumFractionDigits: 2 });

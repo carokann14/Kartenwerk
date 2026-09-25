@@ -1,10 +1,10 @@
 # Kartenwerk
 
-Karten zur deutschen Politik für Social Media. Daten aus CSV oder Excel importieren, Gebiete einfärben und beschriften, als **Canva-SVG** (echte Vektoren) oder **PNG** exportieren.
+Karten zur deutschen Politik für Social Media. Daten aus CSV oder Excel importieren, Gebiete einfärben und beschriften, als **PNG** direkt zum Posten oder als **SVG** (echte Vektoren zum Weiterbearbeiten) exportieren.
 
 Kartenwerk läuft komplett im Browser. Deine Dateien werden nirgendwohin hochgeladen, es gibt keinen Server, kein Konto, keine Cookies und keine Anfragen an Dritte.
 
-**Stand: M3 · Etappe 1 (Verwaltungsebenen: Länder bis Gemeinden)**
+**Stand: M3 · Etappe 4 (eigene Gebiete, Summen auf höheren Ebenen) · M3 abgeschlossen**
 
 ## Was Kartenwerk kann
 
@@ -15,19 +15,27 @@ Kartenwerk läuft komplett im Browser. Deine Dateien werden nirgendwohin hochgel
   - Allgemeine CSV- und Excel-Dateien: Kodierung, Trennzeichen, Kopfzeilen und deutsches Zahlenformat werden erkannt.
   - Zuordnung über Wahlkreisnummer, Gemeindeschlüssel (8 oder 12 Stellen) oder Kreisschlüssel und Gebietsstand, ergänzend über den Namen. Ebene und Stand werden aus den Kennungen vorgeschlagen. Mehrdeutige, unbekannte und doppelte Zeilen werden angezeigt und lassen sich korrigieren. Fehlende Werte sind nie 0.
   - „Daten ersetzen“ lädt eine neue Fassung derselben Datei, Layout und Gestaltung bleiben.
-- **Färbung:** Sieger + Stärke, Stärkste Partei, Parteianteil, Zahlenwert, Kategorie. Parteifarben je Projekt änderbar, einzelne Gebiete manuell überschreibbar.
+- **Färbung:** Sieger + Stärke, Stärkste Partei, Parteianteil, Zahlenwert, Kategorie, Veränderung. Parteifarben je Projekt änderbar, einzelne Gebiete manuell überschreibbar.
+  - **Veränderung:** Parteianteil in Prozentpunkten oder Zahlenwert (absolut oder in %) gegenüber der Vorperiode oder einem zweiten Datensatz desselben Gebietsstands (etwa BTW 2021 umgerechnet auf die Wahlkreise 2025). Zweiseitige Klassen um 0 mit runder Stufe, Farben Partei/Grau oder Blau/Rot; die Legende zeigt nur die belegten Klassen.
+  - **Stetige Skala** für Parteianteil und Zahlenwert, stufenloser Verlauf von hell nach kräftig.
+- **Blasen:** Kreise an den Gebieten, deren Fläche einem Wert entspricht (etwa Wählende), Farbe wie die Färbung oder fest, fester Bezugswert für vergleichbare Karten, Legende mit verschachtelten Kreisen. Mit neutralen Flächen entsteht eine reine Blasenkarte.
+- **Summen auf höheren Ebenen:** Daten feiner Ebenen färben auch gröbere. Gemeindeergebnisse werden beim Wechsel auf Kreise, Bezirke, Verbände oder Länder automatisch addiert, Wahlkreisergebnisse auf Länder. Gleiche Farbregel, gleiche Spalten; Anteile, Quoten und Mittelwerte lassen sich nicht addieren und bleiben leer. Gemeinsam ausgezählte Briefwahl wird je Gruppe nur einmal gezählt. Die Quellenzeile vermerkt „Werte aus Gemeinden summiert“. Geprüft: BTW 2025 aus der Wahlbezirksstatistik ergibt je Kreis genau das amtliche Kreisergebnis.
+- **Eigene Gebiete:** Gebiete einer Ebene zu eigenen Regionen zusammenfassen, etwa „Ruhrgebiet“ aus Kreisen, Landtagswahlkreise aus Gemeinden oder Ost/West aus Ländern. Regionen aus der Auswahl in der Karte (Umschalt + Klick) oder aus dem Fokus anlegen, Gebiete per Klick einer Region zuordnen, umbenennen, löschen. Übrige Gebiete bleiben neutral oder bilden eine eigene Region. „Als Karte zeigen“ macht aus der Einteilung eine eigene Ebene: Daten der Bausteine (auch feinerer, etwa Gemeinden unter Kreis-Regionen) werden je Region addiert; Daten lassen sich auch direkt für die Regionen importieren (Zuordnung über Name oder Nummer). Die Regionsgrenzen lassen sich über jeder Karte einblenden. Einteilungen werden mit dem Projekt gespeichert.
+- **Navigation über Ebenen:** Unter dem Fokus-Pfad wechselst du mit „zeigen als“ zwischen Wahlkreisen, Ländern, Bezirken, Kreisen, Verbänden und Gemeinden; der Fokus bleibt dabei erhalten (Kreis Görlitz als Kreis, als Gemeinden oder als Wahlkreis 156). Im Kartenmodus geht ein Doppelklick eine Stufe tiefer und am Ende in die nächstfeinere Ebene (Land › Kreise › Gemeinden, Wahlkreis › Gemeinden). Die Suche findet auch Gebiete anderer Ebenen, etwa „Wahlkreis 211“ in einer Gemeindekarte. Ein Klick auf ein Gebiet zeigt es im Gebietsbaum.
+- **Grenzen einblenden:** Grenzen anderer Ebenen über der Karte, etwa Wahlkreise über Gemeinden oder Kreise über Wahlkreisen; Farbe, Stärke, gestrichelt, mit Legendeneintrag. Wahlkreisgrenzen über Gemeinden folgen genau den Gemeindegrenzen.
+- **Stände:** Auswahl in zwei Schritten (Ebene, dann Stand). Der neueste Stand ist als „aktuell“ markiert, 2025 als „passt zur Bundestagswahl 2025“.
 - **Kreisgrenzen:** In Gemeindekarten als eigene, kräftigere Linienebene. Gemeindefreie Gebiete (Forste, Truppenübungsplätze) erscheinen neutral und nicht als „keine Daten“.
 - **Elemente:** Titel, Unterzeile, Quellenzeile (Pflichtteil automatisch), Legende, Detail-Lupe (Berlin, Hamburg, München, Köln, Frankfurt, Bremen), Beschriftungen mit Vorlagen und Kollisionsprüfung.
-- **Schraffuren:** schräg, gegenläufig, Kreuz, waagrecht, senkrecht, Punkte; Farbe, Stärke und Abstand einstellbar, über der Datenfarbe oder auf eigener Fläche. Zuweisung aus Daten (Spalte hat einen Wert bzw. liegt über oder unter einer Schwelle), für alle Gebiete ohne Daten oder von Hand. Im Canva-SVG echte Linien und Punkte.
+- **Schraffuren:** schräg, gegenläufig, Kreuz, waagrecht, senkrecht, Punkte; Farbe, Stärke und Abstand einstellbar, über der Datenfarbe oder auf eigener Fläche. Zuweisung aus Daten (Spalte hat einen Wert bzw. liegt über oder unter einer Schwelle), für alle Gebiete ohne Daten oder von Hand. Im SVG echte Linien und Punkte.
 - **Legende bearbeiten:** Texte ändern, Einträge ausblenden und sortieren, Farben von Parteien und Kategorien ändern, eigene Einträge (Fläche, Schraffur, Linie), Anordnung untereinander, nebeneinander oder als Raster.
 - **Ortsmarker:** Ortssuche über das amtliche Gemeindeverzeichnis (10.749 Gemeinden), Klick in die Karte oder Koordinaten. Formen Kreis, Quadrat, Dreieck, Raute, Stern, Stecknadel oder eigenes einfarbiges SVG-Symbol; Beschriftung mit Position, verschiebbar mit Führungslinie; Marker mit gleichem Legendentext bilden einen Legendeneintrag.
 - **Textkästen:** an einen Kartenpunkt gehängt (mit Führungslinie) oder frei auf der Fläche; Umbruchbreite, Ausrichtung, Hintergrund und Rahmen.
 - **Pfeile:** gerade oder gebogen, Spitze am Ziel, am Start, an beiden Enden oder keine, auch gestrichelt. Die Enden rasten an Markern, Textkästen und Gebietsmitten ein und bleiben verbunden, wenn du die Elemente verschiebst.
 - **Formate:** 4:5, 1:1, 9:16, 16:9, LinkedIn und frei. Jede Variante hat ihr eigenes Layout.
-- **Export:** Canva-SVG mit Prüfbericht (SVG 1.1, Text als Pfade, keine Transparenz, unter 3 MB) und PNG in beliebiger Breite, auch mit transparentem Hintergrund. Bei sehr vielen Gebieten (Gemeinden) fasst der Export Gebiete gleicher Farbe zu einer Fläche zusammen, damit die Datei unter der Canva-Grenze bleibt; die Grenzen bleiben als eigene Linien erhalten.
+- **Export:** PNG zum direkten Posten (Voreinstellung 2×, bis 10.000 px breit, auch mit transparentem Hintergrund) und SVG mit echten Vektoren für Illustrator, Affinity, Figma oder Inkscape (Text als Pfade, Ebenen als benannte Gruppen). Auf Wunsch fasst das SVG Gebiete gleicher Farbe zu einer Fläche zusammen, sinnvoll bei Gemeinden.
 - **Speichern:** Jedes Projekt wird laufend im Browser gesichert. Zusätzlich lässt es sich als Projektdatei (`.kartenwerk.json`) speichern und wieder öffnen.
 
-Als Nächstes in M3: Navigation über Ebenen hinweg (Grenzen anderer Ebenen einblenden), Farbmodi Veränderung und stetig, Blasen aus Tabellenwerten, eigene Gebiete. Danach M4 mit eigenen Geodaten und Landtagswahlkreisen.
+Als Nächstes: M4 mit eigenen Geodaten und Landtagswahlkreisen.
 
 ## Einrichten auf GitHub Pages (einmalig)
 

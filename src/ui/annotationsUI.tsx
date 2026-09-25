@@ -1,3 +1,4 @@
+import { usableDatasets } from '../data/aggregate';
 import React, { useMemo } from 'react';
 import { areaRowIndex, colIndex } from '../data/derive';
 import { fmtNum } from '../lib/util';
@@ -54,7 +55,7 @@ export function HatchProps({ doc, id }: { doc: Doc; id: string }) {
   const manual = Object.entries(doc.hatchAssign).filter(([k, v]) => v === h.id && k.startsWith(doc.geoSet + ':')).length;
   const nd = doc.hatchRules.find(r => r.source === 'nodata');
   const rules = doc.hatchRules.filter((r): r is Extract<HatchRule, { source: 'column' }> => r.hatch === h.id && r.source === 'column');
-  const ds0 = doc.datasets.find(d => d.geoSet === doc.geoSet);
+  const ds0 = usableDatasets(doc)[0];
   return (
     <>
       <div className="rp-head"><h2>Eigenschaften</h2></div>
@@ -83,7 +84,7 @@ export function HatchProps({ doc, id }: { doc: Doc; id: string }) {
   );
 }
 function RuleEditor({ doc, r }: { doc: Doc; r: Extract<HatchRule, { source: 'column' }> }) {
-  const dsList = doc.datasets.filter(d => d.geoSet === doc.geoSet);
+  const dsList = usableDatasets(doc);
   const ds = dsList.find(d => d.id === r.dataset) || dsList[0];
   const col = ds?.columns.find(c => c.id === r.column);
   const values = useMemo(() => {

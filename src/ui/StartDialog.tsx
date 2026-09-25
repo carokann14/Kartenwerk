@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { EXAMPLES } from '../data/examples';
 import { GEO_INDEX } from '../geo/geo';
-import { GeoSelect } from './common';
+import { GeoPicker } from './common';
 import { ProjectMeta, listLocal } from '../model/persist';
 import { openLocalProject, openProjectFile, removeLocalProject, startEmpty, startExample } from '../model/projectIO';
 import { setUI, useStore } from '../model/store';
@@ -41,7 +41,7 @@ export function StartDialog() {
             <div className="start-card">
               <Icon.gebiete size={22} />
               <span className="stack-8"><b>Leeres Projekt</b>
-                <GeoSelect value={geo} onChange={setGeo} label="Gebietsstand für das neue Projekt" />
+                <GeoPicker value={geo} onChange={setGeo} label="Gebietsstand für das neue Projekt" />
                 <span className="row-btns"><button className="btn primary small" disabled={busy} onClick={async () => { setBusy(true); await startEmpty(geo); setBusy(false); }}>Anlegen und Daten importieren</button></span>
               </span>
             </div>

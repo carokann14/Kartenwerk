@@ -10,6 +10,7 @@ export interface GeoMeta {
   keyLen?: number;     // feste Schlüssellänge mit führenden Nullen (Verwaltungsgebiete), sonst Nummern
   showNr?: boolean;    // Nummer vor dem Namen zeigen (Wahlkreise)
   file?: string;       // Datei, deren Topologie sich mehrere Ebenen teilen
+  base?: string;       // eigene Einteilung: Gebietsstand der Bausteine
 }
 export interface Area {
   i: number; id: string; nr: number; name: string; bl: string; area: number; label: Pt; nb: number[]; bbox: BBox;
@@ -22,11 +23,14 @@ export interface GeoSet {
   byId: Map<string, number>; byBl: Record<string, number[]>; all: number[];
   byKr: Record<string, number[]>; krName: Record<string, string>;
   points: number;
+  memberOf?: Int32Array;   // eigene Einteilung: Region je Gebiet des Bausteins (-1 = keine)
+  memberN?: number[];      // eigene Einteilung: Zahl der Bausteine je Region
 }
 export interface Shape { name: string; code?: string; polys: Poly[]; bbox: BBox; d: string }
 export interface GeoIndexEntry {
   id: string; label: string; level: string; levelLabel: string; election: string; year: number;
   file?: string; part?: string; lazy?: boolean; stand?: string; count?: number;
+  hint?: string;       // wofür der Stand passt („aktuell“, „passt zur Bundestagswahl 2025“)
 }
 
 export const LAENDER: Record<string, [string, string]> = {
@@ -217,8 +221,13 @@ export const bboxOfIds = (g: GeoSet, ids: number[]): BBox => {
 export const areaTitle = (g: GeoSet, i: number) => { const a = g.areas[i]; return g.meta.showNr ? `${a.nr} · ${a.name}` : a.name; };
 export const areaLabel = (g: GeoSet, i: number) => g.meta.showNr ? `${g.areas[i].nr} ${g.areas[i].name}` : g.areas[i].name;
 /** Zusatz für Listen und Tooltips: Land, bei Gemeinden auch der Kreis */
+const PLURAL: Record<string, string> = { 'btw-wk': 'Wahlkreise', lan: 'Länder', rbz: 'Bezirke', krs: 'Kreise', vwg: 'Verbände', gem: 'Gemeinden' };
+const SINGULAR: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Bezirk', krs: 'Kreis', vwg: 'Verband', gem: 'Gemeinde' };
+/** „12 Kreise“, „1 Gemeinde“ */
+export const countLabel = (n: number, level: string) => `${n.toLocaleString('de-DE')} ${n === 1 ? SINGULAR[level] || 'Gebiet' : PLURAL[level] || 'Gebiete'}`;
 export function areaContext(g: GeoSet, i: number): string {
   const a = g.areas[i], land = LAENDER[a.bl]?.[0] || a.bl;
+  if (g.memberN && g.meta.base) { const n = countLabel(g.memberN[i] || 0, GEO[g.meta.base]?.meta.level || ''); return a.free ? `ohne Region · ${n} · ${land}` : n; }
   if (a.kr && g.meta.level !== 'krs') { const k = g.krName[a.kr]; if (k && k !== a.name) return `${k} · ${land}`; }
   return land;
 }
@@ -236,35 +245,64 @@ export function normKey(meta: Pick<GeoMeta, 'keyLen' | 'level'>, raw: string): s
   return s;
 }
 
-/** Gebiete zu Flächen zusammenfassen: innere Grenzen entfallen, die Außenränder werden zu Ringen verkettet.
- *  Für den Export großer Gebietsstände (eine Fläche je Farbe statt tausender Einzelpfade). */
-export function mergedRings(g: GeoSet, ids: Iterable<number>, tol = 0): Pt[][] {
+/** Gebiete zu Flächen zusammenfassen: innere Grenzen entfallen, die Außenränder werden zu Ringen aus Bögen verkettet
+ *  (für eigene Gebiete und für den Export, eine Fläche je Farbe). */
+export function mergedArcRings(g: GeoSet, ids: Iterable<number>): number[][] {
   const S = new Set(ids); if (!S.size) return [];
-  const arcs = arcsAt(g, tol);
   const used: number[] = [];
   for (const i of S) for (const poly of g.areas[i].ra) for (const ring of poly) for (const ai of ring) {
     const k = ai >= 0 ? ai : ~ai, [a, b] = g.arcOwner[k];
     if (a >= 0 && b >= 0 && a !== b && S.has(a) && S.has(b)) continue;   // innere Grenze
     used.push(ai);
   }
-  const pts = (ai: number) => ai >= 0 ? arcs[ai] : arcs[~ai].slice().reverse();
+  const end0 = (ai: number) => { const a = g.arcs[ai >= 0 ? ai : ~ai]; return ai >= 0 ? a[0] : a[a.length - 1]; };
+  const end1 = (ai: number) => { const a = g.arcs[ai >= 0 ? ai : ~ai]; return ai >= 0 ? a[a.length - 1] : a[0]; };
   const key = (p: Pt) => p[0] + ',' + p[1];
   const byStart = new Map<string, number[]>();
-  for (const ai of used) { const k = key(pts(ai)[0]); const L = byStart.get(k); if (L) L.push(ai); else byStart.set(k, [ai]); }
-  const done = new Set<number>(), rings: Pt[][] = [];
+  for (const ai of used) { const k = key(end0(ai)); const L = byStart.get(k); if (L) L.push(ai); else byStart.set(k, [ai]); }
+  const done = new Set<number>(), rings: number[][] = [];
   for (const first of used) {
     if (done.has(first)) continue;
-    const ring: Pt[] = []; let cur = first; const start = key(pts(first)[0]);
+    const ring: number[] = []; let cur = first; const start = key(end0(first));
     for (let guard = 0; guard < used.length + 1; guard++) {
-      done.add(cur);
-      const p = pts(cur); for (let i = ring.length ? 1 : 0; i < p.length; i++) ring.push(p[i]);
-      const end = key(p[p.length - 1]);
+      done.add(cur); ring.push(cur);
+      const end = key(end1(cur));
       if (end === start) break;
       const next = (byStart.get(end) || []).find(x => !done.has(x));
       if (next == null) break;
       cur = next;
     }
-    if (ring.length >= 4) rings.push(ring);
+    rings.push(ring);
   }
   return rings;
+}
+export function mergedRings(g: GeoSet, ids: Iterable<number>, tol = 0): Pt[][] {
+  const arcs = arcsAt(g, tol);
+  return mergedArcRings(g, ids).map(r => ringFrom(arcs, r)).filter(r => r.length >= 4);
+}
+
+/** Eigene Einteilung: Regionen aus Gebieten eines Gebietsstands, als eigener Gebietsstand auf derselben Topologie.
+ *  `free` = neutrale Restfläche (übrige Bausteine ohne Region, keine Daten). */
+export interface RegionDef { id: string; name: string; members: number[]; free?: boolean }
+export function buildRegionSet(id: string, label: string, base: GeoSet, defs: RegionDef[]): GeoSet {
+  const memberOf = new Int32Array(base.areas.length).fill(-1);
+  const raws: RawArea[] = [];
+  for (const r of defs) {
+    if (!r.members.length) continue;
+    const k = raws.length;
+    for (const i of r.members) memberOf[i] = k;
+    const rings = mergedArcRings(base, r.members);
+    // Beschriftung: Punkt des Bausteins, der dem Schwerpunkt der Region am nächsten liegt
+    let sa = 0, sx = 0, sy = 0; for (const i of r.members) { const a = base.areas[i]; sa += a.area; sx += a.label[0] * a.area; sy += a.label[1] * a.area; }
+    const cx = sx / (sa || 1), cy = sy / (sa || 1);
+    let best = r.members[0], bd = Infinity; for (const i of r.members) { const [x, y] = base.areas[i].label, dd = (x - cx) ** 2 + (y - cy) ** 2; if (dd < bd) { bd = dd; best = i; } }
+    const bls: Record<string, number> = {}; for (const i of r.members) bls[base.areas[i].bl] = (bls[base.areas[i].bl] || 0) + base.areas[i].area;
+    const nr = /^\d+$/.test(r.id) ? +r.id : 10000 + k;
+    raws.push({ id: r.id, nr, name: r.name, bl: Object.entries(bls).sort((x, y) => y[1] - x[1])[0]?.[0] || '00', area: Math.round(sa * 10) / 10, label: base.areas[best].label, polys: rings.map(rg => [rg]), ...(r.free ? { free: 1 as const } : {}) });
+  }
+  const meta: GeoMeta = { ...base.meta, id, label, level: 'custom', levelLabel: 'Regionen', count: 0, keyLen: undefined, showNr: false, base: base.meta.id };
+  const g = finishSet(meta, base.arcs, mkAreas(raws, base.arcs, arcBoxes(base.arcs)));
+  g.memberOf = memberOf;
+  g.memberN = raws.map(() => 0); for (const k of memberOf) if (k >= 0) g.memberN[k]++;
+  return g;
 }

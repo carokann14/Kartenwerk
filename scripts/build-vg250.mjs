@@ -125,5 +125,9 @@ const LBL = { lan: 'Länder', rbz: 'Regierungsbezirke', krs: 'Kreise', vwg: 'Gem
 const keep = idx.sets.filter(s => !(s.file || '').startsWith('vg250-') || !built.some(b => b.file === s.file));
 for (const b of built) for (const k of ['lan', 'rbz', 'krs', 'vwg', 'gem'])
   keep.push({ id: `vg-${k}-${b.year}`, label: `${LBL[k]} · Stand ${b.stand}`, level: k, levelLabel: LBL[k], election: '', year: b.year, file: b.file, part: k, lazy: true, stand: b.stand, count: b.counts[k] });
+// Hinweis je Stand für die Auswahl: neuester = „aktuell“, sonst wofür der Stand passt
+const HINT = { 2025: 'passt zur Bundestagswahl 2025' };
+const newest = {}; for (const s of keep) if (s.stand) newest[s.level] = Math.max(newest[s.level] || 0, s.year);
+for (const s of keep) if (s.stand) s.hint = s.year === newest[s.level] ? 'aktuell' : (HINT[s.year] || '');
 fs.writeFileSync(idxFile, JSON.stringify({ sets: keep }));
 console.log('index.json:', keep.length, 'Gebietsstände');

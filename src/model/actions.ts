@@ -6,9 +6,13 @@ import { fitInset, fitMain, makeVariant, relayout } from './layout';
 import type { ColorRule, Doc, Fokus, Variant } from './types';
 import type { Dataset } from '../data/types';
 import { GEO, ensureGeo, geoLabel } from '../geo/geo';
+import { translateFokus } from '../geo/relate';
+import { isCustom, syncRegions } from '../geo/regions';
+import { datasetFor, usableDatasets } from '../data/aggregate';
+import { fokusLabel } from '../render/scene';
 import { saveLocal } from './persist';
 
-const refit = (d: Draft<Doc>, which: 'main' | 'inset' | 'both' = 'main') => {
+export const refit = (d: Draft<Doc>, which: 'main' | 'inset' | 'both' = 'main') => {
   const plain = current(d) as Doc;
   d.variants.forEach((v, k) => {
     const pv = plain.variants[k] as Variant;
@@ -20,7 +24,7 @@ const refit = (d: Draft<Doc>, which: 'main' | 'inset' | 'both' = 'main') => {
 
 /** Gebietsstände bei Bedarf nachladen (Gemeinden usw. werden erst geladen, wenn man sie braucht). */
 export async function loadGeoSets(ids: (string | null | undefined)[]): Promise<boolean> {
-  const need = [...new Set(ids.filter((x): x is string => !!x && !GEO[x]))];
+  const need = [...new Set(ids.filter((x): x is string => !!x && !GEO[x] && !isCustom(x)))];   // Regionen entstehen aus ihren Bausteinen
   if (!need.length) return true;
   setUI({ busy: 'Lade ' + need.map(geoLabel).join(', ') + ' …' });
   try { await ensureGeo(need); return true; }
@@ -34,7 +38,8 @@ export function newProject(geoSet = 'btw-wk-2025', name = 'Neues Projekt') {
   setDoc(d); setUI({ start: false, sel: { kind: 'graphic' }, mapMode: null, step: 'gebiete', panelOpen: true });
 }
 export async function openDoc(d0: Doc) {
-  await loadGeoSets([d0.geoSet, ...(d0.datasets || []).map(x => x.geoSet)]);
+  await loadGeoSets([d0.geoSet, ...(d0.datasets || []).map(x => x.geoSet), ...(d0.overlays || []).map(o => o.geoSet), ...(d0.regions || []).map(r => r.base)]);
+  syncRegions(d0);
   if (!GEO[d0.geoSet]) throw new Error('Unbekannter Gebietsstand: ' + d0.geoSet);
   const d = normalizeDoc(d0);
   setDoc(d); setUI({ start: false, sel: { kind: 'graphic' }, mapMode: null });
@@ -48,20 +53,26 @@ export function setFokus(f: Fokus) {
     refit(d);
   });
 }
-export async function setGeoSet(id: string) {
-  if (getDoc().geoSet === id) return;
+/** Ebene bzw. Gebietsstand wechseln. Der Fokus wird mitgenommen (Kreis Görlitz bleibt Kreis Görlitz,
+ *  egal ob als Gemeinden, Kreise oder Wahlkreise); `from` übersetzt stattdessen einen anderen Fokus. */
+export async function setGeoSet(id: string, opts: { fokus?: Fokus; from?: Fokus } = {}) {
+  if (getDoc().geoSet === id && !opts.fokus && !opts.from) return;
   if (!(await loadGeoSets([id])) || !GEO[id]) return;
+  const d0 = getDoc(), from = GEO[d0.geoSet];
+  const nf = opts.fokus || (from ? translateFokus(opts.from || d0.fokus, from, GEO[id]) : { kind: 'de' as const });
   update(d => {
-    d.geoSet = id; d.fokus = { kind: 'de' };
+    d.geoSet = id; d.fokus = nf;
+    if (nf.kind !== 'de' && d.inset.visible) { d.inset.visible = false; d.inset.autoHidden = true; }
     for (const v of d.variants) v.labelOffsets = {};
     refit(d, 'both');
-    // Farbregel auf passenden Datensatz umstellen, falls vorhanden
-    const cur = d.color as ColorRule & { dataset?: string };
-    const ds = d.datasets.find(x => x.id === cur.dataset);
-    if (ds && ds.geoSet !== id) { const alt = d.datasets.find(x => x.geoSet === id); if (alt) d.color = autoRule(alt as Dataset); }
+    // Farbregel: Daten feinerer Ebenen werden summiert (Gemeinden → Kreise, Regionen); sonst auf einen passenden Datensatz umstellen
+    const plain = current(d) as Doc, cur = plain.color as ColorRule & { dataset?: string };
+    const ds = datasetFor(plain, cur.dataset, id);
+    if (ds && ds.geoSet !== id) { const alt = usableDatasets(plain, id).find(x => !x.derived) || usableDatasets(plain, id)[0]; if (alt) d.color = autoRule(alt); }
   });
   setUI({ sel: { kind: 'graphic' } });
-  toast('Gebietsstand: ' + GEO[id].meta.label);
+  const fl = fokusLabel(getDoc()), gl = GEO[id].meta.label;
+  toast(gl + (nf.kind !== 'de' && !fl.startsWith(gl) ? ' · ' + fl : ''));
 }
 export function autoRule(ds: Dataset): ColorRule {
   const grp = ds.groups.find(g => g.parties && /Zweit/.test(g.label)) || ds.groups.find(g => g.parties) || ds.groups[0];
@@ -79,7 +90,7 @@ export function addDataset(ds: Dataset, useIt = true) {
       if (d.geoSet !== ds.geoSet) { d.geoSet = ds.geoSet; d.fokus = { kind: 'de' }; if (GEO[ds.geoSet]?.meta.keyLen && d.inset.visible) d.inset.visible = false; }
       d.color = autoRule(ds);
       if (d.texts.title.text === 'Titel der Grafik' && ds.groups.some(g => g.parties)) {
-        const SING: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Regierungsbezirk', krs: 'Kreis', vwg: 'Gemeindeverband', gem: 'Gemeinde' };
+        const SING: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Regierungsbezirk', krs: 'Kreis', vwg: 'Gemeindeverband', gem: 'Gemeinde', custom: 'Region' };
         d.texts.title.text = 'Stärkste Partei je ' + (SING[GEO[ds.geoSet]?.meta.level] || 'Gebiet');
         const grp = ds.groups.find(g => g.parties && /Zweit/.test(g.label)) || ds.groups.find(g => g.parties);
         d.texts.subtitle.text = `${grp && !ds.name.includes(grp.label) ? grp.label + ', ' : ''}${ds.name}. Je kräftiger die Farbe, desto höher der Anteil der stärksten Partei.`;
@@ -110,7 +121,8 @@ export function removeDataset(id: string) {
   update(d => {
     d.datasets = d.datasets.filter(x => x.id !== id);
     const cur = d.color as ColorRule & { dataset?: string };
-    if (cur.dataset === id) d.color = d.datasets.length ? autoRule(current(d.datasets[0]) as Dataset) : { mode: 'none' };
+    if (cur.dataset === id) { const plain = current(d) as Doc, u = usableDatasets(plain); d.color = u.length ? autoRule(u[0]) : plain.datasets.length ? autoRule(plain.datasets[0]) : { mode: 'none' }; }
+    if (d.bubbles?.dataset === id) d.bubbles = null;
   });
 }
 export function addVariant(preset: string) {

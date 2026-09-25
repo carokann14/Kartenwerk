@@ -1,4 +1,5 @@
 // Schraffuren: Zuordnung zu Gebieten und Geometrie (Linien und Punkte) für Editor, Legende und Export
+import { datasetFor } from '../data/aggregate';
 import { areaRowIndex, colIndex } from '../data/derive';
 import type { Doc, HatchPattern, HatchRule, HatchStyle } from '../model/types';
 import { ColorModel, colorModel, fillOf } from './colorModel';
@@ -17,7 +18,7 @@ function ruleHits(doc: Doc, cm: ColorModel, r: HatchRule): (i: number) => boolea
     if (!cm.dataset || cm.mismatch || doc.color.mode === 'none') return () => false;
     return i => cm.cls[i] < 0 && !g.areas[i].free && !doc.overrides[doc.geoSet + ':' + g.areas[i].id];
   }
-  const ds = doc.datasets.find(d => d.id === r.dataset);
+  const ds = datasetFor(doc, r.dataset);
   if (!ds || ds.geoSet !== doc.geoSet) return () => false;
   const ci = colIndex(ds, r.column); if (ci < 0) return () => false;
   const rows = areaRowIndex(ds), vals = new Set(r.values);

@@ -1,17 +1,20 @@
 import React, { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { create } from 'zustand';
-import { CONTEXT, GEO, areaContext, areaD, areaTitle, arcLines, bboxOfIds, linesD, lodTol } from '../geo/geo';
+import { CONTEXT, GEO, GeoSet, areaContext, areaD, areaTitle, arcLines, bboxOfIds, linesD, lodTol } from '../geo/geo';
 import { CUTS, measureW } from '../lib/fonts';
 import { clamp, esc, fmt1, fmtNum } from '../lib/util';
+import { signed } from '../lib/color';
 import { beginGesture, getDoc, getUI, setUI, toast, update, useStore } from '../model/store';
-import type { ArrowEl, ArrowEnd, Doc, Variant } from '../model/types';
+import type { ArrowEl, ArrowEnd, Doc, Fokus, Variant } from '../model/types';
 import { colorModel, fillOf } from '../render/colorModel';
 import { areaFill, hatchMap, patternSpec } from '../render/hatch';
 import { LabelItem, TextPrim, activeVariant, labelPrims, layoutLabels, legendPrims, textPrims } from '../render/elements';
-import { FrameId, frameMeshes, frameSets, geoOf, insetIdx, insetLabel } from '../render/scene';
+import { FrameId, activeOverlays, fokusIdx, fokusLabel, frameMeshes, frameSets, geoOf, insetIdx, insetLabel, overlayParts } from '../render/scene';
+import { finerSet } from '../geo/relate';
 import { refitFrame, setFokus, setGeoSet } from '../model/actions';
 import { addArrow, addMarker, addTextBox } from '../model/annotations';
 import { annItems, arrowRawEnds } from '../render/annotations';
+import { bubbleSet } from '../render/bubbles';
 import { groupMetrics, areaRowIndex } from '../data/derive';
 import { LAENDER } from '../geo/geo';
 import { Icon } from './common';
@@ -24,8 +27,7 @@ export function textEl(t: TextPrim, key?: React.Key) {
   return <text key={key} x={+t.x.toFixed(1)} y={+t.y.toFixed(1)} fontFamily={CUTS[t.cut].family} fontSize={t.size} fill={t.color} textAnchor={t.anchor} {...halo} style={{ fontKerning: 'normal' }}>{t.text}</text>;
 }
 
-const AreaPaths = memo(function AreaPaths({ geoId, ids, fills, fill, u, pe, tol }: { geoId: string; ids: number[]; fills?: string[]; fill?: string; u?: boolean; pe?: boolean; tol: number }) {
-  const g = GEO[geoId];
+const AreaPaths = memo(function AreaPaths({ g, ids, fills, fill, u, pe, tol }: { g: GeoSet; ids: number[]; fills?: string[]; fill?: string; u?: boolean; pe?: boolean; tol: number }) {
   return <g>{ids.map((i, k) => <path key={i} data-i={i} data-u={u ? 1 : undefined} d={areaD(g, i, tol)} fillRule="evenodd" fill={fills ? fills[k] : fill} pointerEvents={pe === false ? 'none' : undefined} />)}</g>;
 });
 const ContextLayer = memo(function ContextLayer({ neighbors, lakes, st, k }: { neighbors: boolean; lakes: boolean; st: Doc['style']; k: number }) {
@@ -34,6 +36,13 @@ const ContextLayer = memo(function ContextLayer({ neighbors, lakes, st, k }: { n
   return <>{neighbors && <path d={nd} fill={st.neighbor} stroke={st.neighborLine} strokeWidth={0.7 / k} strokeLinejoin="round" data-ctx="1" />}{lakes && <path d={ld} fill={st.water} data-ctx="1" />}</>;
 });
 
+const OverlayPath = memo(function OverlayPath({ bg, og, color, width, dash, k, zoom }: { bg: GeoSet; og: GeoSet; color: string; width: number; dash: boolean; k: number; zoom: number }) {
+  const parts = useMemo(() => overlayParts(bg, og), [bg, og]);
+  const tols = parts.map(p => lodTol(p.set, k, zoom)).join(',');
+  const d = useMemo(() => parts.map(p => linesD(arcLines(p.set, p.arcs, lodTol(p.set, k, zoom)))).join(''), [parts, tols]); // eslint-disable-line
+  const w = width / k;
+  return <path d={d} fill="none" stroke={color} strokeWidth={w} strokeLinejoin="round" strokeLinecap={dash ? 'butt' : 'round'} strokeDasharray={dash ? `${w * 3.2} ${w * 2.4}` : undefined} pointerEvents="none" />;
+});
 function MapFrame({ id }: { id: FrameId }) {
   const doc = useStore(s => s.doc!);
   const sel = useStore(s => s.ui.sel);
@@ -41,7 +50,7 @@ function MapFrame({ id }: { id: FrameId }) {
   const zoom = useStore(s => s.ui.view.z);
   const v = activeVariant(doc), F = v.L[id], vw = F.view, st = doc.style, g = geoOf(doc);
   const tol = lodTol(g, vw.k, zoom);
-  const sets = useMemo(() => frameSets(doc, id), [doc.geoSet, doc.fokus, doc.umfeld, doc.inset.preset, id]); // eslint-disable-line
+  const sets = useMemo(() => frameSets(doc, id), [g, doc.fokus, doc.umfeld, doc.inset.preset, id]); // eslint-disable-line
   const me = useMemo(() => frameMeshes(doc, id, sets), [sets, doc.umfeldStyle]); // eslint-disable-line
   const cm = colorModel(doc);
   const Flist = useMemo(() => [...sets.F], [sets]);
@@ -57,6 +66,7 @@ function MapFrame({ id }: { id: FrameId }) {
   const krOn = doc.layers.krLines && me.kr.length > 0;
   const md = useMemo(() => { const L = (x: number[]) => linesD(arcLines(g, x, tol)); return { wk: L(krOn ? me.wk : [...me.wk, ...me.kr]), wkU: L(me.wkU), kr: krOn ? L(me.kr) : '', land: L(me.land), outline: L(me.outline), fokus: L(me.fokus) }; }, [me, tol, krOn]); // eslint-disable-line
   const labels = useMemo(() => layoutLabels(doc, id), [doc, id]);
+  const bub = useMemo(() => bubbleSet(doc, id, v), [doc, id, v]); // eslint-disable-line
   const linesMode = me.linesMode;
   const k = vw.k;
   const selIds = sel.kind === 'area' ? sel.ids.map(x => g.byId.get(x)).filter((x): x is number => x != null && sets.F.has(x)) : [];
@@ -70,8 +80,8 @@ function MapFrame({ id }: { id: FrameId }) {
       <g clipPath={`url(#clip-${id})`}>
         <g transform={`matrix(${k} 0 0 ${k} ${F.w / 2 - vw.cx * k} ${F.h / 2 - vw.cy * k})`}>
           <ContextLayer neighbors={doc.layers.neighbors} lakes={doc.layers.lakes} st={st} k={k} />
-          <AreaPaths geoId={doc.geoSet} ids={Ulist} fill={linesMode ? 'none' : st.umfeld} u pe={!linesMode} tol={tol} />
-          <AreaPaths geoId={doc.geoSet} ids={Flist} fills={fills} tol={tol} />
+          <AreaPaths g={g} ids={Ulist} fill={linesMode ? 'none' : st.umfeld} u pe={!linesMode} tol={tol} />
+          <AreaPaths g={g} ids={Flist} fills={fills} tol={tol} />
           {hatchLayers.length > 0 && <g pointerEvents="none">
             <defs>{hatchLayers.map(({ st: h }) => { const P = patternSpec(h, k); return (
               <pattern key={h.id} id={`hp-${id}-${h.id}`} patternUnits="userSpaceOnUse" width={P.s} height={P.s} patternTransform={`rotate(${P.ang})`}>
@@ -83,11 +93,13 @@ function MapFrame({ id }: { id: FrameId }) {
           {krOn && <path d={md.kr} fill="none" stroke={st.krLine} strokeWidth={st.krLineW / k} strokeLinejoin="round" strokeLinecap="round" pointerEvents="none" />}
           {linesMode && <><path d={md.wkU} fill="none" stroke="#C8C2B6" strokeWidth={0.6 / k} strokeLinejoin="round" pointerEvents="none" /><path d={md.outline} fill="none" stroke="#B9B2A5" strokeWidth={0.8 / k} strokeLinejoin="round" pointerEvents="none" /></>}
           {doc.layers.landLines && <path d={md.land} fill="none" stroke={st.landLine} strokeWidth={st.landLineW / k} strokeLinejoin="round" strokeLinecap="round" pointerEvents="none" />}
+          {activeOverlays(doc).map(o => <OverlayPath key={o.id} bg={g} og={GEO[o.geoSet]} color={o.color} width={o.width} dash={o.dash} k={k} zoom={zoom} />)}
           {id === 'main' && doc.fokusOutline && doc.fokus.kind !== 'de' && <path d={md.fokus} fill="none" stroke={st.fokusLine} strokeWidth={1.8 / k} strokeLinejoin="round" pointerEvents="none" />}
           {lupe && <rect x={lupe.x} y={lupe.y} width={lupe.w} height={lupe.h} fill="none" stroke={st.frameLine} strokeWidth={1.2 / k} pointerEvents="none" />}
           {hover != null && sets.F.has(hover) && <path d={areaD(g, hover, tol)} fill="none" stroke={st.ink} strokeWidth={1.4 / k} pointerEvents="none" />}
           {selD && <><path d={selD} fill="none" stroke="#FFFFFF" strokeWidth={4.2 / k} strokeLinejoin="round" pointerEvents="none" /><path d={selD} fill="none" stroke="#16181B" strokeWidth={1.8 / k} strokeLinejoin="round" pointerEvents="none" /></>}
         </g>
+        {bub && <g className="bubbles" pointerEvents="none">{bub.items.map(b => <circle key={b.i} cx={+b.x.toFixed(1)} cy={+b.y.toFixed(1)} r={+b.r.toFixed(2)} fill={b.fill} fillOpacity={doc.bubbles!.opacity != null && doc.bubbles!.opacity < 1 ? doc.bubbles!.opacity : undefined} stroke={doc.bubbles!.strokeW > 0 ? doc.bubbles!.stroke : undefined} strokeWidth={doc.bubbles!.strokeW || undefined} />)}</g>}
         <g className="lbls">{labels.items.map(it => <LabelG key={it.key} it={it} doc={doc} />)}</g>
       </g>
       {id === 'inset' && <>
@@ -190,10 +202,10 @@ function Tooltip() {
     } else rows = <div className="tt-s">keine Daten</div>;
   } else if (cm.dataset) {
     const v = cm.valueOf(h.i);
-    rows = <div className="tt-s">{cm.mode === 'kategorie' ? (cm.keys[h.i] || 'keine Daten') : v == null ? 'keine Daten' : fmtNum(v, 2)}</div>;
+    rows = <div className="tt-s">{cm.mode === 'kategorie' ? (cm.keys[h.i] || 'keine Daten') : v == null ? 'keine Daten' : cm.mode === 'veraenderung' ? signed(+v.toFixed(2)) + cm.unit : fmtNum(v, 2)}</div>;
   }
   const ov = doc.overrides[doc.geoSet + ':' + a.id];
-  return <div className="tooltip" style={{ left: h.x, top: h.y }}><div className="tt-h">{areaTitle(g, h.i)}</div><div className="tt-s">{areaContext(g, h.i)}{a.free ? ' · gemeindefrei' : ''}{cm.group ? ' · ' + cm.group.label : ''}{(() => { const hm = hatchMap(doc), hh = doc.layers.hatches ? hm.byArea[h.i] : null; return hh ? ' · ' + (hm.styles.get(hh)?.name || '') : ''; })()}{ov ? ' · manuell eingefärbt' : ''}</div>{rows}</div>;
+  return <div className="tooltip" style={{ left: h.x, top: h.y }}><div className="tt-h">{areaTitle(g, h.i)}</div><div className="tt-s">{areaContext(g, h.i)}{a.free && !g.memberOf ? ' · gemeindefrei' : ''}{cm.group ? ' · ' + cm.group.label : ''}{(() => { const hm = hatchMap(doc), hh = doc.layers.hatches ? hm.byArea[h.i] : null; return hh ? ' · ' + (hm.styles.get(hh)?.name || '') : ''; })()}{ov ? ' · manuell eingefärbt' : ''}</div>{rows}</div>;
 }
 
 function MapModeBar({ wrap }: { wrap: React.RefObject<HTMLDivElement> }) {
@@ -433,9 +445,12 @@ export function Canvas() {
       const p = t.closest('path[data-i]') as SVGPathElement | null;
       if (p && !p.dataset.u && u.mapMode === 'main') {
         const g = geoOf(d), ar = g.areas[+p.dataset.i!];
-        if (d.fokus.kind === 'de') { setUI({ expanded: { ...u.expanded, [ar.bl]: true } }); setFokus({ kind: 'land', bl: ar.bl }); toast('Fokus: ' + LAENDER[ar.bl][0]); }
-        else if (d.fokus.kind === 'land' && ar.kr && (g.byKr[ar.kr]?.length || 0) > 1) { setFokus({ kind: 'kreis', kr: ar.kr }); toast('Fokus: ' + (g.krName[ar.kr] || ar.kr)); }
-        else if (d.fokus.kind === 'land' || d.fokus.kind === 'kreis' || d.fokus.kind === 'custom') { setFokus({ kind: 'area', id: ar.id }); toast('Fokus: ' + ar.name); }
+        // eine Stufe tiefer: Land → Kreis → Gebiet; danach die nächstfeinere Ebene (Länder → Kreise → Gemeinden)
+        const cur = fokusIdx(d).length;
+        const steps: Fokus[] = [...(g.memberOf ? [] : [{ kind: 'land', bl: ar.bl } as Fokus]), ...(ar.kr && g.meta.level !== 'krs' ? [{ kind: 'kreis', kr: ar.kr } as Fokus] : []), { kind: 'area', id: ar.id }];
+        const next = steps.find(f => { const n = fokusIdx(d, f).length; return n >= 1 && n < cur; });
+        if (next) { if (next.kind === 'land') setUI({ expanded: { ...u.expanded, [ar.bl]: true } }); setFokus(next); toast('Fokus: ' + fokusLabel(getDoc())); }
+        else { const fs = finerSet(g); if (fs) void setGeoSet(fs, { from: { kind: 'area', id: ar.id } }); else toast('Feinste Ebene erreicht'); }
       }
       return;
     }

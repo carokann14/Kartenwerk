@@ -58,6 +58,16 @@ export interface Dataset {
   report: MatchReport;
   joint?: Record<string, string>;   // Gebiete mit gemeinsamem Ergebnis (gleicher Schlüssel = eine Fläche)
   alias?: Record<string, string>;   // Gebiet ohne eigene Zeile → Gebiet, dessen Zeile es enthält (z. B. „einschl. Bergewöhrden“)
+  derived?: DerivedInfo;            // nur zur Laufzeit: aus einem feineren Gebietsstand summiert
+}
+export interface DerivedInfo {
+  from: string;                     // Gebietsstand der Quelldaten
+  sources: number;                  // Quellgebiete mit Daten
+  targets: number;                  // Zielgebiete mit Daten
+  unassigned: number;               // Quellgebiete ohne Zielgebiet (z. B. außerhalb aller Regionen)
+  partial: number;                  // Zielgebiete, in denen Daten einzelner Bausteine fehlen
+  rates: string[];                  // Spalten, die sich nicht addieren lassen (Anteile, Quoten), leer gelassen
+  split: number;                    // gemeinsam ausgezählte Gruppen, die über mehrere Zielgebiete reichen
 }
 
 export interface RawSheet { name: string; cells: Cell[][] }

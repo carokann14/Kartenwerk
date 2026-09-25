@@ -2,6 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { fmt1, fmtInt } from '../../lib/util';
 import { areaRowIndex, groupMetrics } from '../../data/derive';
 import { PRESET_LABELS } from '../../data/pipeline';
+import { datasetFor } from '../../data/aggregate';
+import type { Dataset } from '../../data/types';
+import { countLabel } from '../../geo/geo';
 import { GEO } from '../../geo/geo';
 import { removeDataset, setGeoSet } from '../../model/actions';
 import { setUI, update, useStore } from '../../model/store';
@@ -14,13 +17,14 @@ export function PanelDaten() {
   const ui = useStore(s => s.ui);
   const cm = colorModel(doc);
   const g = geoOf(doc);
-  const active = doc.datasets.find(d => d.id === (ui.tableDataset || cm.dataset?.id)) || doc.datasets[0];
+  const src = doc.datasets.find(d => d.id === (ui.tableDataset || cm.dataset?.id)) || doc.datasets[0];
+  const active = src ? datasetFor(doc, src.id) : undefined;   // auf gröberen Ebenen: summierte Tabelle
   const grp = active && (cm.dataset?.id === active.id && cm.group ? cm.group : active.groups[0]);
   const rows = useMemo(() => {
     if (!active) return [];
     const ix = areaRowIndex(active), G = GEO[active.geoSet];
     const gm = grp ? groupMetrics(active, grp) : null;
-    return G.all.map(i => {
+    return G.all.filter(i => !(G.memberOf && G.areas[i].free)).map(i => {   // Restflächen eigener Einteilungen haben nie Daten
       const a = G.areas[i], r = ix.get(a.id);
       const m = r != null && gm ? gm[r] : null;
       const col = m && m.win >= 0 ? active.columns.find(c => c.id === grp!.columns[m.win]) : null;
@@ -41,7 +45,7 @@ export function PanelDaten() {
         <button className="btn primary" onClick={() => setUI({ wizard: { mode: 'new' } })}><Icon.upload /> Datei importieren …</button>
         {!doc.datasets.length && <p className="hint">CSV oder Excel. Für Wahlergebnisse der Bundeswahlleiterin gibt es fertige Vorlagen, Beispieldateien findest du im Importassistenten.</p>}
         {doc.datasets.map(d => {
-          const r = d.report, used = cm.dataset?.id === d.id, other = d.geoSet !== doc.geoSet;
+          const r = d.report, used = cm.dataset?.id === d.id, sum = datasetFor(doc, d.id)!.derived, other = d.geoSet !== doc.geoSet && !sum;
           const open = r.ambiguous + r.unknown + r.duplicate;
           return (
             <div key={d.id} className={'card ds' + (used ? ' used' : '')}>
@@ -53,6 +57,7 @@ export function PanelDaten() {
                 {r.byName > 0 && <span className="chip">{r.byName} über Namen</span>}
                 {open > 0 && <span className="chip err">{open} offen</span>}
                 {r.missing.length > 0 && <span className="chip warn">{r.missing.length} Gebiete ohne Daten</span>}
+                {sum && <span className="chip accent" title={`${sum.sources.toLocaleString('de-DE')} ${GEO[d.geoSet]?.meta.levelLabel} → ${sum.targets.toLocaleString('de-DE')} ${g.meta.levelLabel}`}>auf {g.meta.levelLabel} summiert</span>}
               </div>
               <div className="row-btns">
                 <button className="btn small" onClick={() => setUI({ wizard: { mode: 'replace', datasetId: d.id } })} title="Neue Version derselben Datei laden, Gestaltung bleibt"><Icon.refresh /> Daten ersetzen …</button>
@@ -66,6 +71,7 @@ export function PanelDaten() {
       </Section>
       {active && <Section title="Tabelle" aside={`${active.name} · nur lesen`}>
         {active.geoSet !== doc.geoSet && <Note kind="warn">Dieser Datensatz gehört zu „{GEO[active.geoSet].meta.label}“. Die Karte zeigt „{g.meta.label}“.</Note>}
+        {active.derived && <DerivedNote ds={active} />}
         {grp && <p className="hint">Abgeleitet aus der Gruppe <b>{grp.label}</b>: stärkste Spalte, ihr Anteil und der Vorsprung auf Platz 2.</p>}
         {rows.length > 60 && <div className="search"><Icon.search /><input type="text" value={flt} onChange={e => setFlt(e.target.value)} placeholder={showNr ? 'Name, Nummer oder Partei' : 'Name, Schlüssel oder Partei'} aria-label="Tabelle filtern" /></div>}
         <div className="dtable-wrap"><div className="dtable-scroll"><table className="dtable">
@@ -81,5 +87,14 @@ export function PanelDaten() {
       </Section>}
     </>
   );
+}
+/** Hinweis zu summierten Daten: woraus, was fehlt, was nicht addierbar ist */
+export function DerivedNote({ ds }: { ds: Dataset }) {
+  const x = ds.derived!, lv = GEO[x.from]?.meta.level || '';
+  return <Note>Summiert aus {countLabel(x.sources, lv)} ({GEO[x.from]?.meta.label}).
+    {x.unassigned > 0 && <> {countLabel(x.unassigned, lv)} liegen in keiner Region.</>}
+    {x.partial > 0 && <> In {x.partial} {x.partial === 1 ? 'Gebiet fehlen' : 'Gebieten fehlen'} Daten einzelner {countLabel(2, lv).replace(/^2 /, '')}.</>}
+    {x.split > 0 && <> {x.split} gemeinsam ausgezählte {x.split === 1 ? 'Gruppe reicht' : 'Gruppen reichen'} über mehrere Gebiete und {x.split === 1 ? 'zählt' : 'zählen'} ganz zum größten Teil.</>}
+    {x.rates.length > 0 && <> Nicht addierbar und leer: {x.rates.slice(0, 4).join(', ')}{x.rates.length > 4 ? ' …' : ''}.</>}</Note>;
 }
 export { fmtInt };

@@ -1,18 +1,21 @@
+import { RegionAssign } from './panels/Regionen';
 import React from 'react';
 import { CUTS, Cut } from '../lib/fonts';
 import { clamp, fmt1, fmtInt, fmtNum } from '../lib/util';
 import { areaRowIndex, groupMetrics } from '../data/derive';
-import { areaContext, areaTitle } from '../geo/geo';
+import { GEO, areaContext, areaTitle } from '../geo/geo';
+import { removeOverlay, updateOverlay } from '../model/overlays';
 import { LABEL_PRESETS, PRESETS } from '../model/defaults';
 import { refitAfterInset, refitFrame, setFokus, relayoutActive, removeVariant, resizeVariant, setOverride, setTextScale } from '../model/actions';
 import { setUI, update, useStore } from '../model/store';
 import type { Doc, Sel } from '../model/types';
 import { ColorModel, colorModel, legendTitleAuto, partyColor } from '../render/colorModel';
 import { activeVariant, layoutLabels, sourceText } from '../render/elements';
-import { INSET_DEFS, fokusLabel, geoOf, insetLabel } from '../render/scene';
+import { INSET_DEFS, fokusLabel, geoOf, insetLabel, overlayName } from '../render/scene';
 import { Check, Field, Icon, Note, NumInput, Section, Seg } from './common';
 import { AreaHatch, HatchList, HatchProps, LegendProps } from './annotationsUI';
 import { AnnProps, ArrowIcon, MarkerIcon } from './elementsUI';
+import { BubbleSection } from './panels/Blasen';
 import { elName } from '../render/annotations';
 
 // ---------- Ebenen ----------
@@ -45,6 +48,8 @@ function Layers() {
       <Row lvl={2} s={{ kind: 'layer', id: 'hatches' }} icon={<Icon.layer />} name={<>Schraffuren <small>{doc.hatches.length}</small></>} hidden={!L.hatches} extra={eye(L.hatches, on => update(d => { d.layers.hatches = on; }), 'Schraffuren')} />
       {Object.keys(g.byKr).length > 0 && g.meta.level !== 'krs' && <Row lvl={2} s={{ kind: 'layer', id: 'kr' }} icon={<Icon.layer />} name="Kreisgrenzen" hidden={!L.krLines} extra={eye(L.krLines, on => update(d => { d.layers.krLines = on; }), 'Kreisgrenzen')} />}
       <Row lvl={2} s={{ kind: 'layer', id: 'land' }} icon={<Icon.layer />} name="Ländergrenzen" hidden={!L.landLines} extra={eye(L.landLines, on => update(d => { d.layers.landLines = on; }), 'Ländergrenzen')} />
+      {doc.overlays.map(o => <Row key={o.id} lvl={2} s={{ kind: 'overlay', id: o.id }} icon={<span className="ov-swatch" style={{ borderTopColor: o.color, borderTopStyle: o.dash ? 'dashed' : 'solid' }} />} name={<>{overlayName(o.geoSet, true)} <small>{GEO[o.geoSet]?.meta.stand ? GEO[o.geoSet]?.meta.stand?.slice(-4) : ''}</small></>} hidden={!o.visible} extra={eye(o.visible, on => updateOverlay(o.id, { visible: on }), overlayName(o.geoSet, true))} />)}
+      {doc.bubbles && <Row lvl={2} s={{ kind: 'bubbles' }} icon={<span className="bub-icon" />} name={<>Blasen <small>{doc.datasets.find(d => d.id === doc.bubbles!.dataset)?.columns.find(c => c.id === doc.bubbles!.column)?.label || ''}</small></>} hidden={!doc.bubbles.visible} extra={eye(doc.bubbles.visible, on => update(d => { if (d.bubbles) d.bubbles.visible = on; }), 'Blasen')} />}
       <Row lvl={2} s={{ kind: 'layer', id: 'water' }} icon={<Icon.layer />} name={<>Gewässer <small>Kontext</small></>} hidden={!L.lakes} extra={eye(L.lakes, on => update(d => { d.layers.lakes = on; }), 'Gewässer')} />
       <Row lvl={2} s={{ kind: 'layer', id: 'neighbors' }} icon={<Icon.layer />} name={<>Nachbarstaaten <small>Kontext</small></>} hidden={!L.neighbors} extra={eye(L.neighbors, on => update(d => { d.layers.neighbors = on; }), 'Nachbarstaaten')} />
       <Row lvl={1} s={{ kind: 'frame', id: 'inset' }} icon={<Icon.frame />} name={<>Inset „{insetLabel(doc)}“</>} hidden={!doc.inset.visible} extra={eye(doc.inset.visible, on => { update(d => { d.inset.visible = on; d.inset.autoHidden = false; }); refitAfterInset(); }, 'Inset')} />
@@ -80,6 +85,7 @@ function AreaProps({ doc, ids, cm }: { doc: Doc; ids: string[]; cm: ColorModel }
     <Head t={`${ids.length} Gebiete ausgewählt`} sub={ids.slice(0, 6).map(id => { const a = g.areas[g.byId.get(id)!]; return a ? (g.meta.showNr ? a.nr : a.name) : id; }).join(', ') + (ids.length > 6 ? ' …' : '')} />
     <p className="hint">Umschalt + Klick fügt hinzu oder entfernt.</p>
     <button className="btn small" onClick={() => setFokus((ids.length === 1 ? { kind: 'area', id: ids[0] } : { kind: 'custom', ids: [...ids].sort((a, b) => +a - +b || a.localeCompare(b)) }))}><Icon.target /> Auswahl als Fokus</button>
+    <RegionAssign doc={doc} ids={ids} />
     <OverrideUI doc={doc} ids={ids} />
     <AreaHatch doc={doc} ids={ids} />
   </>;
@@ -106,8 +112,9 @@ function AreaProps({ doc, ids, cm }: { doc: Doc; ids: string[]; cm: ColorModel }
     body = <dl className="kv">{cols.map(c => { const val = ds.rows[r][ds.columns.indexOf(c)]; return <React.Fragment key={c.id}><dt title={c.label}>{c.label}</dt><dd>{typeof val === 'number' ? fmtNum(val, 2) : val ?? '–'}</dd></React.Fragment>; })}</dl>;
   }
   return <>
-    <Head t={areaTitle(g, i)} sub={`${a.bez ? a.bez + ' · ' : ''}${areaContext(g, i)} · ${fmtInt(a.area)} km²${a.free ? ' · gemeindefrei' : ''}${grp ? ' · ' + grp.label : ''}`} />
+    <Head t={areaTitle(g, i)} sub={`${a.bez ? a.bez + ' · ' : ''}${areaContext(g, i)} · ${fmtInt(a.area)} km²${a.free && !g.memberOf ? ' · gemeindefrei' : ''}${grp ? ' · ' + grp.label : ''}`} />
     {body}
+    <RegionAssign doc={doc} ids={ids} />
     <OverrideUI doc={doc} ids={ids} />
     <AreaHatch doc={doc} ids={ids} />
   </>;
@@ -192,6 +199,20 @@ function LayerProps({ doc, id }: { doc: Doc; id: 'wk' | 'labels' | 'kr' | 'land'
   </>;
 }
 
+function OverlayProps({ doc, id }: { doc: Doc; id: string }) {
+  const o = doc.overlays.find(x => x.id === id); if (!o) return <Head t="Grenzen" />;
+  const og = GEO[o.geoSet];
+  return <>
+    <Head t={overlayName(o.geoSet, true)} sub={`${og?.meta.label || o.geoSet} · über der Karte`} />
+    <Check checked={o.visible} onChange={on => updateOverlay(o.id, { visible: on })}>Anzeigen</Check>
+    <Field label="Farbe · Stärke"><div className="row-btns"><input type="color" value={o.color} onChange={e => updateOverlay(o.id, { color: e.target.value.toUpperCase() }, 'ovc-' + o.id)} aria-label="Linienfarbe" /><NumInput min={0.2} max={8} step={0.1} value={o.width} onChange={n => updateOverlay(o.id, { width: n }, 'ovw-' + o.id)} ariaLabel="Linienstärke in Pixeln" /></div></Field>
+    <Field label="Linie"><Seg items={[['solid', 'Durchgezogen'], ['dash', 'Gestrichelt']]} value={o.dash ? 'dash' : 'solid'} onChange={v => updateOverlay(o.id, { dash: v === 'dash' })} /></Field>
+    <Check checked={o.legend} onChange={on => updateOverlay(o.id, { legend: on })}>In der Legende zeigen</Check>
+    {og && og.meta.level === 'btw-wk' && geoOf(doc).meta.level === 'gem' ? <p className="hint">Die Wahlkreisgrenzen folgen den Gemeindegrenzen (Wahlkreise bestehen aus Gemeinden). Nur in Städten mit mehreren Wahlkreisen stammen sie aus der Wahlkreiskarte.</p>
+      : og && og.meta.file !== geoOf(doc).meta.file && <p className="hint">Andere Kartengrundlage als die Gebiete: Die Linien können etwas von den Gebietsgrenzen abweichen. Im Maßstab eines Landes ist das kaum zu sehen.</p>}
+    <button className="btn small ghost danger" onClick={() => removeOverlay(o.id)}><Icon.trash /> Entfernen</button>
+  </>;
+}
 function GraphicProps({ doc }: { doc: Doc }) {
   const v = activeVariant(doc), free = v.preset === 'Frei';
   return <>
@@ -234,6 +255,8 @@ function Props() {
   else if (s.kind === 'ann') body = <AnnProps doc={doc} id={s.id} />;
   else if (s.kind === 'frame') body = <FrameProps doc={doc} id={s.id} />;
   else if (s.kind === 'layer') body = <LayerProps doc={doc} id={s.id} />;
+  else if (s.kind === 'overlay') body = <OverlayProps doc={doc} id={s.id} />;
+  else if (s.kind === 'bubbles') body = <><Head t="Blasen" sub="Kreisfläche ∝ Wert" /><BubbleSection inPanel /></>;
   else body = <GraphicProps doc={doc} />;
   // Neuer Gegenstand = Eigenschaften von oben zeigen
   const selKey = s.kind === 'area' ? 'area:' + (s.ids.length > 1 ? 'multi' : s.ids[0]) : s.kind + ':' + ('id' in s ? s.id : '');

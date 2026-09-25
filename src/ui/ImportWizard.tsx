@@ -8,7 +8,8 @@ import type { Cell, Dataset, ImportSettings, PresetId, RawInput, Role } from '..
 import { GEO, areaContext, areaTitle } from '../geo/geo';
 import { addDataset, loadGeoSets, replaceDataset } from '../model/actions';
 import { getDoc, setUI, useStore } from '../model/store';
-import { Check, Field, GeoSelect, Icon, Note, NumInput, Seg } from './common';
+import { Check, Field, GeoPicker, Icon, Note, NumInput, Seg } from './common';
+import { customOptions } from '../model/regionActions';
 
 const STEPS = ['Datei', 'Aufbau', 'Spalten', 'Gebiete', 'Zuordnung'];
 const ROLE_LABEL: Record<Role, string> = { id: 'Kennung', name: 'Name', value: 'Wert', category: 'Kategorie', label: 'Beschriftung', ignore: 'ignorieren' };
@@ -42,7 +43,7 @@ export function ImportWizard() {
         s = b.preset === 'allgemein' ? { ...fresh, ...b, sheet: fresh.sheet } : { ...fresh, ...keep };
       } else s = defaultSettings(r);
       const t = buildTable(r, s);
-      if (!s.geoSet) { const sug = await suggestGeoSetAsync(t, s, fileName); s.geoSet = sug.id; setGeoReason(sug.reason); }
+      if (!s.geoSet) { const sug = await suggestGeoSetAsync(t, s, fileName, customOptions(getDoc())); s.geoSet = sug.id; setGeoReason(sug.reason); }
       if (!(await loadGeoSets([s.geoSet]))) return;
       setRaw(r); setSt(s); setName(base ? base.name : shortTitle(s.sourceTitle, fileName.replace(/\.[^.]+$/, '')));
       setStep(base ? 5 : 2);
@@ -50,7 +51,7 @@ export function ImportWizard() {
   }
   const onFile = async (f: File | undefined) => { if (f) await load(f.name, await f.arrayBuffer()); };
   const set = (patch: Partial<ImportSettings>) => setSt(s => (s ? { ...s, ...patch } : s));
-  const setPreset = async (p: PresetId) => { if (!raw) return; const s = defaultSettings(raw, p, st?.sheet || 0); const t = buildTable(raw, s); const sug = await suggestGeoSetAsync(t, s, raw.fileName); s.geoSet = sug.id; setGeoReason(sug.reason); if (await loadGeoSets([s.geoSet])) setSt(s); };
+  const setPreset = async (p: PresetId) => { if (!raw) return; const s = defaultSettings(raw, p, st?.sheet || 0); const t = buildTable(raw, s); const sug = await suggestGeoSetAsync(t, s, raw.fileName, customOptions(getDoc())); s.geoSet = sug.id; setGeoReason(sug.reason); if (await loadGeoSets([s.geoSet])) setSt(s); };
   const setGeo = async (id: string) => { if (await loadGeoSets([id])) set({ geoSet: id }); };
 
   const finish = () => {
@@ -196,7 +197,7 @@ function StepGeo({ st, set, setGeo, reason, name, setName, table }: { st: Import
   return (
     <div className="wiz-grid">
       <div className="stack-12">
-        <Field label="Gebietsstand"><GeoSelect value={st.geoSet} onChange={id => { void setGeo(id); }} /></Field>
+        <Field label="Gebietsstand" stack><GeoPicker value={st.geoSet} onChange={id => { void setGeo(id); }} customs={customOptions(getDoc())} /></Field>
         {reason && <Note kind="ok" icon={<Icon.check />}>Vorschlag: {reason}.</Note>}
         <p className="hint">Zuordnung über <b>{idc ? `„${idc.label}“` : 'keine Kennung'}</b>{nmc ? <> und ergänzend über den Namen <b>„{nmc.label}“</b></> : ''}. Kennungen gelten nur zusammen mit dem Gebietsstand: Wahlkreis 219 von 2021 ist ein anderes Gebiet als 219 von 2025, und Gemeinden werden zusammengelegt. Gemeindeschlüssel werden mit 8 Stellen (AGS) oder 12 Stellen (Regionalschlüssel) erkannt, Kreise mit 5 Stellen.</p>
       </div>

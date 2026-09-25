@@ -1,11 +1,15 @@
-import React from 'react';
-import { BL_ORDER, GEO, GeoSet, LAENDER, areaContext, areaLabel } from '../../geo/geo';
+import React, { useEffect } from 'react';
+import { BL_ORDER, GEO, GEO_INDEX, GeoSet, LAENDER, areaContext, areaLabel } from '../../geo/geo';
+import { toggleOverlay } from '../../model/overlays';
 import { setFokus, setGeoSet, refitMain } from '../../model/actions';
 import { setUI, update, useStore } from '../../model/store';
 import type { Fokus } from '../../model/types';
 import { colorModel, fillOf } from '../../render/colorModel';
 import { fokusIdx, geoOf } from '../../render/scene';
-import { Check, Field, GeoSelect, Icon, Section, Seg } from '../common';
+import { sisterSets, translateFokus } from '../../geo/relate';
+import { Check, GeoPicker, Icon, Section, Seg } from '../common';
+import { RegionsSection } from './Regionen';
+import { customOptions } from '../../model/regionActions';
 
 function normFokus(ids: string[], geoId: string): Fokus {
   const g = GEO[geoId];
@@ -13,7 +17,7 @@ function normFokus(ids: string[], geoId: string): Fokus {
   if (!u.length || u.length === g.areas.length) return { kind: 'de' };
   if (u.length === 1) return { kind: 'area', id: u[0] };
   const set = new Set(u);
-  for (const bl of BL_ORDER) { const L = g.byBl[bl] || []; if (L.length === set.size && L.every(i => set.has(g.areas[i].id))) return { kind: 'land', bl }; }
+  if (!g.memberOf) for (const bl of BL_ORDER) { const L = g.byBl[bl] || []; if (L.length === set.size && L.every(i => set.has(g.areas[i].id))) return { kind: 'land', bl }; }
   const kr = g.areas[g.byId.get(u[0])!]?.kr;
   if (kr) { const L = g.byKr[kr] || []; if (L.length === set.size && L.every(i => set.has(g.areas[i].id))) return { kind: 'kreis', kr }; }
   return { kind: 'custom', ids: u.sort((a, b) => +a - +b || a.localeCompare(b)) };
@@ -35,46 +39,76 @@ export function PanelGebiete() {
     for (const id of ids) all ? cur.delete(id) : cur.add(id);
     setFokus(normFokus([...cur], doc.geoSet));
   };
+  // Auswahl in der Karte → Baum aufklappen und hinscrollen
+  const selIds = new Set(ui.sel.kind === 'area' ? ui.sel.ids : []);
+  const selOne = ui.sel.kind === 'area' && ui.sel.ids.length === 1 ? ui.sel.ids[0] : null;
+  useEffect(() => {
+    if (!selOne) return;
+    const i = g.byId.get(selOne); if (i == null) return;
+    const a = g.areas[i], ex = { ...ui.expanded, [a.bl]: true, ...(a.kr && g.meta.level !== 'krs' ? { ['kr:' + a.kr]: true } : {}) };
+    if (Object.keys(ex).some(k => !ui.expanded[k])) setUI({ expanded: ex });
+    requestAnimationFrame(() => document.querySelector(`[data-tree-id="${selOne}"]`)?.scrollIntoView({ block: 'nearest' }));
+  }, [selOne, doc.geoSet]); // eslint-disable-line
   const q = ui.search.trim().toLowerCase();
-  const hits: { t: 'land' | 'kreis' | 'area'; key: string; label: string; aside: string; pre: number }[] = [];
+  const hits: { t: 'land' | 'kreis' | 'area' | 'other'; key: string; label: string; aside: string; pre: number; set?: string }[] = [];
   if (q) {
-    for (const bl of BL_ORDER) if (LAENDER[bl][0].toLowerCase().includes(q) || LAENDER[bl][1].toLowerCase() === q) hits.push({ t: 'land', key: bl, label: LAENDER[bl][0], aside: 'Land', pre: 0 });
+    for (const bl of BL_ORDER) { const ln = LAENDER[bl][0].toLowerCase(); if (ln.includes(q) || LAENDER[bl][1].toLowerCase() === q) hits.push({ t: 'land', key: bl, label: LAENDER[bl][0], aside: 'Land', pre: ln === q || LAENDER[bl][1].toLowerCase() === q ? 0 : ln.startsWith(q) ? 1 : 2 }); }
     if (g.meta.level !== 'krs') for (const [kr, nm] of Object.entries(g.krName)) if ((g.byKr[kr]?.length || 0) > 1 && nm.toLowerCase().includes(q)) hits.push({ t: 'kreis', key: kr, label: nm, aside: 'Kreis · ' + LAENDER[kr.slice(0, 2)]?.[1], pre: nm.toLowerCase() === q ? 0 : nm.toLowerCase().startsWith(q) ? 1 : 2 });
     for (const i of g.all) { const a = g.areas[i], nm = a.name.toLowerCase(); if (a.id === q || nm.includes(q) || 'wk ' + a.id === q) hits.push({ t: 'area', key: a.id, label: a.name, aside: g.meta.showNr ? 'Nr. ' + a.nr : areaContext(g, i), pre: a.id === q || nm === q ? 0 : nm.startsWith(q) ? 1 : 2 }); }
+    // andere Ebenen (geladene): „Wahlkreis 156“ in einer Gemeindekarte → Gemeinden in diesem Wahlkreis
+    for (const x of sisterSets(g)) {   // (eigene Einteilungen nicht: deren Regionen stehen in der Liste darunter)
+      const o = GEO[x.id]; if (!o || o === g || o.meta.level === 'lan') continue;
+      if (o.meta.level !== 'btw-wk' && (Object.keys(g.byKr).length || o.meta.level === 'vwg')) continue;   // Kreise stehen schon oben
+      let n = 0;
+      for (const i of o.all) {
+        const a = o.areas[i], nm = a.name.toLowerCase();
+        if (!(nm.includes(q) || (o.meta.showNr && (String(a.nr) === q || 'wk ' + a.nr === q)))) continue;
+        hits.push({ t: 'other', key: a.id, set: x.id, label: areaLabel(o, i), aside: o.meta.label, pre: 3 + (nm === q || String(a.nr) === q ? 0 : 1) });
+        if (++n >= 4) break;
+      }
+    }
     hits.sort((x, y) => x.pre - y.pre);
   }
   const crumbs: React.ReactNode[] = [];
   crumbs.push(f.kind === 'de' ? <span key="de" className="cur">Deutschland</span> : <button key="de" onClick={() => setFokus({ kind: 'de' })}>Deutschland</button>);
   if (f.kind === 'land') crumbs.push(<span key="l" className="cur">{LAENDER[f.bl][0]}</span>);
   if (f.kind === 'kreis') crumbs.push(<button key="l" onClick={() => setFokus({ kind: 'land', bl: f.kr.slice(0, 2) })}>{LAENDER[f.kr.slice(0, 2)]?.[0]}</button>, <span key="k" className="cur">{g.krName[f.kr] || f.kr}</span>);
-  if (f.kind === 'area') { const i = g.byId.get(f.id); if (i != null) { const a = g.areas[i]; crumbs.push(<button key="l" onClick={() => setFokus({ kind: 'land', bl: a.bl })}>{LAENDER[a.bl][0]}</button>);
+  if (f.kind === 'area') { const i = g.byId.get(f.id); if (i != null) { const a = g.areas[i]; if (g.meta.level !== 'lan' && !g.memberOf) crumbs.push(<button key="l" onClick={() => setFokus({ kind: 'land', bl: a.bl })}>{LAENDER[a.bl][0]}</button>);
     if (a.kr && (g.byKr[a.kr]?.length || 0) > 1 && g.meta.level !== 'krs') crumbs.push(<button key="k" onClick={() => setFokus({ kind: 'kreis', kr: a.kr! })}>{g.krName[a.kr] || a.kr}</button>);
     crumbs.push(<span key="a" className="cur">{areaLabel(g, i)}</span>); } }
-  if (f.kind === 'custom') crumbs.push(<span key="c" className="cur">Freie Auswahl ({f.ids.length})</span>);
+  if (f.kind === 'custom') crumbs.push(<span key="c" className="cur">{f.label ? `${f.label} · ${f.ids.length} ${g.meta.levelLabel}` : `Freie Auswahl (${f.ids.length})`}</span>);
   return (
     <>
       <Section title="Gebietsebene" aside="Stand">
-        <Field label="Ebene"><GeoSelect value={doc.geoSet} onChange={id => { void setGeoSet(id); }} /></Field>
-        <p className="hint">Wahlkreise und Verwaltungsgebiete (Länder bis Gemeinden, amtliche Grenzen des BKG) sind getrennte Kartensysteme, jedes mit eigenem Gebietsstand. Daten gehören immer zu einem Stand.</p>
+        <GeoPicker value={doc.geoSet} onChange={id => { void setGeoSet(id); }} customs={customOptions(doc)} />
+        <details className="hint-more"><summary>Warum mehrere Stände?</summary><p className="hint">Gemeinde- und Kreisgrenzen ändern sich zum Jahreswechsel (Fusionen, neue kreisfreie Städte). Daten passen zu den Grenzen ihres Stichtags: die Bundestagswahl 2025 zum Stand 2025, Landtagswahlen 2026 und aktuelle Statistiken zu 2026. Beim Import schlägt Kartenwerk den passenden Stand vor.</p></details>
       </Section>
       <Section title="Fokus" aside="was die Karte zeigt">
         <div className="crumbs">{crumbs.map((c, k) => <React.Fragment key={k}>{k > 0 && <span className="sep">›</span>}{c}</React.Fragment>)}</div>
+        <div className="level-chips" role="group" aria-label="Fokus als andere Ebene zeigen"><span className="hint">zeigen als</span>
+          {sisterSets(g, doc).map(x => <button key={x.id} className={'chip-btn' + (x.id === doc.geoSet ? ' on' : '') + (x.custom ? ' custom' : '')} aria-pressed={x.id === doc.geoSet} onClick={() => { if (x.id !== doc.geoSet) void setGeoSet(x.id); }}>{x.label}</button>)}</div>
         <div className="search"><Icon.search /><input type="text" id="fokus-search" value={ui.search} onChange={e => setUI({ search: e.target.value })}  placeholder={g.meta.showNr ? 'Name, Nummer oder Land' : 'Name, Kreis, Schlüssel oder Land'} autoComplete="off" aria-label="Gebiet suchen" /></div>
-        {q && <div className="tree">{hits.slice(0, 9).map(h => (
-          <div key={h.t + h.key} className="tnode" onClick={() => { if (h.t === 'land') { expand(h.key, true); setFokus({ kind: 'land', bl: h.key }); } else if (h.t === 'kreis') { setUI({ expanded: { ...ui.expanded, [h.key.slice(0, 2)]: true, ['kr:' + h.key]: true } }); setFokus({ kind: 'kreis', kr: h.key }); } else setFokus({ kind: 'area', id: h.key }); }}>
+        {q && <div className="tree">{hits.slice(0, 12).map(h => (
+          <div key={h.t + h.key} className="tnode" onClick={() => { if (h.t === 'land') { expand(h.key, true); setFokus({ kind: 'land', bl: h.key }); } else if (h.t === 'kreis') { setUI({ expanded: { ...ui.expanded, [h.key.slice(0, 2)]: true, ['kr:' + h.key]: true } }); setFokus({ kind: 'kreis', kr: h.key }); } else if (h.t === 'other') { const o = GEO[h.set!]; setFokus(translateFokus({ kind: 'area', id: h.key }, o, g)); } else setFokus({ kind: 'area', id: h.key }); }}>
             <span /><span /><span className="tl">{h.label}</span><span className="ta">{h.aside}</span>
           </div>))}
-          {hits.length > 9 && <p className="hint">{hits.length - 9} weitere Treffer, Suche genauer fassen.</p>}
+          {hits.length > 12 && <p className="hint">{hits.length - 12} weitere Treffer, Suche genauer fassen.</p>}
           {!hits.length && <p className="hint">Kein Treffer. Gesucht werden Name, {g.meta.showNr ? 'Nummer' : 'Kreis, Schlüssel'} und Land.</p>}
         </div>}
       </Section>
+      <RegionsSection />
       <Section title="Gebietsbaum" aside={GEO[doc.geoSet].meta.label}>
         <p className="hint">Name anklicken = dorthin wechseln. Häkchen = Gebiete frei kombinieren, auch über Ländergrenzen.</p>
         <div className="tree">
           <div className={'tnode' + (f.kind === 'de' ? ' cur' : '')} onClick={() => setFokus({ kind: 'de' })}>
             <span /><input type="checkbox" readOnly checked={f.kind === 'de'} tabIndex={-1} aria-label="Deutschland" /><span className="tl"><b>Deutschland</b></span><span className="ta">{g.areas.length}</span>
           </div>
-          {BL_ORDER.map(bl => {
+          {g.memberOf ? g.all.map(i => { const a = g.areas[i]; return (
+            <div key={a.id} data-tree-id={a.id} className={'tnode lvl1' + (f.kind === 'area' && f.id === a.id ? ' cur' : '') + (selIds.has(a.id) ? ' picked' : '')}>
+              <span /><input type="checkbox" checked={f.kind !== 'de' && S.has(a.id)} onChange={() => toggleIds([a.id])} aria-label={a.name + ' kombinieren'} />
+              <span className="tl" title={a.name} onClick={() => setFokus({ kind: 'area', id: a.id })}>{a.name}{a.free ? <small> · {LAENDER[a.bl]?.[1]}</small> : null}</span>
+              <span className="sw" style={{ background: fillOf(doc, cm, i) }} />
+            </div>); }) : BL_ORDER.map(bl => {
             const idx = g.byBl[bl] || []; const ids = idx.map(i => g.areas[i].id);
             const n = ids.filter(id => S.has(id)).length, open = ui.expanded[bl];
             return (
@@ -86,7 +120,7 @@ export function PanelGebiete() {
                 </div>
                 {open && (() => {
                   const areaRow = (i: number, lvl: number) => { const a = g.areas[i]; return (
-                    <div key={a.id} className={`tnode lvl${lvl}` + (f.kind === 'area' && f.id === a.id ? ' cur' : '')}>
+                    <div key={a.id} data-tree-id={a.id} className={`tnode lvl${lvl}` + (f.kind === 'area' && f.id === a.id ? ' cur' : '') + (selIds.has(a.id) ? ' picked' : '')}>
                       <span /><input type="checkbox" checked={f.kind !== 'de' && S.has(a.id)} onChange={() => toggleIds([a.id])} aria-label={a.name + ' kombinieren'} />
                       <span className="tl" title={a.name} onClick={() => setFokus({ kind: 'area', id: a.id })}>{g.meta.showNr && <span className="num" style={{ color: 'var(--muted)' }}>{a.nr}</span>} {a.name}</span>
                       <span className="sw" style={{ background: fillOf(doc, cm, i) }} />
@@ -110,6 +144,13 @@ export function PanelGebiete() {
             );
           })}
         </div>
+      </Section>
+      <Section title="Grenzen einblenden" aside="andere Ebenen">
+        {sisterSets(g, doc).filter(x => x.id !== doc.geoSet && GEO_INDEX.find(e => e.id === x.id)?.level !== 'lan').map(x => {
+          const on = doc.overlays.some(o => o.geoSet === x.id);
+          return <Check key={x.id} checked={on} onChange={() => { void toggleOverlay(x.id); }}>{x.label}{GEO_INDEX.find(e => e.id === x.id)?.level === 'btw-wk' ? ' ' + (GEO_INDEX.find(e => e.id === x.id)?.year || '') : ''}</Check>;
+        })}
+        <p className="hint">Zeichnet die Grenzen einer anderen Ebene über die Karte, z. B. Wahlkreise über Gemeinden. Farbe und Linie in der Ebenen-Liste rechts.</p>
       </Section>
       <Section title="Umfeld">
         <Seg full items={[['none', 'Keins'], ['neighbors', 'Nachbarn'], ['parent', 'Übergeordnet'], ['all', 'Alles']]} value={doc.umfeld} onChange={v => update(d => { d.umfeld = v; })} />

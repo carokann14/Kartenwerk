@@ -1,5 +1,5 @@
 // Texte, Legende und Beschriftungen als Primitive (Editor: <text>, Export: Pfade)
-import { STEP_T, fmtBreak, mixWhite } from '../lib/color';
+import { CONT_STEPS, STEP_T, contColor, fmtBreak, mixWhite, signed } from '../lib/color';
 import { Cut, ascentRatio, capOffset, measureW, wrapText } from '../lib/fonts';
 import { clamp, fmt1, fmtNum } from '../lib/util';
 import { areaRowIndex, groupMetrics } from '../data/derive';
@@ -10,6 +10,7 @@ import { ColorModel, colorModel, partyColor } from './colorModel';
 import { hatchPathD, rectRing } from './hatch';
 import { markerD } from './annotations';
 import { LegEntry, legendModel } from './legend';
+import { bubbleLegendValues, bubbleSet, circleD } from './bubbles';
 import { FrameId, frameSets, geoOf, jointOf } from './scene';
 
 export interface TextPrim { x: number; y: number; text: string; cut: Cut; size: number; color: string; anchor: 'start' | 'middle' | 'end'; halo?: boolean }
@@ -29,8 +30,9 @@ export function sourceText(doc: Doc): string {
   for (const ds of used) {
     const s = ds.settings;
     parts.push(`Daten: ${[s.attribution, s.sourceTitle].filter(Boolean).join(', ') || ds.fileName}.`);
+    if (ds.derived) parts.push(`Werte aus ${GEO[ds.derived.from]?.meta.levelLabel || 'kleineren Gebieten'} summiert.`);
   }
-  if (g) parts.push(`Geometrie: ${g.meta.stand ? `Gebietsstand ${g.meta.stand}, ` : ''}${g.meta.attribution}, vereinfacht.`);
+  if (g) parts.push(`Geometrie: ${g.meta.stand ? `Gebietsstand ${g.meta.stand}, ` : ''}${g.meta.attribution}, vereinfacht${g.meta.base ? `; Regionen aus ${GEO[g.meta.base]?.meta.levelLabel || 'Bausteinen'} zusammengefasst` : ''}.`);
   if (doc.layers.neighbors || doc.layers.lakes) parts.push('Nachbarstaaten und Gewässer: Natural Earth.');
   const gv = [...new Set(doc.els.filter(e => e.type === 'marker' && !e.hidden && e.place).map(e => (e as { place: { src: string } }).place.src))];
   if (gv.length) parts.push(`Ortslagen: ${gv.join('; ')}.`);
@@ -71,7 +73,11 @@ export function legendPrims(doc: Doc, P: { x: number; y: number } = activeVarian
   /** Kästchen eines Eintrags: Fläche, Schraffur oder Linie */
   const swatch = (e: LegEntry, x: number, yy: number, w: number, h: number) => {
     const ax = P.x + x, ay = P.y + yy;
-    if (e.kind === 'line') { rects.push({ x: ax, y: ay + h / 2 - 1.25, w, h: 2.5, fill: e.color }); maxX = Math.max(maxX, x + w); return; }
+    if (e.kind === 'line') {
+      if (e.dash) { const seg = 5, gap = 3.5; for (let sx = 0; sx < w; sx += seg + gap) rects.push({ x: ax + sx, y: ay + h / 2 - 1.25, w: Math.min(seg, w - sx), h: 2.5, fill: e.color }); }
+      else rects.push({ x: ax, y: ay + h / 2 - 1.25, w, h: 2.5, fill: e.color });
+      maxX = Math.max(maxX, x + w); return;
+    }
     if (e.kind === 'marker' && e.marker) { const m = e.marker, sz = Math.min(w, h) * (m.shape === 'pin' ? 0.62 : 0.86); paths.push({ d: markerD(m, ax + w / 2, m.shape === 'pin' ? ay + h * 0.98 : ay + h / 2, sz), fill: m.fill, ...(m.strokeW > 0 && m.stroke.toUpperCase() !== '#FFFFFF' ? { stroke: m.stroke, width: Math.min(1, m.strokeW) } : {}) }); maxX = Math.max(maxX, x + w); return; }
     const fill = e.kind === 'nodata' ? e.color : e.kind === 'hatch' ? (e.bg || '#FFFFFF') : e.color;
     R(x, yy, w, h, fill);
@@ -83,6 +89,8 @@ export function legendPrims(doc: Doc, P: { x: number; y: number } = activeVarian
   };
   for (const tl of wrapText(M.title, 'bold', base, Math.max(220, 300 * ts))) { T(0, y + base * 0.95, tl, 'bold', base, ink); y += base * 1.3; }
   y += base * 0.25;
+  // Klassenbreite: mindestens so breit wie die längste Grenzbeschriftung (große Zahlen überlappen sonst)
+  const segW = (n: number, min: number) => Math.round(Math.max(min, ...cm.breaks.slice(0, Math.max(0, n - 1)).map(b => measureW(fmtBreak(b), 'text', small) + small * 0.8)));
   const scale = (n: number, sw: number, gap: number, yy: number) => cm.breaks.forEach((b, k) => { if (k < n - 1) T((k + 1) * (sw + gap) - gap / 2, yy, fmtBreak(b), 'text', small, soft, 'middle'); });
   const rows = M.rows.filter(e => !e.hidden), more = M.more.filter(e => !e.hidden);
   /** Einfache Einträge untereinander, nebeneinander oder im Raster */
@@ -113,7 +121,7 @@ export function legendPrims(doc: Doc, P: { x: number; y: number } = activeVarian
     }
   };
   if (M.main === 'matrix' && c.mode === 'siegerStaerke') {
-    const n = cm.steps, sw = Math.round(base * 2.35), sh = Math.round(base * 1.1), gap = 2;
+    const n = cm.steps, sw = segW(n, base * 2.35), sh = Math.round(base * 1.1), gap = 2;
     scale(n, sw, gap, y + small * 0.9); y += small * 1.45;
     for (const e of rows) {
       for (let s2 = 0; s2 < n; s2++) R(s2 * (sw + gap), y, sw, sh, mixWhite(e.color, STEP_T[n][s2]));
@@ -123,15 +131,50 @@ export function legendPrims(doc: Doc, P: { x: number; y: number } = activeVarian
     y -= base * 0.42;
   } else if (M.main === 'list') {
     list(rows, Math.round(base * 1.15), base * 0.92, ink, doc.legend.orientation);
+  } else if (cm.continuous) {
+    // stetige Skala: feine Streifen ohne Lücke
+    const { min, max, hue } = cm.continuous, N = CONT_STEPS, bw = Math.round(base * 11), sh = Math.round(base * 1.0), w1 = bw / N;
+    for (let s2 = 0; s2 < N; s2++) R(s2 * w1, y, w1 + 0.3, sh, contColor(hue, s2 / (N - 1)));
+    const f = (x: number) => fmtNum(x, Math.abs(max - min) < 10 ? 1 : 0);
+    T(0, y + sh + small * 1.25, f(min) + cm.unit, 'text', small, soft, 'start');
+    T(bw / 2, y + sh + small * 1.25, f((min + max) / 2), 'text', small, soft, 'middle');
+    T(bw, y + sh + small * 1.25, f(max) + cm.unit, 'text', small, soft, 'end');
+    y += sh + small * 0.9;
+  } else if (cm.diverging && cm.shown) {
+    const [lo, hi] = cm.shown, n = hi - lo + 1, sw = Math.round(base * (n > 6 ? 1.7 : 2.2)), sh = Math.round(base * 1.0), gap = 2;
+    for (let k = 0; k < n; k++) R(k * (sw + gap), y, sw, sh, cm.classColors[lo + k]);
+    for (let k = lo > 0 ? 0 : 1; k < n; k++) T(k * (sw + gap) - (k ? gap / 2 : 0), y + sh + small * 1.25, signed(cm.breaks[lo + k - 1]), 'text', small, soft, k ? 'middle' : 'start');
+    if (hi < cm.classColors.length - 1) T(n * (sw + gap) - gap, y + sh + small * 1.25, signed(cm.breaks[hi]), 'text', small, soft, 'end');
+    y += sh + small * 0.9;
   } else if (c.mode === 'anteil' || c.mode === 'wert') {
-    const n = cm.steps || 5, sw = Math.round(base * (n > 5 ? 1.9 : 2.4)), sh = Math.round(base * 1.0), gap = 2;
-    const hue = c.mode === 'anteil' ? partyColor(doc, c.party) : c.hue;
-    const T5 = STEP_T[n] || STEP_T[5];
-    for (let s2 = 0; s2 < n; s2++) R(s2 * (sw + gap), y, sw, sh, mixWhite(hue, T5[Math.min(s2, T5.length - 1)]));
+    const n = cm.steps || 5, sw = segW(n, base * (n > 5 ? 1.9 : 2.4)), sh = Math.round(base * 1.0), gap = 2;
+    for (let s2 = 0; s2 < n; s2++) R(s2 * (sw + gap), y, sw, sh, cm.classColors[s2] || '#CCCCCC');
     scale(n, sw, gap, y + sh + small * 1.25);
     y += sh + small * 0.9;
   }
-  if (M.caption && !M.caption.hidden && M.caption.text) { T(0, y + small * 1.5, M.caption.text, 'text', small, soft); y += small * 1.8; }
+  if (M.caption && !M.caption.hidden && M.caption.text) { y += small * 0.3; for (const cl of wrapText(M.caption.text, 'text', small, Math.max(220, 300 * ts))) { T(0, y + small * 1.2, cl, 'text', small, soft); y += small * 1.3; } y += small * 0.2; }
+  // Blasen: verschachtelte Kreise mit Werten
+  const bs0 = doc.bubbles?.visible && doc.bubbles.legend ? bubbleSet(doc, 'main', activeVariant(doc)) : null;
+  const bs = bs0 ? { ...bs0, unitR: doc.bubbles!.maxR * ts } : null;
+  if (bs) {
+    if (M.main) y += base * 0.7;
+    for (const tl of wrapText(bs.label, 'bold', small * 1.08, Math.max(220, 300 * ts))) { T(0, y + small * 1.1, tl, 'bold', small * 1.08, ink); y += small * 1.45; }
+    y += small * 0.3;
+    const vals = bubbleLegendValues(bs.ref), rMax = Math.max(4, bs.unitR * Math.sqrt(vals[0] / bs.ref)), cx = rMax + 1, tx = 2 * rMax + base * 0.8;
+    // Beschriftungen mit Mindestabstand; die Linie führt vom Kreisscheitel zur Beschriftung
+    const lineH = small * 1.2, top0 = y + small * 0.5;
+    const bottom = Math.max(top0 + 2 * rMax, top0 + (vals.length - 1) * lineH);
+    let ly = -Infinity;
+    for (const val of vals) {
+      const r = bs.unitR * Math.sqrt(val / bs.ref), cy = bottom - r, top = cy - r;
+      paths.push({ d: circleD(P.x + cx, P.y + cy, r), fill: 'none', stroke: soft, width: 1 });
+      const yl = Math.max(top, ly + lineH); ly = yl;
+      paths.push({ d: `M${(P.x + cx).toFixed(1)} ${(P.y + top).toFixed(1)}L${(P.x + 2 * rMax + 2).toFixed(1)} ${(P.y + top).toFixed(1)}L${(P.x + tx - 3).toFixed(1)} ${(P.y + yl).toFixed(1)}`, fill: 'none', stroke: soft, width: 0.7 });
+      T(tx, yl + capOffset('text', small), fmtNum(val, 0), 'text', small, soft);
+    }
+    maxX = Math.max(maxX, 2 * rMax + 2);
+    y = Math.max(bottom, ly + small * 0.6);
+  }
   if (more.length) {
     y += base * 0.55;
     list(more, Math.round(base * 0.95), small, soft, doc.legend.orientation === 'vertical' || M.main === 'matrix' || M.main === 'bar' ? 'vertical' : doc.legend.orientation);
@@ -155,7 +198,7 @@ export function labelText(doc: Doc, cm: ColorModel, i: number): string[] {
       vorsprung = fmt1(gm.margin) + ' Pkt.';
     }
   }
-  const v = cm.valueOf(i); if (v != null) wert = fmtNum(v, 1);
+  const v = cm.valueOf(i); if (v != null) wert = doc.color.mode === 'veraenderung' ? signed(+v.toFixed(1)) : fmtNum(v, 1);
   if (cm.mode === 'kategorie') wert = cm.keys[i] || '';
   return (doc.labels.template || '')
     .replace(/\{nr\}/g, g.meta.showNr ? String(a.nr) : a.id).replace(/\{name\}/g, a.name).replace(/\{land\}/g, LAENDER[a.bl]?.[1] || '')
@@ -178,7 +221,7 @@ export function layoutLabels(doc: Doc, id: FrameId, v: Variant = activeVariant(d
   // Gebiete, die im Maßstab kleiner als eine Zeile sind, bekommen keine automatische Beschriftung (wichtig bei Gemeinden)
   const minA = (size * 1.6) ** 2 / (F.view.k * F.view.k) * g.meta.grid * g.meta.grid / 1e6;
   const cands = list.map(i => { const key = id + ':' + g.areas[i].id; const off = v.labelOffsets[key]; return { i, key, off, pri: off ? 1e12 : g.areas[i].area }; })
-    .filter(c => c.off || c.pri >= minA || list.length < 400).sort((a, b) => b.pri - a.pri);
+    .filter(c => (c.off || c.pri >= minA || list.length < 400) && !(g.memberOf && g.areas[c.i].free)).sort((a, b) => b.pri - a.pri);   // Restflächen eigener Einteilungen ohne Beschriftung
   // gemeinsame Ergebnisse nur einmal beschriften (größtes Gebiet der Gruppe)
   const J = jointOf(doc);
   if (J) { const seen = new Set<string>(); const keep = cands.filter(c => { const j = J[g.areas[c.i].id]; if (!j || c.off) return true; if (seen.has(j)) return false; seen.add(j); return true; }); res.hidden += cands.length - keep.length; cands.length = 0; cands.push(...keep); }

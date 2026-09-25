@@ -638,3 +638,33 @@ button.start-card:hover { border-color: var(--accent); }
 .busy .spinner { width: 14px; height: 14px; border-color: rgba(255,255,255,.35); border-top-color: #fff; }
 .issue .issue-find { grid-column: 2 / -1; font-size: 12px; padding: 3px 6px; }
 .start-more { margin-top: -4px; align-items: center; }
+.geo-picker .geo-hint { margin: 0; }
+.hint-more { margin-top: 6px; }
+.hint-more summary { font-size: 12px; color: var(--muted); cursor: pointer; }
+.hint-more p { margin-top: 4px; }
+.level-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 2px 0 10px; }
+.level-chips .hint { margin-right: 2px; }
+.chip-btn { font: inherit; font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--ink2, inherit); cursor: pointer; }
+.chip-btn:hover { border-color: var(--accent); }
+.chip-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tnode.picked { background: var(--accent-soft, #F6E7D2); }
+.ov-swatch { display: inline-block; width: 14px; height: 0; border-top-width: 2px; vertical-align: middle; }
+.bub-icon { display: inline-block; width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid currentColor; box-shadow: inset 0 0 0 2px var(--panel), inset 0 0 0 5px currentColor; opacity: .8; }
+
+/* Eigene Gebiete */
+.region-new { display: flex; gap: 6px; align-items: center; }
+.region-new input { flex: 1; min-width: 0; }
+.region-new .btn { white-space: nowrap; }
+.region-list { display: flex; flex-direction: column; gap: 2px; max-height: 280px; overflow-y: auto; border: 1px solid var(--line); border-radius: 6px; padding: 3px; }
+.region-row { display: grid; grid-template-columns: 24px 1fr auto auto auto; gap: 4px; align-items: center; padding: 1px 2px; border-radius: 4px; }
+.region-row:hover { background: var(--panel-2); }
+.region-row.cur { background: var(--accent-soft); }
+.region-row > .num { font-size: 11px; color: var(--muted); text-align: right; }
+.region-row > .sw { width: 12px; height: 12px; border-radius: 2px; justify-self: center; border: 1px solid rgba(0,0,0,.12); }
+.region-row > .ta { font: 500 11px var(--mono); color: var(--muted); padding: 0 4px; }
+.region-row input[type=text] { height: 24px; font-size: 12.5px; padding: 0 6px; min-width: 0; border-color: transparent; background: transparent; }
+.region-row input[type=text]:hover, .region-row input[type=text]:focus { border-color: var(--line); background: var(--panel); }
+.region-row .chip-btn { font-family: var(--mono); font-size: 11px; padding: 1px 7px; }
+.chip-btn.custom { border-style: dashed; }
+.chip-btn.custom.on { border-style: solid; }
+.linkish { font: inherit; border: 0; background: none; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; }

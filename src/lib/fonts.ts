@@ -44,7 +44,7 @@ export function wrapText(text: string, cut: Cut, size: number, maxW: number) {
   }
   return lines;
 }
-/** Umriss eines Textes als SVG-Pfad (für den Canva-Export). null, wenn die Schrift fehlt. */
+/** Umriss eines Textes als SVG-Pfad (für den SVG-Export). null, wenn die Schrift fehlt. */
 export function textPathD(text: string, cut: Cut, x: number, y: number, size: number): string | null {
   const f = FONTS[cut];
   if (!f) return null;

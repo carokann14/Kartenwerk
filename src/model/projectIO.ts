@@ -3,6 +3,7 @@ import { svgId } from '../lib/util';
 import { saveFile } from '../export/save';
 import { importExample } from '../data/examples';
 import { geoEntry } from '../geo/geo';
+import { isCustom } from '../geo/regions';
 import { addDataset, loadGeoSets, newProject, openDoc } from './actions';
 import { deleteLocal, deserialize, loadLocal, saveLocal, serialize } from './persist';
 import { getDoc, setUI, toast, update } from './store';
@@ -18,7 +19,7 @@ export async function saveProjectFile() {
 export async function openProjectFile(file: File) {
   try {
     const d = deserialize(await file.text());
-    const missing = [d.geoSet, ...d.datasets.map(x => x.geoSet)].filter(id => !geoEntry(id));
+    const missing = [d.geoSet, ...d.datasets.map(x => x.geoSet), ...(d.overlays || []).map(o => o.geoSet), ...(d.regions || []).map(r => r.base)].filter(id => !isCustom(id) && !geoEntry(id));
     if (missing.length) throw new Error('Gebietsstand fehlt in dieser Version: ' + [...new Set(missing)].join(', '));
     await openDoc(d);
     toast('Projekt geöffnet: ' + d.name);

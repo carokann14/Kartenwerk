@@ -1,4 +1,4 @@
-// Flaches SVG 1.1 für Canva: alles als Pfade, keine Transparenz, kein CSS
+// SVG-Export (Vektor) und Grundlage für PNG: Text als Pfade, Stile als Attribute, kein CSS
 import { CONTEXT, GEO, Pt, Poly, arcLines, bboxOfIds, lodTol, mergedRings, polysAt } from '../geo/geo';
 import { textPathD, measureW } from '../lib/fonts';
 import { esc, svgId } from '../lib/util';
@@ -7,8 +7,9 @@ import type { Doc } from '../model/types';
 import { colorModel } from '../render/colorModel';
 import { areaFill, hatchMap, hatchPathD } from '../render/hatch';
 import { annItems, elName } from '../render/annotations';
+import { bubbleSet } from '../render/bubbles';
 import { activeVariant, labelPrims, layoutLabels, legendPrims, Prims, TextPrim, textPrims } from '../render/elements';
-import { FrameId, frameMeshes, frameSets, insetIdx, insetLabel } from '../render/scene';
+import { FrameId, activeOverlays, frameMeshes, frameSets, insetIdx, insetLabel, overlayParts } from '../render/scene';
 
 const q1 = (v: number) => Math.round(v * 10);
 function relD(rings: number[][][], closed: boolean) {
@@ -107,13 +108,14 @@ export function textToPath(t: TextPrim) {
 const primsToPaths = (p: Prims) => p.rects.map(r => `<rect x="${r.x.toFixed(1)}" y="${r.y.toFixed(1)}" width="${r.w.toFixed(1)}" height="${r.h.toFixed(1)}" fill="${r.fill}"/>`).join('')
   + (p.paths || []).map(q => `<path d="${q.d}" fill="${q.fill}"${q.stroke ? ` stroke="${q.stroke}" stroke-width="${q.width ?? 1}" stroke-linejoin="round"${q.cap ? ` stroke-linecap="${q.cap}"` : ''}${q.dash ? ` stroke-dasharray="${q.dash}"` : ''}` : ''}/>`).join('') + p.texts.map(textToPath).join('');
 
-function exportFrame(doc: Doc, id: FrameId) {
+export interface ExportOpts { merge: boolean; scale: number }   // merge: gleiche Farben als eine Fläche; scale: Ausgabe-Pixel je Grafik-Pixel
+function exportFrame(doc: Doc, id: FrameId, o: ExportOpts) {
   const v = activeVariant(doc), F = v.L[id], vw = F.view, st = doc.style, g = GEO[doc.geoSet];
   const cm = colorModel(doc);
   const R: BBox = [F.x, F.y, F.x + F.w, F.y + F.h];
   const toA = ([gx, gy]: Pt) => [F.x + (gx - vw.cx) * vw.k + F.w / 2, F.y + (gy - vw.cy) * vw.k + F.h / 2];
-  // Gemeinden bundesweit: etwas gröber, damit die Datei unter der Canva-Grenze bleibt (sichtbar ist das nicht)
-  const tol = frameSets(doc, id).F.size > 3000 ? 0.6 : 0.35;
+  // Vereinfachung unterhalb eines Ausgabe-Pixels (PNG 2× → halbe Toleranz in Grafik-Pixeln)
+  const tol = 0.3 / Math.max(1, o.scale);
   const polyRings = (polys: Poly[], bb: BBox) => {
     const a = toA([bb[0], bb[1]]), b = toA([bb[2], bb[3]]);
     const rings: number[][][] = [];
@@ -123,26 +125,24 @@ function exportFrame(doc: Doc, id: FrameId) {
     return rings;
   };
   const polyOut = (polys: Poly[], bb: BBox) => relD(polyRings(polys, bb), true);
-  const dense = tol > 0.35;
   const lineOut = (lines: Pt[][]) => {
     const segs: number[][][] = [];
     for (const l of lines) {
       const r = simplifyPx(l.map(toA), tol, false);
-      if (dense && r.length === 2 && Math.hypot(r[1][0] - r[0][0], r[1][1] - r[0][1]) < 0.4) continue;   // unsichtbar kurz
       for (const sg of clipLine(r, R)) if (sg.length >= 2) segs.push(sg);
     }
     return relD(chainLines(segs), false);
   };
   const sets = frameSets(doc, id), me = frameMeshes(doc, id, sets);
   // große Gebietsstände: vorab auf den Exportmaßstab vereinfachen (halbe Toleranz, Rest erledigt simplifyPx)
-  const lt = lodTol(g, vw.k * 2), pa = (i: number) => polysAt(g, i, lt), arcsL = (x: number[]) => arcLines(g, x, lt);
+  const lt = lodTol(g, vw.k * 2 * Math.max(1, o.scale)), pa = (i: number) => polysAt(g, i, lt), arcsL = (x: number[]) => arcLines(g, x, lt);
   const krOn = doc.layers.krLines && me.kr.length > 0;
   let s = `<g id="${id === 'main' ? 'Hauptkarte' : 'Inset-' + svgId(insetLabel(doc))}">`;
   if (id === 'inset') s += `<rect x="${F.x}" y="${F.y}" width="${F.w}" height="${F.h}" fill="#FFFFFF"/>`;
   if (doc.layers.neighbors) { s += `<g id="${id}-Nachbarstaaten">`; for (const c of CONTEXT.countries) { const d = polyOut(c.polys, c.bbox); if (d) s += `<path id="${id}-${c.code}" d="${d}" fill="${st.neighbor}" fill-rule="evenodd" stroke="${st.neighborLine}" stroke-width="0.7" stroke-linejoin="round"/>`; } s += `</g>`; }
   if (doc.layers.lakes) { s += `<g id="${id}-Gewaesser">`; for (const c of CONTEXT.lakes) { const d = polyOut(c.polys, c.bbox); if (d) s += `<path d="${d}" fill="${st.water}" fill-rule="evenodd"/>`; } s += `</g>`; }
-  // Viele Gebiete (Gemeinden): gleiche Farben zu einer Fläche zusammenfassen, sonst wird die Datei für Canva zu groß
-  const merge = sets.F.size + sets.U.size > 1200;
+  // Gleiche Farben als eine Fläche: keine feinen Nahtlinien zwischen Nachbargebieten (PNG), kleinere Datei
+  const merge = o.merge;
   const bigBox: BBox = [-1e9, -1e9, 1e9, 1e9];
   const mergedOut = (idx: Iterable<number>) => polyRings([mergedRings(g, idx, lt)], bigBox);
   if (!me.linesMode && sets.U.size) {
@@ -179,11 +179,12 @@ function exportFrame(doc: Doc, id: FrameId) {
     s += `</g>`;
   }
   s += `<g id="${id}-Grenzen">`;
-  const ln = (lines: Pt[][], color: string, w: number, name: string) => { const d = lineOut(lines); return d ? `<path id="${id}-${name}" d="${d}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"/>` : ''; };
+  const ln = (lines: Pt[][], color: string, w: number, name: string, dash = false) => { const d = lineOut(lines); return d ? `<path id="${id}-${name}" d="${d}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="${dash ? 'butt' : 'round'}"${dash ? ` stroke-dasharray="${(w * 3.2).toFixed(1)} ${(w * 2.4).toFixed(1)}"` : ''}/>` : ''; };
   if (doc.layers.wkLines) s += ln(arcsL(krOn ? me.wk : [...me.wk, ...me.kr]), st.wkLine, st.wkLineW, 'Gebietsgrenzen');
   if (krOn) s += ln(arcsL(me.kr), st.krLine, st.krLineW, 'Kreisgrenzen');
   if (me.linesMode) { s += ln(arcsL(me.wkU), '#C8C2B6', 0.6, 'Umfeldgrenzen'); s += ln(arcsL(me.outline), '#B9B2A5', 0.8, 'Umfeldumriss'); }
   if (doc.layers.landLines) s += ln(arcsL(me.land), st.landLine, st.landLineW, 'Laendergrenzen');
+  for (const ov of activeOverlays(doc)) { const og = GEO[ov.geoSet]; s += ln(overlayParts(g, og).flatMap(p => arcLines(p.set, p.arcs, lodTol(p.set, vw.k * 2 * Math.max(1, o.scale)))), ov.color, ov.width, 'Grenzen-' + svgId(og.meta.label), ov.dash); }
   if (id === 'main' && doc.fokusOutline && doc.fokus.kind !== 'de') s += ln(arcsL(me.fokus), st.fokusLine, 1.8, 'Fokusumriss');
   if (id === 'main' && doc.inset.visible && doc.fokus.kind === 'de') {
     const bb = bboxOfIds(g, insetIdx(doc)), p = 800;
@@ -191,6 +192,13 @@ function exportFrame(doc: Doc, id: FrameId) {
     s += `<rect id="Lupe" x="${a[0].toFixed(1)}" y="${a[1].toFixed(1)}" width="${(b[0] - a[0]).toFixed(1)}" height="${(b[1] - a[1]).toFixed(1)}" fill="none" stroke="${st.frameLine}" stroke-width="1.2"/>`;
   }
   s += `</g>`;
+  const bub = bubbleSet(doc, id, v);
+  if (bub && bub.items.length) {
+    const b = doc.bubbles!, sw = (b.strokeW > 0 ? ` stroke="${b.stroke}" stroke-width="${b.strokeW}"` : '') + (b.opacity != null && b.opacity < 1 ? ` fill-opacity="${b.opacity}"` : '');
+    s += `<g id="${id}-Blasen">`;
+    for (const it of bub.items) { const cx = F.x + it.x, cy = F.y + it.y; if (cx + it.r < R[0] || cx - it.r > R[2] || cy + it.r < R[1] || cy - it.r > R[3]) continue; s += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${it.r.toFixed(1)}" fill="${it.fill}"${sw}/>`; }
+    s += `</g>`;
+  }
   const lay = layoutLabels(doc, id);
   if (lay.items.length) {
     s += `<g id="${id}-Beschriftungen">`;
@@ -207,12 +215,13 @@ function exportFrame(doc: Doc, id: FrameId) {
   }
   return s + `</g>`;
 }
-export function buildExportSvg(doc: Doc, transparent = doc.background === 'transparent') {
+export function buildExportSvg(doc: Doc, opts: Partial<ExportOpts> = {}, transparent = doc.background === 'transparent') {
+  const o: ExportOpts = { merge: false, scale: 1, ...opts };
   const v = activeVariant(doc), W = v.w, H = v.h;
   let s = `<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
   if (!transparent) s += `<rect id="Hintergrund" x="0" y="0" width="${W}" height="${H}" fill="#FFFFFF"/>`;
-  s += exportFrame(doc, 'main');
-  if (doc.inset.visible) s += exportFrame(doc, 'inset');
+  s += exportFrame(doc, 'main', o);
+  if (doc.inset.visible) s += exportFrame(doc, 'inset', o);
   const lp = legendPrims(doc); if (lp) s += `<g id="Legende">${primsToPaths(lp)}</g>`;
   for (const [kind, name] of [['title', 'Titel'], ['subtitle', 'Unterzeile'], ['source', 'Quelle']] as const) { const p = textPrims(doc, kind); if (p) s += `<g id="${name}">${primsToPaths(p)}</g>`; }
   const items = annItems(doc, v);
@@ -230,15 +239,10 @@ export function analyzeSvg(svg: string): SvgReport {
   const colors = new Set<string>();
   for (const m of svg.matchAll(/(?:fill|stroke)="(#[0-9A-Fa-f]{3,8})"/g)) colors.add(m[1].toUpperCase());
   const paths = (svg.match(/<path /g) || []).length + (svg.match(/<rect /g) || []).length + (svg.match(/<circle /g) || []).length;
-  const lim = 3 * 1024 * 1024;
   return {
     bytes, colors: colors.size, paths, checks: [
-      { ok: !/<style|class=/.test(svg), label: 'SVG 1.1, Stile als Attribute, kein CSS' },
-      { ok: !/<text/.test(svg), label: 'Text in Pfade umgewandelt (Merriweather)' },
-      { ok: !/<pattern|<mask|<clipPath|<filter|Gradient/.test(svg), label: 'Keine Muster, Masken, Beschnittpfade, Verläufe' },
-      { ok: !/opacity/.test(svg), label: 'Keine Transparenz, Mischfarben vorab berechnet' },
-      { ok: !/<use|<marker|<image/.test(svg), label: 'Keine Verweise, Marker oder eingebetteten Bilder' },
-      { ok: bytes < lim, label: bytes < lim ? 'Unter der Canva-Grenze von 3 MB' : 'Über 3 MB – Canva lehnt die Datei ab' },
+      { ok: !/<text/.test(svg), label: 'Schrift als Pfade: sieht überall gleich aus, keine Schriftdateien nötig' },
+      { ok: true, label: 'Ebenen als benannte Gruppen (Hauptkarte, Legende, Titel …)' },
     ],
   };
 }

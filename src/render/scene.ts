@@ -1,6 +1,8 @@
 // Welche Gebiete zeigt welcher Rahmen? Fokus, Umfeld, Insets, Grenzlinien
 import { GEO, GeoSet, LAENDER, areaLabel, bboxOfIds } from '../geo/geo';
+import { areaAt } from '../geo/relate';
 import type { Doc, Fokus } from '../model/types';
+import { datasetFor } from '../data/aggregate';
 
 export const geoOf = (doc: Doc): GeoSet => GEO[doc.geoSet];
 
@@ -18,6 +20,7 @@ export function fokusLabel(doc: Doc, f: Fokus = doc.fokus): string {
   if (f.kind === 'land') return LAENDER[f.bl]?.[0] || f.bl;
   if (f.kind === 'kreis') return g.krName[f.kr] || 'Kreis ' + f.kr;
   if (f.kind === 'area') { const i = g.byId.get(f.id); return i == null ? f.id : areaLabel(g, i); }
+  if (f.label) return `${f.label} (${f.ids.length} ${g.meta.levelLabel})`;
   return `${f.ids.length} Gebiete, frei kombiniert`;
 }
 function parentIdx(doc: Doc): number[] {
@@ -64,18 +67,19 @@ export function frameSets(doc: Doc, id: FrameId): FrameSets {
 /** Gebiete mit gemeinsamem Ergebnis im Datensatz der Farbregel (z. B. gemeinsam ausgezählte Briefwahl) */
 export function jointOf(doc: Doc): Record<string, string> | null {
   const id = (doc.color as { dataset?: string }).dataset; if (!id) return null;
-  const ds = doc.datasets.find(d => d.id === id);
+  const ds = datasetFor(doc, id);
   return ds && ds.geoSet === doc.geoSet && ds.joint ? ds.joint : null;
 }
 /** Grenzlinien eines Rahmens als Bogen-Indizes (gezeichnet je nach Maßstab mit arcLines) */
 export interface Meshes { wk: number[]; wkU: number[]; kr: number[]; land: number[]; outline: number[]; fokus: number[]; linesMode: boolean }
-const meshCache = new Map<string, Meshes>();
+const meshCache = new WeakMap<GeoSet, Map<string, Meshes>>();   // je Gebietsstand (Regionen werden bei Änderungen neu gebaut)
 export function frameMeshes(doc: Doc, id: FrameId, sets: FrameSets = frameSets(doc, id)): Meshes {
   const linesMode = id === 'main' && doc.umfeldStyle === 'lines';
   const J = jointOf(doc);
   const key = [doc.geoSet, id, JSON.stringify(doc.fokus), doc.umfeld, linesMode, id === 'inset' ? doc.inset.preset : '', J ? (doc.color as { dataset?: string }).dataset : ''].join('|');
-  const hit = meshCache.get(key); if (hit) return hit;
   const g = geoOf(doc), { F, U } = sets;
+  let mc = meshCache.get(g); if (!mc) { mc = new Map(); meshCache.set(g, mc); }
+  const hit = mc.get(key); if (hit) return hit;
   const vis = (i: number) => i >= 0 && (F.has(i) || U.has(i));
   const big = g.areas.length > 1500;
   const wk: number[] = [], wkU: number[] = [], kr: number[] = [], land: number[] = [], outline: number[] = [], fokus: number[] = [];
@@ -96,9 +100,60 @@ export function frameMeshes(doc: Doc, id: FrameId, sets: FrameSets = frameSets(d
     if (fa !== fb) fokus.push(ai);
   }
   const m = { wk, wkU, kr, land, outline, fokus, linesMode };
-  if (meshCache.size > 40) meshCache.clear();
-  meshCache.set(key, m);
+  if (mc.size > 40) mc.clear();
+  mc.set(key, m);
   return m;
 }
 export const fokusBBox = (doc: Doc) => bboxOfIds(geoOf(doc), fokusIdx(doc));
 export const insetBBox = (doc: Doc) => bboxOfIds(geoOf(doc), insetIdx(doc));
+
+/** Innere Grenzen eines Gebietsstands (für Überlagerungen), einmal je Stand berechnet */
+const innerCache = new WeakMap<GeoSet, number[]>();
+export function innerArcs(g: GeoSet): number[] {
+  let r = innerCache.get(g); if (r) return r;
+  // Regionen: Grenzen zwischen neutralen Restflächen (Landesgrenzen) gehören nicht zur Einteilung
+  const fr = (i: number) => !!g.memberOf && !!g.areas[i].free;
+  r = []; for (let ai = 0; ai < g.arcs.length; ai++) { const [a, b] = g.arcOwner[ai]; if (a >= 0 && b >= 0 && a !== b && !(fr(a) && fr(b))) r.push(ai); }
+  innerCache.set(g, r); return r;
+}
+/** Sichtbare Überlagerungen mit geladenen Geometrien (nicht die Ebene der Karte selbst) */
+export const activeOverlays = (doc: Doc) => (doc.overlays || []).filter(o => o.visible && GEO[o.geoSet] && o.geoSet !== doc.geoSet);
+
+/** Singular für Legende und Ebenenliste: „Wahlkreisgrenze“, „Kreisgrenze“ … */
+export function overlayName(geoSet: string, plural = false): string {
+  const m = GEO[geoSet]?.meta; if (!m) return 'Grenzen';
+  if (m.base) return plural ? 'Grenzen: ' + m.label : m.label;
+  const S: Record<string, [string, string]> = { 'btw-wk': ['Wahlkreisgrenze', 'Wahlkreisgrenzen'], lan: ['Landesgrenze', 'Landesgrenzen'], rbz: ['Bezirksgrenze', 'Bezirksgrenzen'], krs: ['Kreisgrenze', 'Kreisgrenzen'], vwg: ['Grenze der Gemeindeverbände', 'Grenzen der Gemeindeverbände'], gem: ['Gemeindegrenze', 'Gemeindegrenzen'] };
+  const n = S[m.level]?.[plural ? 1 : 0] || 'Grenzen';
+  return m.level === 'btw-wk' ? `${n} ${m.year}` : n;
+}
+
+/** Linien einer Überlagerung. Wahlkreise über Gemeinden werden aus den Gemeindegrenzen abgeleitet
+ *  (Wahlkreise bestehen aus Gemeinden), damit die Linien genau auf den Gemeindegrenzen liegen.
+ *  Nur in Städten mit mehreren Wahlkreisen gelten die Linien der Wahlkreiskarte. */
+export interface OverlayPart { set: GeoSet; arcs: number[] }
+const derivedCache = new WeakMap<GeoSet, WeakMap<GeoSet, OverlayPart[]>>();
+export function overlayParts(base: GeoSet, og: GeoSet): OverlayPart[] {
+  if (!(og.meta.level === 'btw-wk' && base.meta.level === 'gem')) return [{ set: og, arcs: innerArcs(og) }];
+  let m = derivedCache.get(base); if (!m) { m = new WeakMap(); derivedCache.set(base, m); }
+  const hit = m.get(og); if (hit) return hit;
+  // Städte mit mehreren Wahlkreisen: enthalten mehrere Wahlkreis-Beschriftungspunkte
+  const wkGem = og.areas.map(w => areaAt(base, w.label));
+  const cnt = new Map<number, number>(); for (const gi of wkGem) if (gi != null) cnt.set(gi, (cnt.get(gi) || 0) + 1);
+  const split = new Set([...cnt].filter(([, n]) => n > 1).map(([gi]) => gi));
+  const wkOf: (number | null)[] = base.areas.map(a => split.has(a.i) ? -1 - a.i : areaAt(og, a.label));
+  // Beschriftungspunkt außerhalb der (gröberen) Wahlkreiskarte, etwa an Küsten: Wahlkreis der Nachbarn übernehmen
+  for (let pass = 0; pass < 3; pass++) for (const a of base.areas) {
+    if (wkOf[a.i] != null) continue;
+    const c = new Map<number, number>(); for (const j of a.nb) { const w = wkOf[j]; if (w != null && w >= 0) c.set(w, (c.get(w) || 0) + 1); }
+    const best = [...c].sort((x, y) => y[1] - x[1])[0]; if (best) wkOf[a.i] = best[0];
+  }
+  for (const a of base.areas) if (wkOf[a.i] == null) wkOf[a.i] = -1e9 - a.i;
+  const gArcs: number[] = [];
+  for (let ai = 0; ai < base.arcs.length; ai++) { const [a, b] = base.arcOwner[ai]; if (a >= 0 && b >= 0 && wkOf[a] !== wkOf[b]) gArcs.push(ai); }
+  const wArcs: number[] = [];
+  for (const ai of innerArcs(og)) { const [x, y] = og.arcOwner[ai]; const gx = wkGem[x], gy = wkGem[y]; if (gx != null && gx === gy && split.has(gx)) wArcs.push(ai); }
+  const res = [{ set: base, arcs: gArcs }, { set: og, arcs: wArcs }];
+  m.set(og, res);
+  return res;
+}

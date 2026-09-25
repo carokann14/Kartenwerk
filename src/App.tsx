@@ -11,6 +11,7 @@ import { StartDialog } from './ui/StartDialog';
 import { TopBar } from './ui/TopBar';
 import { saveProjectFile } from './model/projectIO';
 import { duplicateEl, removeEl } from './model/annotations';
+import { removeOverlay } from './model/overlays';
 import { PanelDaten } from './ui/panels/Daten';
 import { PanelElemente } from './ui/panels/Elemente';
 import { PanelExport } from './ui/panels/Export';
@@ -92,6 +93,7 @@ function useShortcuts() {
         return;
       }
       if ((e.key === 'Delete' || e.key === 'Backspace') && u.sel.kind === 'ann') { e.preventDefault(); removeEl(u.sel.id); return; }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && u.sel.kind === 'overlay') { e.preventDefault(); removeOverlay(u.sel.id); return; }
       if (mod && key === 'd' && u.sel.kind === 'ann') { e.preventDefault(); duplicateEl(u.sel.id); return; }
       if ((e.key === 'Delete' || e.key === 'Backspace') && u.sel.kind === 'area') {
         const d = getDoc(); const ids = u.sel.ids.filter(id => d.overrides[d.geoSet + ':' + id]);

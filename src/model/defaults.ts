@@ -49,6 +49,9 @@ export function defaultDoc(geoSet = 'btw-wk-2025'): Doc {
     hatchAssign: {},
     hatchRules: [{ id: 'r-nodata', hatch: 'h-nodata', source: 'nodata' }],
     els: [],
+    overlays: [],
+    bubbles: null,
+    regions: [],
     inset: { visible: true, preset: 'berlin', autoHidden: false },
     background: 'white',
     variants: [],
@@ -76,6 +79,9 @@ export function normalizeDoc(d: Doc): Doc {
   x.hatchAssign ||= {};
   x.hatchRules ||= [];
   x.els ||= [];
+  x.overlays ||= [];
+  if (x.bubbles === undefined) x.bubbles = null;
+  x.regions ||= [];
   for (const v of x.variants) v.ann ||= {};
   return x;
 }
