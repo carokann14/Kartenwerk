@@ -8,7 +8,7 @@ import { addMarker, addTextBox, applyMarkerStyleToAll, detachArrowEnd, duplicate
 import { GEO } from '../geo/geo';
 import { getDoc, setUI, toast, update, useStore } from '../model/store';
 import type { ArrowEl, ArrowEnd, Doc, MarkerEl, MarkerShape, TextBoxEl } from '../model/types';
-import { SHAPE_LABEL, elName, markerD, parseSymbol } from '../render/annotations';
+import { SHAPE_LABEL, annItems, elName, markerD, parseSymbol } from '../render/annotations';
 import { activeVariant } from '../render/elements';
 import { Check, Field, Icon, Note, NumInput, Section, Seg } from './common';
 
@@ -155,6 +155,7 @@ function MarkerProps({ doc, m, moved, common }: { doc: Doc; m: MarkerEl; moved: 
 }
 function TextBoxProps({ doc, t, moved, common }: { doc: Doc; t: TextBoxEl; moved: boolean; common: React.ReactNode }) {
   const custom = t.color !== 'ink' && t.color !== 'inkSoft';
+  const pos = annItems(doc, activeVariant(doc)).find(it => it.id === t.id);
   return <>
     <div className="rp-head"><h2>Eigenschaften</h2></div>
     <h3 className="props-title">Textkasten</h3>
@@ -165,6 +166,7 @@ function TextBoxProps({ doc, t, moved, common }: { doc: Doc; t: TextBoxEl; moved
     <Field label="Farbe"><div className="row-btns nowrap"><Seg items={[['ink', 'Dunkel'], ['inkSoft', 'Grau'], ['x', 'Eigene']]} value={custom ? 'x' : t.color as 'ink'} onChange={c => updateEl(t.id, { color: c === 'x' ? '#9E5B0B' : c })} />{custom && <input type="color" value={t.color} onChange={e => updateEl(t.id, { color: e.target.value.toUpperCase() }, 'color')} aria-label="Textfarbe" />}</div></Field>
     <Field label="Ausrichtung"><Seg items={[['start', 'Links'], ['middle', 'Mitte'], ['end', 'Rechts']]} value={t.align} onChange={a => updateEl(t.id, { align: a })} /></Field>
     <Field label="Breite (px)"><NumInput min={0} max={2000} value={t.width} onChange={x => updateEl(t.id, { width: x }, 'w')} ariaLabel="Umbruchbreite, 0 = automatisch" /></Field>
+    {pos && <Field label="Position (px)"><span className="mono">{Math.round(pos.body[0])}, {Math.round(pos.body[1])}</span></Field>}
     <p className="hint">Breite 0: nur Zeilenumbrüche aus dem Text. Mit Breite bricht der Text automatisch um.</p>
     <Field label="Hintergrund"><div className="row-btns nowrap"><Check checked={!!t.bg} onChange={on => updateEl(t.id, { bg: on ? '#FFFFFF' : null, pad: on && !t.pad ? 6 : t.pad })}>Fläche</Check>{t.bg && <input type="color" value={t.bg} onChange={e => updateEl(t.id, { bg: e.target.value.toUpperCase() }, 'bg')} aria-label="Hintergrundfarbe" />}</div></Field>
     <Field label="Rahmen"><div className="row-btns nowrap"><Check checked={!!t.border} onChange={on => updateEl(t.id, { border: on ? '#16181B' : null, pad: on && !t.pad ? 6 : t.pad })}>Linie</Check>{t.border && <input type="color" value={t.border} onChange={e => updateEl(t.id, { border: e.target.value.toUpperCase() }, 'border')} aria-label="Rahmenfarbe" />}</div></Field>

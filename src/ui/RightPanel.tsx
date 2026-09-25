@@ -133,6 +133,7 @@ function TextProps({ doc, id }: { doc: Doc; id: 'title' | 'subtitle' }) {
     <Field label="Farbe"><Seg items={[['ink', 'Dunkel'], ['inkSoft', 'Grau']]} value={t.color} onChange={c => update(d => { d.texts[id].color = c; })} /></Field>
     <Field label="Ausrichtung"><Seg items={[['start', 'Links'], ['middle', 'Mitte'], ['end', 'Rechts']]} value={t.align} onChange={a => update(d => { d.texts[id].align = a; })} /></Field>
     <Field label="Breite (px)"><NumInput min={100} max={v.w} value={Math.round(v.L[id].w)} onChange={n => update(d => { d.variants[d.active].L[id].w = n; }, { key: 'w-' + id })} ariaLabel="Breite des Textblocks" /></Field>
+    <Field label="Position (px)"><span className="mono">{Math.round(v.L[id].x)}, {Math.round(v.L[id].y)}</span></Field>
     <p className="hint">Doppelklick auf den Text in der Grafik springt hierher. Ziehen auf der Arbeitsfläche verschiebt den Block, an den seitlichen Griffen ändert sich die Breite. Pfeiltasten verschieben um 1 px, mit Umschalt um 10 px.</p>
   </>;
 }
@@ -153,6 +154,7 @@ function SourceProps({ doc }: { doc: Doc }) {
     <Field label="Farbe"><Seg items={[['ink', 'Dunkel'], ['inkSoft', 'Grau']]} value={t.color} onChange={c => update(d => { d.texts.source.color = c; })} /></Field>
     <Field label="Ausrichtung"><Seg items={[['start', 'Links'], ['middle', 'Mitte'], ['end', 'Rechts']]} value={t.align} onChange={a => update(d => { d.texts.source.align = a; })} /></Field>
     <Field label="Breite (px)"><NumInput min={100} max={v.w} value={Math.round(v.L.source.w)} onChange={n => update(d => { d.variants[d.active].L.source.w = n; }, { key: 'w-source' })} ariaLabel="Breite der Quellenzeile" /></Field>
+    <Field label="Position (px)"><span className="mono">{Math.round(v.L.source.x)}, {Math.round(v.L.source.y)}</span></Field>
     <p className="hint">Doppelklick auf die Quellenzeile in der Grafik springt hierher. Ziehen verschiebt sie, an den seitlichen Griffen ändert sich die Breite. Pfeiltasten um 1 px, mit Umschalt um 10 px.</p>
   </>;
 }
