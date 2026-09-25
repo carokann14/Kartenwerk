@@ -9,6 +9,7 @@ import {
 } from '../model/annotations';
 import { setUI, update, useStore } from '../model/store';
 import type { Doc, HatchPattern, HatchRule, HatchStyle } from '../model/types';
+import { activeVariant } from '../render/elements';
 import { PATTERN_LABEL, hatchMap, hatchPathD, rectRing } from '../render/hatch';
 import { LegEntry, entryColorSetter, legendModel } from '../render/legend';
 import { geoOf } from '../render/scene';
@@ -167,7 +168,7 @@ function LegRow({ doc, e, section }: { doc: Doc; e: LegEntry; section: LegEntry[
 }
 
 export function LegendProps({ doc }: { doc: Doc }) {
-  const M = legendModel(doc), lg = doc.legend;
+  const M = legendModel(doc), lg = doc.legend, v = activeVariant(doc);
   const isMatrix = M?.main === 'matrix';
   return (
     <>
@@ -181,6 +182,8 @@ export function LegendProps({ doc }: { doc: Doc }) {
       {lg.orientation === 'grid' && <Field label="Spalten"><Seg items={[['2', '2'], ['3', '3'], ['4', '4']]} value={String(lg.cols) as '2'} onChange={v => update(d => { d.legend.cols = +v; })} /></Field>}
       {isMatrix && !lg.simple && lg.orientation !== 'vertical' && <p className="hint">Bei Abstufung nach Stärke steht die Klassengrenzen-Skala nur „untereinander“ über der Legende; bei „Neben“/„Raster“ entfällt sie, die Kästen je Partei bleiben aber vollständig erhalten.</p>}
       {M?.main === 'bar' && lg.orientation !== 'vertical' && <p className="hint">Bei „Neben“/„Raster“ bekommt jede Klasse eine eigene Bereichsbeschriftung statt der gemeinsamen Skala darunter.</p>}
+      {lg.orientation === 'horizontal' && <Field label="Breite (px)"><NumInput min={0} max={v.w} value={Math.round(v.L.legend.w)} onChange={n => update(d => { d.variants[d.active].L.legend.w = n; }, { key: 'w-legend' })} ariaLabel="Breite der Legende, 0 = automatisch" /></Field>}
+      {lg.orientation === 'horizontal' && <p className="hint">Bestimmt, wann bei „Neben“ eine neue Zeile beginnt; 0 = automatisch (richtet sich nach der Kartenbreite). Die Höhe folgt immer aus der Anzahl der Zeilen und lässt sich nicht einzeln setzen. Auch per Ziehgriff an der Legende selbst einstellbar, wenn sie ausgewählt ist.</p>}
       <Check checked={lg.counts} onChange={on => update(d => { d.legend.counts = on; })}>Anzahl der Gebiete zeigen</Check>
       <Field label="Größe (px)"><NumInput min={9} max={40} value={lg.size} onChange={n => update(d => { d.legend.size = n; }, { key: 'lg-size' })} ariaLabel="Schriftgröße der Legende" /></Field>
       {!M && <Note>Die Legende erscheint, sobald eine Färbung mit Daten aktiv ist.</Note>}

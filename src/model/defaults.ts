@@ -76,7 +76,7 @@ export const HATCH_PRESETS: Omit<HatchStyle, 'id'>[] = [
   { name: 'Kreuz', pattern: 'kreuz', color: '#16181B', width: 0.9, spacing: 7, bg: null },
   { name: 'Punkte', pattern: 'punkte', color: '#16181B', width: 1.6, spacing: 6, bg: null },
 ];
-export const defaultLegend = (): LegendSettings => ({ visible: true, title: '', orientation: 'vertical', cols: 2, counts: true, size: 20, labels: {}, hidden: [], order: [], extra: [], caption: null });
+export const defaultLegend = (): LegendSettings => ({ visible: true, title: '', orientation: 'vertical', cols: 2, counts: true, size: 20, simple: false, labels: {}, hidden: [], order: [], extra: [], caption: null });
 
 /** Ältere Projekte auf den aktuellen Stand bringen (fehlende Felder mit Vorgaben füllen). */
 export function normalizeDoc(d: Doc): Doc {
@@ -99,6 +99,7 @@ export function normalizeDoc(d: Doc): Doc {
   for (const v of x.variants) {
     v.ann ||= {}; v.guides ||= { x: [], y: [], visible: true }; v.guides.visible ??= true;
     v.L.logo ||= defaultLogoBox(v.L, v.w, v.h, logoRatio(x.logo.asset));
+    v.L.legend.w ??= 0;   // altes Projekt ohne Breitenfeld: 0 = automatisch, wie es bislang immer war
     if (typeof v.L.m === 'number') { const mm = v.L.m as number; v.L.m = { left: mm, top: mm, right: mm, bottom: mm }; }   // altes Projekt: ein Rand für alle vier Seiten
   }
   return x;

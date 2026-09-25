@@ -227,8 +227,8 @@ function Overlay() {
     const b = elementBox(doc, ui.sel.id); if (b) out.push(box(b, 'el', false));
     // Logo: Griff oben rechts ändert die Größe, die Unterkante bleibt
     if (b && ui.sel.id === 'logo') { const hs = 10 / z; out.push(<rect key="lh" data-logo-handle="1" x={b.x + b.w + 3 / z - hs / 2} y={b.y - 3 / z - hs / 2} width={hs} height={hs} fill="var(--panel)" stroke={a} strokeWidth={1.5 / z} style={{ pointerEvents: 'all', cursor: 'nesw-resize' }} />); }
-    // Titel/Unterzeile/Quellenzeile: seitliche Griffe ändern die Breite, die Höhe folgt dem Text
-    if (b && (ui.sel.id === 'title' || ui.sel.id === 'subtitle' || ui.sel.id === 'source')) out.push(...widthHandles(b, z, a, 'textw', ui.sel.id));
+    // Titel/Unterzeile/Quellenzeile/Legende: seitliche Griffe ändern die Breite, die Höhe folgt dem Inhalt
+    if (b && (ui.sel.id === 'title' || ui.sel.id === 'subtitle' || ui.sel.id === 'source' || ui.sel.id === 'legend')) out.push(...widthHandles(b, z, a, 'textw', ui.sel.id));
   }
   const draft = useArrowDraft();
   if (draft.a && draft.b) out.push(<line key="draft" x1={draft.a[0]} y1={draft.a[1]} x2={draft.b[0]} y2={draft.b[1]} stroke={a} strokeWidth={2 / z} strokeDasharray={`${6 / z} ${4 / z}`} />);
@@ -405,7 +405,7 @@ export function Canvas() {
     if (u.tool) { placeTool(d, u.tool, a); return; }
     if (t.closest('[data-logo-handle]')) { const b = activeVariant(d).L.logo; drag.current = { ...base, type: 'logoSize', ow: b.w, bottom: b.y + b.w * logoRatio(d.logo.asset), r: logoRatio(d.logo.asset) }; return; }
     const twh = t.closest('[data-textw-handle]') as SVGElement | null;
-    if (twh) { const id = twh.dataset.textwHandle as 'title' | 'subtitle' | 'source', dir = twh.dataset.dir as 'w' | 'e', L = activeVariant(d).L[id]; drag.current = { ...base, type: 'textWidth', id, dir, ow: L.w, ox: L.x }; return; }
+    if (twh) { const id = twh.dataset.textwHandle as 'title' | 'subtitle' | 'source' | 'legend', dir = twh.dataset.dir as 'w' | 'e', L = activeVariant(d).L[id]; drag.current = { ...base, type: 'textWidth', id, dir, ow: L.w, ox: L.x }; return; }
     const awh = t.closest('[data-annw-handle]') as SVGElement | null;
     if (awh) {
       const id = awh.dataset.annwHandle!, dir = awh.dataset.dir as 'w' | 'e', el = d.els.find(x => x.id === id);

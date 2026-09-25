@@ -58,7 +58,7 @@ export function makeLayout(doc: Doc, W: number, H: number, ts: number, guides?: 
   const tb = (kind: 'title' | 'subtitle' | 'source', w: number) => textBlock(doc, kind, w, ts).height;
   const srcW = W - mL - mR, srcH = doc.texts.source.visible ? tb('source', srcW) : 0;
   const blank: FrameBox = { x: 0, y: 0, w: 100, h: 100, view: { cx: 0, cy: 0, k: 1 } };
-  const L: Layout = { m, reserve: 0, title: { x: mL, y: mT, w: 100 }, subtitle: { x: mL, y: mT, w: 100 }, source: { x: mL, y: H - mB - srcH, w: srcW }, legend: { x: mL, y: mT }, main: { ...blank }, inset: { ...blank }, logo: { x: mL, y: mT, w: 100 } };
+  const L: Layout = { m, reserve: 0, title: { x: mL, y: mT, w: 100 }, subtitle: { x: mL, y: mT, w: 100 }, source: { x: mL, y: H - mB - srcH, w: srcW }, legend: { x: mL, y: mT, w: 0 }, main: { ...blank }, inset: { ...blank }, logo: { x: mL, y: mT, w: 100 } };
   const titleH = (w: number) => doc.texts.title.visible ? tb('title', w) + Math.round(12 * s) : 0;
   const subH = (w: number) => doc.texts.subtitle.visible ? tb('subtitle', w) : 0;
   const bottom = H - mB - srcH - Math.round(16 * s);
@@ -71,7 +71,7 @@ export function makeLayout(doc: Doc, W: number, H: number, ts: number, guides?: 
     L.main = { ...blank, x: mL, y, w: tw, h: Math.max(200, Math.min(Math.round(tw * ratio * 0.97), bottom - y - Math.round(colW * 1.1) - Math.round(30 * s))) };
     const y2 = L.main.y + L.main.h + Math.round(26 * s);
     L.inset = { ...blank, x: W - mR - colW, y: y2, w: colW, h: Math.round(Math.min(colW * 1.08, bottom - y2)) };
-    L.legend = { x: mL, y: y2 };
+    L.legend = { x: mL, y: y2, w: 0 };
   } else if (!land) {
     const tw = W - mL - mR;
     L.title = { x: mL, y: mT, w: tw };
@@ -80,12 +80,12 @@ export function makeLayout(doc: Doc, W: number, H: number, ts: number, guides?: 
     const colW = Math.round(W * 0.22);
     L.reserve = colW + Math.round(10 * s);
     L.inset = { ...blank, x: L.main.x + L.main.w - colW, y: L.main.y + Math.round(L.main.h * 0.02), w: colW, h: Math.round(colW * 1.08) };
-    L.legend = { x: L.main.x + L.main.w - colW, y: L.inset.y + L.inset.h + Math.round(40 * s) };
+    L.legend = { x: L.main.x + L.main.w - colW, y: L.inset.y + L.inset.h + Math.round(40 * s), w: 0 };
   } else {
     const tw = Math.round(W * 0.33);
     L.title = { x: mL, y: mT, w: tw };
     let y = mT + titleH(tw); L.subtitle = { x: mL, y, w: tw }; y += subH(tw) + Math.round(34 * s);
-    L.legend = { x: mL, y };
+    L.legend = { x: mL, y, w: 0 };
     const mx = mL + tw + Math.round(W * 0.03);
     L.main = { ...blank, x: mx, y: mT, w: W - mx - mR, h: H - mT - mB - srcH - Math.round(14 * s) };
     const colW = Math.round(L.main.w * 0.27);

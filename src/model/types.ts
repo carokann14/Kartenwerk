@@ -40,7 +40,7 @@ export interface FrameBox { x: number; y: number; w: number; h: number; view: Vi
 export interface Margin { left: number; top: number; right: number; bottom: number }   // Rand für die Standardplatzierung, je Seite einzeln (z. B. ungleiche Safe Zone bei Reels)
 export interface Layout {
   m: Margin; reserve: number;
-  title: Box; subtitle: Box; source: Box; legend: { x: number; y: number };
+  title: Box; subtitle: Box; source: Box; legend: Box;   // legend.w: 0 = automatisch (passt sich der Kartenbreite an), sonst vom Nutzer per Ziehgriff/Feld gesetzt
   main: FrameBox; inset: FrameBox;
   logo: Box;                                 // x, y = linke obere Ecke, w = Breite in px; die Höhe folgt dem Seitenverhältnis des Logos
 }
@@ -125,6 +125,7 @@ export type HatchRule =
 export interface LegendExtra { id: string; label: string; kind: 'fill' | 'hatch' | 'line'; color: string; hatch: string | null }
 export interface LegendSettings {
   visible: boolean; title: string; orientation: 'vertical' | 'horizontal' | 'grid'; cols: number; counts: boolean; size: number;
+  simple: boolean;                  // Sieger + Stärke: ein Kasten je Partei statt der Abstufungsmatrix (nur die Legende, die Karte bleibt abgestuft)
   labels: Record<string, string>;   // Eintrag → eigener Text
   hidden: string[];                 // ausgeblendete Einträge
   order: string[];                  // eigene Reihenfolge

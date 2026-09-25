@@ -73,11 +73,13 @@ export function textPrims(doc: Doc, kind: 'title' | 'subtitle' | 'source', v: Va
 }
 
 // ---------- Legende ----------
-export function legendPrims(doc: Doc, P: { x: number; y: number } = activeVariant(doc).L.legend, mainW = activeVariant(doc).L.main.w, ts = activeVariant(doc).ts): Prims | null {
+export function legendPrims(doc: Doc, P: { x: number; y: number; w?: number } = activeVariant(doc).L.legend, mainW = activeVariant(doc).L.main.w, ts = activeVariant(doc).ts): Prims | null {
   if (!doc.legend.visible) return null;
   const M = legendModel(doc); if (!M) return null;
   const cm = colorModel(doc), c = doc.color;
   const base = +(doc.legend.size * ts).toFixed(2), small = Math.round(base * 0.74), ink = doc.style.ink, soft = doc.style.inkSoft;
+  // Umbruchbreite bei „Neben“: von Hand gesetzte Breite (Ziehgriff/Feld, siehe m4-1o) hat Vorrang, sonst wie bisher aus der Kartenbreite abgeleitet.
+  const wrapW = P.w ? Math.max(150, P.w) : Math.max(260, mainW * 0.8);
   const texts: TextPrim[] = [], rects: RectPrim[] = [], paths: PathPrim[] = [];
   let y = 0, maxX = 0;
   const T = (x: number, yy: number, text: string, cut: Cut, size: number, color: string, anchor: TextPrim['anchor'] = 'start') => {
@@ -115,7 +117,7 @@ export function legendPrims(doc: Doc, P: { x: number; y: number } = activeVarian
   const arrange = (n: number, or: 'vertical' | 'horizontal' | 'grid', measure: (i: number) => number, draw: (i: number, x: number, yy: number) => void, h: number) => {
     if (!n) return;
     if (or === 'horizontal') {
-      let x = 0; const maxW = Math.max(260, mainW * 0.8);
+      let x = 0; const maxW = wrapW;
       for (let i = 0; i < n; i++) {
         const w = measure(i) + base * 1.1;
         if (x > 0 && x + w > maxW) { x = 0; y += h + base * 0.42; }
