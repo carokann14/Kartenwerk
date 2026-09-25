@@ -110,46 +110,66 @@ export function legendPrims(doc: Doc, P: { x: number; y: number } = activeVarian
   const segW = (n: number, min: number) => Math.round(Math.max(min, ...cm.breaks.slice(0, Math.max(0, n - 1)).map(b => measureW(fmtBreak(b), 'text', small) + small * 0.8)));
   const scale = (n: number, sw: number, gap: number, yy: number) => cm.breaks.forEach((b, k) => { if (k < n - 1) T((k + 1) * (sw + gap) - gap / 2, yy, fmtBreak(b), 'text', small, soft, 'middle'); });
   const rows = M.rows.filter(e => !e.hidden), more = M.more.filter(e => !e.hidden);
-  /** Einfache Einträge untereinander, nebeneinander oder im Raster */
-  const list = (items: LegEntry[], sw: number, size: number, color: string, orient: 'vertical' | 'horizontal' | 'grid') => {
-    if (!items.length) return;
-    const tw = (e: LegEntry) => sw + base * 0.5 + measureW(lbl(e), 'text', size);
-    if (orient === 'horizontal') {
+  const orient = doc.legend.orientation;
+  /** Anordnung (untereinander/nebeneinander/Raster) für eine Reihe gleich hoher Einträge; misst und zeichnet jeden Eintrag über measure/draw. */
+  const arrange = (n: number, or: 'vertical' | 'horizontal' | 'grid', measure: (i: number) => number, draw: (i: number, x: number, yy: number) => void, h: number) => {
+    if (!n) return;
+    if (or === 'horizontal') {
       let x = 0; const maxW = Math.max(260, mainW * 0.8);
-      for (const e of items) {
-        const w = tw(e) + base * 1.1;
-        if (x > 0 && x + w > maxW) { x = 0; y += sw + base * 0.5; }
-        swatch(e, x, y, sw, sw); T(x + sw + base * 0.5, y + sw / 2 + capOffset('text', size), lbl(e), 'text', size, color);
-        x += w;
+      for (let i = 0; i < n; i++) {
+        const w = measure(i) + base * 1.1;
+        if (x > 0 && x + w > maxW) { x = 0; y += h + base * 0.42; }
+        draw(i, x, y); x += w;
       }
-      y += sw;
-    } else if (orient === 'grid') {
+      y += h;
+    } else if (or === 'grid') {
       const cols = Math.max(1, Math.min(6, doc.legend.cols || 2)), colW: number[] = [];
-      items.forEach((e, k) => { const cI = k % cols; colW[cI] = Math.max(colW[cI] || 0, tw(e) + base * 1.1); });
-      items.forEach((e, k) => {
-        const cI = k % cols, x = colW.slice(0, cI).reduce((a, b) => a + b, 0);
-        if (cI === 0 && k > 0) y += sw + base * 0.42;
-        swatch(e, x, y, sw, sw); T(x + sw + base * 0.5, y + sw / 2 + capOffset('text', size), lbl(e), 'text', size, color);
-      });
-      y += sw;
+      for (let i = 0; i < n; i++) { const cI = i % cols; colW[cI] = Math.max(colW[cI] || 0, measure(i) + base * 1.1); }
+      for (let i = 0; i < n; i++) {
+        const cI = i % cols, x = colW.slice(0, cI).reduce((a, b) => a + b, 0);
+        if (cI === 0 && i > 0) y += h + base * 0.42;
+        draw(i, x, y);
+      }
+      y += h;
     } else {
-      for (const e of items) { swatch(e, 0, y, sw, sw); T(sw + base * 0.55, y + sw / 2 + capOffset('text', size), lbl(e), 'text', size, color); y += sw + base * 0.42; }
+      for (let i = 0; i < n; i++) { draw(i, 0, y); y += h + base * 0.42; }
       y -= base * 0.42;
     }
   };
-  if (M.main === 'matrix' && c.mode === 'siegerStaerke') {
-    const n = cm.steps, sw = segW(n, base * 2.35), sh = Math.round(base * 1.1), gap = 2;
-    if (n > 1) { scale(n, sw, gap, y + small * 0.9); y += small * 1.45; }
-    for (const e of rows) {
-      for (let s2 = 0; s2 < n; s2++) R(s2 * (sw + gap), y, sw, sh, mixWhite(e.color, STEP_T[n][s2]));
-      T(n * (sw + gap) + base * 0.55, y + sh / 2 + capOffset('text', base * 0.92), lbl(e), 'text', base * 0.92, ink);
-      y += sh + base * 0.42;
+  /** Einfache Einträge untereinander, nebeneinander oder im Raster */
+  const list = (items: LegEntry[], sw: number, size: number, color: string, or: 'vertical' | 'horizontal' | 'grid') => {
+    arrange(items.length, or, i => sw + base * 0.5 + measureW(lbl(items[i]), 'text', size), (i, x, yy) => {
+      const e = items[i]; swatch(e, x, yy, sw, sw); T(x + sw + base * 0.5, yy + sw / 2 + capOffset('text', size), lbl(e), 'text', size, color);
+    }, sw);
+  };
+  /** Aus Farbe + Text gebaute Einträge für Klassen-Legenden (kein LegEntry aus dem Modell, aber gleich behandelbar) */
+  const swItem = (color: string, label: string): LegEntry => ({ key: '', label, auto: label, color, count: null, kind: 'fill', hatch: null, bg: null, hidden: false, target: null, removable: false });
+  if (M.main === 'matrix' && c.mode === 'siegerStaerke' && doc.legend.simple) {
+    // Vereinfacht: ein Kasten je Partei in ihrer vollen Farbe, wie eine gewöhnliche Liste anordenbar (Unter/Neben/Raster).
+    // Die Abstufung nach Stärke bleibt allein der Karte vorbehalten (cm.fills, unverändert).
+    list(rows, Math.round(base * 1.15), base * 0.92, ink, orient);
+  } else if (M.main === 'matrix' && c.mode === 'siegerStaerke') {
+    const n = cm.steps, sw = segW(n, base * 2.35), sh = Math.round(base * 1.1), gap = 2, groupW = n * (sw + gap);
+    if (orient === 'vertical') {
+      if (n > 1) { scale(n, sw, gap, y + small * 0.9); y += small * 1.45; }
+      for (const e of rows) {
+        for (let s2 = 0; s2 < n; s2++) R(s2 * (sw + gap), y, sw, sh, mixWhite(e.color, STEP_T[n][s2]));
+        T(groupW + base * 0.55, y + sh / 2 + capOffset('text', base * 0.92), lbl(e), 'text', base * 0.92, ink);
+        y += sh + base * 0.42;
+      }
+      y -= base * 0.42;
+    } else {
+      // Neben/Raster: je Partei ihre Abstufungsreihe als ein Block; ohne gemeinsame Klassengrenzen-Skala, da Spalten hier nicht ausgerichtet sind.
+      arrange(rows.length, orient, i => groupW + base * 0.55 + measureW(lbl(rows[i]), 'text', base * 0.92), (i, x, yy) => {
+        const e = rows[i];
+        for (let s2 = 0; s2 < n; s2++) R(x + s2 * (sw + gap), yy, sw, sh, mixWhite(e.color, STEP_T[n][s2]));
+        T(x + groupW + base * 0.55, yy + sh / 2 + capOffset('text', base * 0.92), lbl(e), 'text', base * 0.92, ink);
+      }, sh);
     }
-    y -= base * 0.42;
   } else if (M.main === 'list') {
-    list(rows, Math.round(base * 1.15), base * 0.92, ink, doc.legend.orientation);
-  } else if (cm.continuous) {
-    // stetige Skala: feine Streifen ohne Lücke
+    list(rows, Math.round(base * 1.15), base * 0.92, ink, orient);
+  } else if (cm.continuous && orient === 'vertical') {
+    // Vorgabe „Unter“: stetige Skala wie bisher, feine Streifen ohne Lücke
     const { min, max, hue } = cm.continuous, N = CONT_STEPS, bw = Math.round(base * 11), sh = Math.round(base * 1.0), w1 = bw / N;
     for (let s2 = 0; s2 < N; s2++) R(s2 * w1, y, w1 + 0.3, sh, contColor(hue, s2 / (N - 1)));
     const f = (x: number) => fmtNum(x, Math.abs(max - min) < 10 ? 1 : 0);
@@ -157,17 +177,40 @@ export function legendPrims(doc: Doc, P: { x: number; y: number } = activeVarian
     T(bw / 2, y + sh + small * 1.25, f((min + max) / 2), 'text', small, soft, 'middle');
     T(bw, y + sh + small * 1.25, f(max) + cm.unit, 'text', small, soft, 'end');
     y += sh + small * 0.9;
-  } else if (cm.diverging && cm.shown) {
+  } else if (cm.continuous) {
+    // „Neben“/„Raster“ gewählt: für eine stetige Skala nicht sinnvoll getrennt, beides dreht den Verlauf senkrecht (oben = Höchstwert).
+    const { min, max, hue } = cm.continuous, N = CONT_STEPS, bh = Math.round(base * 11), sw = Math.round(base * 1.6), h1 = bh / N;
+    for (let s2 = 0; s2 < N; s2++) R(0, y + s2 * h1, sw, h1 + 0.3, contColor(hue, 1 - s2 / (N - 1)));
+    const f = (x: number) => fmtNum(x, Math.abs(max - min) < 10 ? 1 : 0);
+    T(sw + base * 0.5, y + capOffset('text', small), f(max) + cm.unit, 'text', small, soft, 'start');
+    T(sw + base * 0.5, y + bh / 2 + capOffset('text', small), f((min + max) / 2), 'text', small, soft, 'start');
+    T(sw + base * 0.5, y + bh + capOffset('text', small), f(min) + cm.unit, 'text', small, soft, 'start');
+    y += bh;
+  } else if (cm.diverging && cm.shown && orient === 'vertical') {
+    // Vorgabe „Unter“: wie bisher, eine zusammenhängende Reihe mit Grenzbeschriftung darunter
     const [lo, hi] = cm.shown, n = hi - lo + 1, sw = Math.round(base * (n > 6 ? 1.7 : 2.2)), sh = Math.round(base * 1.0), gap = 2;
     for (let k = 0; k < n; k++) R(k * (sw + gap), y, sw, sh, cm.classColors[lo + k]);
     for (let k = lo > 0 ? 0 : 1; k < n; k++) T(k * (sw + gap) - (k ? gap / 2 : 0), y + sh + small * 1.25, signed(cm.breaks[lo + k - 1]), 'text', small, soft, k ? 'middle' : 'start');
     if (hi < cm.classColors.length - 1) T(n * (sw + gap) - gap, y + sh + small * 1.25, signed(cm.breaks[hi]), 'text', small, soft, 'end');
     y += sh + small * 0.9;
-  } else if (c.mode === 'anteil' || c.mode === 'wert') {
+  } else if (cm.diverging && cm.shown) {
+    // „Neben“/„Raster“ gewählt: einzelne Klassen mit eigener Bereichsbeschriftung, wie eine gewöhnliche Liste anordenbar
+    const [lo, hi] = cm.shown, total = cm.classColors.length;
+    const divLbl = (k: number) => { const lb = k > 0 ? signed(cm.breaks[k - 1]) : null, hb = k < total - 1 ? signed(cm.breaks[k]) : null; return lb && hb ? `${lb} – ${hb}` : hb ? `< ${hb}` : lb ? `≥ ${lb}` : ''; };
+    const items = Array.from({ length: hi - lo + 1 }, (_, i) => swItem(cm.classColors[lo + i], divLbl(lo + i)));
+    list(items, Math.round(base * (items.length > 6 ? 0.85 : 1.05)), small, soft, orient);
+  } else if ((c.mode === 'anteil' || c.mode === 'wert') && orient === 'vertical') {
+    // Vorgabe „Unter“: wie bisher, eine zusammenhängende Reihe mit Klassengrenzen darunter
     const n = cm.steps || 5, sw = segW(n, base * (n > 5 ? 1.9 : 2.4)), sh = Math.round(base * 1.0), gap = 2;
     for (let s2 = 0; s2 < n; s2++) R(s2 * (sw + gap), y, sw, sh, cm.classColors[s2] || '#CCCCCC');
     scale(n, sw, gap, y + sh + small * 1.25);
     y += sh + small * 0.9;
+  } else if (c.mode === 'anteil' || c.mode === 'wert') {
+    // „Neben“/„Raster“ gewählt: einzelne Klassen mit eigener Bereichsbeschriftung, wie eine gewöhnliche Liste anordenbar
+    const n = cm.steps || 5;
+    const clsLbl = (k: number) => n <= 1 ? '' : k === 0 ? `< ${fmtBreak(cm.breaks[0])}${cm.unit}` : k === n - 1 ? `≥ ${fmtBreak(cm.breaks[n - 2])}${cm.unit}` : `${fmtBreak(cm.breaks[k - 1])}–${fmtBreak(cm.breaks[k])}${cm.unit}`;
+    const items = Array.from({ length: n }, (_, k) => swItem(cm.classColors[k] || '#CCCCCC', clsLbl(k)));
+    list(items, Math.round(base * (n > 5 ? 0.85 : 1.05)), small, soft, orient);
   }
   if (M.caption && !M.caption.hidden && M.caption.text) { y += small * 0.3; for (const cl of wrapText(M.caption.text, 'text', small, Math.max(220, 300 * ts))) { T(0, y + small * 1.2, cl, 'text', small, soft); y += small * 1.3; } y += small * 0.2; }
   // Blasen: verschachtelte Kreise mit Werten
@@ -194,7 +237,7 @@ export function legendPrims(doc: Doc, P: { x: number; y: number } = activeVarian
   }
   if (more.length) {
     y += base * 0.55;
-    list(more, Math.round(base * 0.95), small, soft, doc.legend.orientation === 'vertical' || M.main === 'matrix' || M.main === 'bar' ? 'vertical' : doc.legend.orientation);
+    list(more, Math.round(base * 0.95), small, soft, orient);
   }
   if (M.ovNote && !M.ovNote.hidden) { y += base * 0.7; T(0, y + small, M.ovNote.text, 'text', small, soft); y += small * 1.3; }
   return { texts, rects, paths, box: { x: P.x, y: P.y, w: Math.ceil(maxX), h: Math.ceil(y) } };

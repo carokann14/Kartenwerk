@@ -168,16 +168,19 @@ function LegRow({ doc, e, section }: { doc: Doc; e: LegEntry; section: LegEntry[
 
 export function LegendProps({ doc }: { doc: Doc }) {
   const M = legendModel(doc), lg = doc.legend;
-  const listMode = M?.main === 'list';
+  const isMatrix = M?.main === 'matrix';
   return (
     <>
       <div className="rp-head"><h2>Eigenschaften</h2></div>
       <h3 className="props-title">Legende</h3>
       <p className="props-sub">aus der Färbung erzeugt, Texte und Reihenfolge änderbar</p>
       <Field stack label="Titel" htmlFor="p-lt"><input type="text" id="p-lt" value={lg.title} placeholder={M?.titleAuto || ''} onChange={e => { const val = e.target.value; update(d => { d.legend.title = val; }, { key: 'lg-title' }); }} /></Field>
+      {isMatrix && <Check checked={lg.simple} onChange={on => update(d => { d.legend.simple = on; })}>Ein Kasten je Partei, ohne Abstufung in der Legende</Check>}
+      {isMatrix && lg.simple && <p className="hint">Die Karte zeigt weiterhin alle Abstufungen nach Stärke; nur die Legende wird auf einen Kasten je Partei vereinfacht.</p>}
       <Field label="Anordnung"><Seg items={[['vertical', 'Unter'], ['horizontal', 'Neben'], ['grid', 'Raster']]} value={lg.orientation} onChange={o => update(d => { d.legend.orientation = o; })} /></Field>
       {lg.orientation === 'grid' && <Field label="Spalten"><Seg items={[['2', '2'], ['3', '3'], ['4', '4']]} value={String(lg.cols) as '2'} onChange={v => update(d => { d.legend.cols = +v; })} /></Field>}
-      {!listMode && lg.orientation !== 'vertical' && <p className="hint">Neben- und Rasteranordnung gelten für Listen (Stärkste Partei, Kategorie). Die Stufen-Legende bleibt untereinander.</p>}
+      {isMatrix && !lg.simple && lg.orientation !== 'vertical' && <p className="hint">Bei Abstufung nach Stärke steht die Klassengrenzen-Skala nur „untereinander“ über der Legende; bei „Neben“/„Raster“ entfällt sie, die Kästen je Partei bleiben aber vollständig erhalten.</p>}
+      {M?.main === 'bar' && lg.orientation !== 'vertical' && <p className="hint">Bei „Neben“/„Raster“ bekommt jede Klasse eine eigene Bereichsbeschriftung statt der gemeinsamen Skala darunter.</p>}
       <Check checked={lg.counts} onChange={on => update(d => { d.legend.counts = on; })}>Anzahl der Gebiete zeigen</Check>
       <Field label="Größe (px)"><NumInput min={9} max={40} value={lg.size} onChange={n => update(d => { d.legend.size = n; }, { key: 'lg-size' })} ariaLabel="Schriftgröße der Legende" /></Field>
       {!M && <Note>Die Legende erscheint, sobald eine Färbung mit Daten aktiv ist.</Note>}
