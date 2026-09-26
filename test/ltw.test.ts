@@ -94,3 +94,23 @@ ok(f.kind === 'area' && f.id === '13', `Fokus Wahlkreis Greifswald → Länder: 
   const n = normalizeDoc(old);
   ok(n.layers.laender === false && n.style.laender === '#E2DDD2' && defaultDoc().layers.laender === true, 'ältere Projekte: Nachbarländer aus (Aussehen bleibt), neue Projekte: an; Farben ergänzt');
 }
+// Weitere Länder: Vorlagen für die Ergebnisdateien (Niedersachsen, Nordrhein-Westfalen, Rheinland-Pfalz)
+for (const [file, preset, geoId, n, ms] of [
+  ['ni-2022/Landtagswahlen-NI.txt', 'ltw-ni', 'ltw-ni-2022', 87, 0],
+  ['nw-2022/Landtagswahlen-NW.txt', 'ltw-nw', 'ltw-nw-2022', 128, 0],
+  ['rp-2026/Endgueltiges_Ergebnis_LW_2026_Wahlkreise.xlsx', 'ltw-rp', 'ltw-rp-2026', 52, 0],
+] as const) {
+  await ensureGeo([geoId]);
+  const r = await readFile(file.split('/')[1], buf('data-src/ltw/' + file));
+  const st2 = defaultSettings(r);
+  ok(st2.preset === preset && st2.geoSet === geoId, `${file}: Vorlage ${st2.preset} → ${st2.geoSet} · „${st2.sourceTitle}“ · ${st2.attribution}`);
+  const t2 = buildTable(r, st2); t2.notes.forEach(x => console.log('   ' + x));
+  const d2 = buildDataset(r, st2, t2, shortTitle(st2.sourceTitle));
+  const g1 = d2.groups.find(g => g.label === 'Erststimmen'), g2 = d2.groups.find(g => g.label === 'Zweitstimmen');
+  ok(d2.report.exact === n && d2.report.unknown === 0 && d2.report.duplicate === 0 && d2.report.missing.length === 0 && d2.report.nameMismatch.length === ms, `${preset}: ${d2.report.exact}/${n} zugeordnet, ${d2.report.nameMismatch.length} Namensabweichungen${d2.report.nameMismatch.length ? ' (' + d2.report.nameMismatch.slice(0, 3).map(x => x.dataName + ' ≠ ' + x.geoName).join('; ') + ')' : ''}`);
+  ok(!!g1?.total && !!g2?.total && g1.columns.length >= 5 && g2.columns.length >= 5, `${preset}: Gruppen Erststimmen (${g1?.columns.length}) und Zweitstimmen (${g2?.columns.length}) mit Bezug`);
+  ok(!t2.notes.some(x => /^Achtung/.test(x)), `${preset}: keine Abweichung zum Landesergebnis gemeldet`);
+  const gz = d2.columns.findIndex(c => c.label === 'Gültige Stimmen · Zweitstimmen');
+  console.log('   gültige Zweitstimmen gesamt:', d2.rows.reduce((a, row) => a + ((row[gz] as number) || 0), 0).toLocaleString('de-DE'));
+  for (const g of [g2!, g1!]) { const win: Record<string, number> = {}; groupMetrics(d2, g).forEach(m => { const c = d2.columns.find(x => x.id === g.columns[m.win]); const k = c?.label.split(' · ')[0] || '?'; win[k] = (win[k] || 0) + 1; }); console.log(`   Stärkste (${g.label}):`, JSON.stringify(win)); }
+}

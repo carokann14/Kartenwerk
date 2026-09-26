@@ -3,6 +3,7 @@ import { loadBinary } from '../lib/assets';
 import { fmtInt, norm } from '../lib/util';
 import { readFile } from '../data/parse';
 import { EXAMPLES, exampleAvailable } from '../data/examples';
+import { ltwPreset } from '../data/ltw';
 import { PRESET_LABELS, beTitle, wbzTitle, buildDataset, buildTable, defaultSettings, issueLabel, shortTitle, suggestGeoSetAsync } from '../data/pipeline';
 import type { Cell, Dataset, ImportSettings, PresetId, RawInput, Role } from '../data/types';
 import { GEO, areaContext, areaTitle } from '../geo/geo';
@@ -157,9 +158,7 @@ function StepStructure({ raw, st, set, setPreset, table }: { raw: RawInput; st: 
           <Field label="Gebiete"><Seg items={BE_EBENEN.map(e => [e[0], e[1]] as [string, string])} value={st.be?.ebene || BE_EBENEN[0][0]} onChange={v => set({ be: { ebene: v }, geoSet: BE_EBENEN.find(e => e[0] === v)![2], sourceTitle: beTitle(beStimmeOf(st.sourceTitle), beDatumOf(st.sourceTitle), v) })} /></Field>
           <p className="hint">Die Datei enthält Wahlkreise, Bezirke, Bundestagswahlkreise und Summen für Berlin. Übernommen wird eine Gebietsart.</p>
         </div>}
-        {st.preset === 'ltw-mv' && <div className="card muted stack-8">
-          <p className="hint">Die Datei des Landeswahlleiters enthält je Wahlkreis vier Zeilen (Stimmen und Prozent, Erst- und Zweitstimme) und das Land. Übernommen werden die Stimmenzahlen, Erst- und Zweitstimmen nebeneinander; Anteile rechnet Kartenwerk selbst. „x“ heißt: nicht angetreten.</p>
-        </div>}
+        {ltwPreset(st.preset) && <div className="card muted stack-8"><p className="hint">{ltwPreset(st.preset)!.hint}</p></div>}
         {st.format === 'long' && L && <div className="card muted stack-8">
           <p className="hint">Im Langformat steht jeder Wert in einer eigenen Zeile. Die Tabelle wird so gedreht, dass jede Gruppe (z. B. Partei) eine Spalte wird.</p>
           <Field label="Kennung"><select value={L.key} onChange={e => setL({ key: +e.target.value })}>{opts}</select></Field>

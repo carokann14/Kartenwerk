@@ -21,9 +21,13 @@ const main = async () => {
   const idxFile = OUT + '/index.json', idx = JSON.parse(fs.readFileSync(idxFile, 'utf8'));
   for (const e of LTW.filter(x => !only.length || only.includes(x.code))) {
     const id = ltwSetId(e), dir = `${SRC}/${e.code}-${e.year}`;
-    const [L] = await readGeoFiles([{ name: e.geo.file, buf: buf(`${dir}/${e.geo.file}`) }]);
+    const layers = await readGeoFiles([{ name: e.geo.file, buf: buf(`${dir}/${e.geo.file}`) }]);
+    const lay = e.geo.layer?.toLowerCase(), L = lay ? layers.find(x => x.name.toLowerCase() === lay || x.name.toLowerCase().endsWith('/' + lay)) : layers[0];
+    if (!L) throw new Error(`${ltwSetId(e)}: Ebene ${e.geo.layer} nicht gefunden (${layers.map(x => x.name).join(', ')})`);
+    // Kennung und Name nach Katalog ableiten (etwa Rheinland-Pfalz: Nummer aus 26_IDEN)
+    for (const f of L.features) { f.props.__id = e.geo.id ? e.geo.id(f.props) : f.props[e.geo.idField]; f.props.__name = e.geo.name ? e.geo.name(f.props) : f.props[e.geo.nameField]; }
     const crs = crsFromWkt(L.wkt); if (!crs) throw new Error(`${id}: Koordinatensystem nicht erkannt`);
-    const { raw, report } = buildUserGeo(L, { crs, idField: e.geo.idField, nameField: e.geo.nameField, tol: 1 });
+    const { raw, report } = buildUserGeo(L, { crs, idField: '__id', nameField: '__name', tol: e.count > 100 ? 2 : 1 });
     const wrongBl = raw.areas.filter(a => a.bl !== e.bl).map(a => a.id);
     for (const a of raw.areas) { a.bl = e.bl; a.name = a.name.replace(/\s+/g, ' ').trim(); }
     raw.areas.sort((a, b) => (a.nr ?? 0) - (b.nr ?? 0));
