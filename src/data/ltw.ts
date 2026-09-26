@@ -375,7 +375,36 @@ const stPreset: LtwPreset = {
   },
 };
 
-export const LTW_PRESETS: LtwPreset[] = [mvPreset, niPreset, nwPreset, rpPreset, bwPreset, shPreset, stPreset];
+// Hessen: Hessisches Statistisches Landesamt, Wahlergebnisse_Landtagswahl.csv (Wahlpräsentation, alle Ebenen; Gebietstyp WK,
+// Schlüssel „00100000000“ = Wahlkreis 1). Wahlkreisstimme = Erststimme, Landesstimme = Zweitstimme; Prozentspalten entfallen.
+const hePreset: LtwPreset = {
+  id: 'ltw-he', code: 'he', label: 'Hessen · Landtagswahl nach Wahlkreisen',
+  hint: 'Downloaddatei der Wahlpräsentation des Hessischen Statistischen Landesamts (alle Ebenen). Übernommen werden die 55 Wahlkreise; Wahlkreisstimmen erscheinen als Erststimmen, Landesstimmen als Zweitstimmen. Die gewählte Person steht in der Spalte „Direktmandat“.',
+  find: c => findIn(c, r => r.includes('Gebietsschlüssel') && r.includes('Gebietstyp') && r.includes('gültige Wahlkreisstimmen') && r.includes('gültige Landesstimmen'), 5),
+  meta: (c, h) => {
+    const t = s(c[0]?.[0]) + ' ' + txtRow(c[0]).join(' ');
+    const y = (h > 0 ? t : '').match(/Landtagswahl (20\d\d)/)?.[1] || '2023';
+    const st = t.match(/Stand:\s*(\d\d\.\d\d\.\d{4})/)?.[1];
+    return { year: +y, title: `Landtagswahl Hessen ${y}${st ? ', Stand ' + st : ''}`, attribution: 'Hessisches Statistisches Landesamt' };
+  },
+  build: (c, h) => {
+    const H = txtRow(c[h]), ix = (n: string) => H.indexOf(n);
+    const lab = (x: string) => x === 'Gebietsbezeichnung' ? 'Name' : x === 'Wahlberechtigte' ? 'Wahlberechtigte' : x === 'Wählerinnen und Wähler' ? 'Wählende' : x === 'Wählerinnen und Wähler mit Wahlschein' ? 'Wählende mit Wahlschein' : x === 'Wahlbeteiligung' ? 'Wahlbeteiligung'
+      : / \(%\)$/.test(x) ? '' : x === 'ungültige Wahlkreisstimmen' ? 'Ungültige Stimmen · Erststimmen' : x === 'gültige Wahlkreisstimmen' ? 'Gültige Stimmen · Erststimmen' : x === 'ungültige Landesstimmen' ? 'Ungültige Stimmen · Zweitstimmen' : x === 'gültige Landesstimmen' ? 'Gültige Stimmen · Zweitstimmen'
+      : / Wahlkreisstimmen$/.test(x) ? x.replace(/ Wahlkreisstimmen$/, ' · Erststimmen') : / Landesstimmen$/.test(x) ? x.replace(/ Landesstimmen$/, ' · Zweitstimmen') : '';
+    const cols: [string, number][] = [['Wahlkreis', ix('Gebietsschlüssel')], ...H.map((x, i) => [lab(x), i] as [string, number]).filter(([x]) => x)];
+    const gt = ix('Gebietstyp'), gw = (r: Cell[]) => { const n = s(r[ix('Wahlkreis gewonnen: Name')]), v = s(r[ix('Wahlkreis gewonnen: Vorname')]), p = s(r[ix('Wahlkreis gewonnen: Wahlvorschlag')]); return n ? `${n}${v ? ', ' + v : ''}${p ? ` (${p})` : ''}` : ''; };
+    const row = (r: Cell[]) => [...cols.map(([x, i]) => (x === 'Wahlkreis' ? String(Number(s(r[i]).slice(0, 3))) : x === 'Name' ? s(r[i]) : numOf(r[i]))), gw(r)];
+    const rows = c.slice(h + 1).filter(r => s(r[gt]) === 'WK'), land = c.slice(h + 1).find(r => s(r[gt]) === 'LD');
+    const header = [...cols.map(x => x[0]), 'Direktmandat'];
+    const t = dropEmpty({ header, body: rows.map(row), notes: [] }, 2);
+    t.notes.push(`${t.body.length} Wahlkreise; Wahlkreisstimmen als Erststimmen, Landesstimmen als Zweitstimmen übernommen.`);
+    if (land) { const L = row(land); checkLand(t, t.header.map(x => L[header.indexOf(x)]), 2, l => isRateLabel(l) || l === 'Direktmandat'); }
+    return t;
+  },
+};
+
+export const LTW_PRESETS: LtwPreset[] = [mvPreset, niPreset, nwPreset, rpPreset, bwPreset, shPreset, stPreset, hePreset];
 export const ltwPreset = (id: string) => LTW_PRESETS.find(p => p.id === id) || null;
 /** Gebietsstand zur Vorlage: gleiches Land, passendes Jahr, sonst das neueste */
 export function ltwGeoFor(p: LtwPreset, year?: number): string {

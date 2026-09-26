@@ -102,6 +102,7 @@ for (const [file, preset, geoId, n, ms] of [
   ['bw-2026/ltw26-ergebnisse.csv', 'ltw-bw', 'ltw-bw-2026', 70, 0],
   ['sh-2022/ergebnis-download.csv', 'ltw-sh', 'ltw-sh-2022', 35, 0],
   ['st-2026/Ergebnisse_LT_2026.xlsx', 'ltw-st', 'ltw-st-2026', 41, 0],
+  ['he-2023/Wahlergebnisse_Landtagswahl.csv', 'ltw-he', 'ltw-he-2023', 55, 0],
 ] as const) {
   await ensureGeo([geoId]);
   const r = await readFile(file.split('/')[1], buf('data-src/ltw/' + file));
