@@ -70,7 +70,13 @@ export const wbzTitle = (year: string, mode: 'anteilig' | 'gemeinsam') => `Bunde
 /** Quellentitel Berlin: Stimme, Stand der Auszählung, Ebene bzw. Briefwahl */
 export const beTitle = (stimme: string, datum: string, how: string) => `Abgeordnetenhauswahl Berlin 2026, ${stimme}${datum ? `, Stand ${datum}` : ''}` + (
   how === 'anteilig' ? ', nach Wahlbezirken; Briefwahl anteilig verteilt (geschätzt)' : how === 'gemeinsam' ? ', nach Briefwahlbezirken (Urnen- und Briefwahl)' : `, nach ${(BE_EBENEN.find(e => e[0] === how) || BE_EBENEN[0])[3]}`);
-export function defaultSettings(raw: RawInput, preset: PresetId = 'auto', sheet = 0): ImportSettings {
+/** Erstes Tabellenblatt, für das eine Vorlage greift (Brandenburg, Sachsen: vorne Impressum und Erläuterungen) */
+export function autoSheet(raw: RawInput): number {
+  for (let i = 0; i < raw.sheets.length; i++) if (detectPreset(raw, i) !== 'allgemein') return i;
+  return 0;
+}
+export function defaultSettings(raw: RawInput, preset: PresetId = 'auto', sheetArg?: number): ImportSettings {
+  const sheet = sheetArg ?? (preset === 'auto' ? autoSheet(raw) : 0);
   const p = preset === 'auto' ? detectPreset(raw, sheet) : preset;
   const cells = raw.sheets[sheet].cells;
   const base: ImportSettings = {
@@ -238,7 +244,7 @@ export function buildTable(raw: RawInput, st: ImportSettings): TableResult {
     body = rows.map(r => keep.map(([, i]) => (i >= 0 ? r[i] ?? null : null)));
     notes.push(`${rows.length} Zeilen der Gebietsart „${ebene}“; ${pcols.length} Wahlvorschläge mit Stimmen.`);
   } else if (ltwPreset(st.preset)) {
-    const w = ltwPreset(st.preset)!.build(cells, st.headerStart);
+    const w = ltwPreset(st.preset)!.build(cells, st.headerStart, raw.sheets.map(s => s.cells));
     header = w.header; body = w.body; notes.push(...w.notes);
   } else if (st.preset === 'bwl-kreis') {
     // Berlin steht getrennt nach West und Ost (11200, 11100); die Karte kennt nur das Land Berlin (11000)

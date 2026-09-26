@@ -128,6 +128,9 @@ for (const [file, preset, geoId, n, groups, first] of [
   ['hh-2025/ergebnis-download-land.csv', 'ltw-hh-land', 'ltw-hh-2025', 17, ['Zweitstimmen'], 'Zweitstimmen'],
   ['sl-2022/KERG_SAARLAND.csv', 'ltw-sl', 'ltw-sl-2022', 3, ['Stimmen', 'Stimmen (Vorperiode)'], 'Stimmen'],
   ['hb-2023/HB_Buergerschaftswahl_2023_Wahlbereiche.csv', 'ltw-hb', 'ltw-hb-2023', 2, ['Stimmen'], 'Stimmen'],
+  ['bb-2024/DL_BB_2_LT2024.xlsx', 'ltw-bb', 'ltw-bb-2024', 44, ['Erststimmen', 'Zweitstimmen'], 'Zweitstimmen'],
+  ['sn-2024/statistik-sachsen_LW24_endgErgebniss.xlsx', 'ltw-sn', 'ltw-sn-2024', 60, ['Erststimmen', 'Zweitstimmen'], 'Zweitstimmen'],
+  ['th-2024/LWINFO2024.xlsx', 'ltw-th', 'ltw-th-2024', 44, ['Erststimmen', 'Zweitstimmen'], 'Zweitstimmen'],
 ] as const) {
   await ensureGeo([geoId]);
   const r = await readFile(file.split('/')[1], buf('data-src/ltw/' + file));
@@ -140,7 +143,7 @@ for (const [file, preset, geoId, n, groups, first] of [
   ok(gs.every(g => !!g?.total && g.columns.length >= 3), `${preset}: Gruppen ${groups.map((l, k) => `${l} (${gs[k]?.columns.length ?? '–'}${gs[k]?.total ? '' : ', ohne Bezug'})`).join(', ')}`);
   ok(autoRule(d2).mode === 'siegerStaerke' && d2.groups.find(g => g.id === (autoRule(d2) as { group: string }).group)?.label === first, `${preset}: Färbung zuerst nach ${first}`);
   ok(!t2.notes.some(x => /^Achtung/.test(x)), `${preset}: keine Abweichung zum Landesergebnis gemeldet`);
-  for (const g of gs.slice(0, 1)) {
+  for (const g of gs.slice(0, 2)) {
     const win: Record<string, number> = {}, sum: Record<string, number> = {};
     groupMetrics(d2, g!).forEach(m => { const c = d2.columns.find(x => x.id === g!.columns[m.win]); const k = c?.label.split(' · ')[0] || '?'; win[k] = (win[k] || 0) + 1; });
     g!.columns.forEach(id => { const i = d2.columns.findIndex(c => c.id === id); sum[d2.columns[i].label.split(' · ')[0]] = d2.rows.reduce((a, row) => a + ((row[i] as number) || 0), 0); });

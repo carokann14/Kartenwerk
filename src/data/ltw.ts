@@ -17,6 +17,7 @@ export interface LtwEntry {
     fromVg?: { level: 'krs' | 'gem'; parts: { id: string; name: string; members: string[] }[] };
     seq?: boolean;                   // Nummern 1…n prüfen (Standard ja; Bayern hat Stimmkreise 101 ff.)
     tol?: number;                    // Vereinfachung in 10-m-Zellen (Standard 1, ab 100 Wahlkreisen 2)
+    crs?: string;                    // Koordinatensystem, wenn die Datei keins nennt (Thüringen: GeoPackage ohne Angabe)
     layer?: string;                  // Ebene im Archiv, wenn es mehrere gibt (Dateiname ohne Endung)
     id?: (p: Record<string, unknown>) => string;     // Kennung aus den Attributen ableiten (sonst idField)
     name?: (p: Record<string, unknown>) => string;   // Name bereinigen (sonst nameField)
@@ -143,6 +144,36 @@ export const LTW: LtwEntry[] = [
       license: 'dl-de/by-2-0 (BKG)',
     },
   },
+  {
+    bl: '14', code: 'sn', year: 2024, land: 'Sachsen', election: 'Landtagswahl Sachsen 2024', count: 60,
+    geo: {
+      // Kartendienst des GeoSN (Verwaltungsatlas, Ebene landtagswahlkreise), abgefragt über den eingebauten Browser und als Topologie übertragen
+      file: 'sn_landtagswahlkreise_2024.geojson', idField: 'nr', nameField: 'name', tol: 0,
+      attribution: 'Landtagswahlkreise 2024: © GeoSN (2024), dl-de/by-2-0, Verwaltungsatlas Sachsen',
+      source: 'https://geodienste.sachsen.de/ags-relay/ArcGISServer/guest/arcgis/rest/services/smr/rest_smr_wahlen/MapServer/1',
+      license: 'dl-de/by-2-0 (GeoSN)',
+    },
+  },
+  {
+    bl: '16', code: 'th', year: 2024, land: 'Thüringen', election: 'Landtagswahl Thüringen 2024', count: 44,
+    geo: {
+      file: '16TH_L24_Wahlkreiseinteilung.zip', idField: 'WK_ID', nameField: 'WK', crs: 'EPSG:25832',
+      attribution: 'Wahlkreiseinteilung zur Landtagswahl 2024: Landeswahlleiter Thüringen',
+      source: 'https://wahlen.thueringen.de/landtagswahlen/lw_informationen.asp',
+      license: 'keine Lizenz angegeben (Geo-Vektordaten des Landeswahlleiters)',
+    },
+  },
+  {
+    bl: '12', code: 'bb', year: 2024, land: 'Brandenburg', election: 'Landtagswahl Brandenburg 2024', count: 44,
+    geo: {
+      // abgeleitet (npm run ltw:derive -- bb): Gemeinden der VG250 nach der amtlichen Zuordnung im Wahlbezirksergebnis;
+      // Brandenburg an der Havel, Cottbus und Potsdam sind geteilt, dort stammt die innere Grenze aus der groben Karte der Ergebnis-Präsentation
+      file: 'bb_landtagswahlkreise_2024.geojson', idField: 'nr', nameField: 'name', tol: 0,
+      attribution: 'Landtagswahlkreise 2024 abgeleitet aus © BKG (2026) dl-de/by-2-0 (Verwaltungsgebiete 1:250 000) und der Wahlkreiszuordnung des Landeswahlleiters Brandenburg; Grenzen in Brandenburg an der Havel, Cottbus und Potsdam genähert',
+      source: 'https://wahlergebnisse.brandenburg.de/12/500/20240922/landtagswahl_land/',
+      license: 'dl-de/by-2-0 (BKG); Zuordnung aus amtlichen Ergebnisdaten',
+    },
+  },
 ];
 export const ltwGroupId = (e: Pick<LtwEntry, 'code' | 'year' | 'group'>) => `ltw-${e.code}-${e.group!.part}-${e.year}`;
 export const ltwSetId = (e: Pick<LtwEntry, 'code' | 'year'>) => `ltw-${e.code}-${e.year}`;
@@ -160,7 +191,7 @@ export interface LtwPreset {
   find: (cells: Cell[][]) => number;                 // Kopfzeile oder -1
   headerRows?: number;
   meta: (cells: Cell[][], h: number, fileName: string) => { year?: number; title: string; attribution: string };
-  build: (cells: Cell[][], h: number) => LtwTable;
+  build: (cells: Cell[][], h: number, sheets?: Cell[][][]) => LtwTable;   // sheets: alle Blätter (Brandenburg: Erst- und Zweitstimmen getrennt)
   group?: boolean;                                   // Ergebnis für die Zusammenfassung (Bayern: Wahlkreise über den Stimmkreisen)
   nameRole?: 'name' | 'label';                       // abgekürzte Namen in der Datei: nur zur Anzeige, zugeordnet wird über die Nummer
 }
@@ -623,7 +654,100 @@ const hbPreset: LtwPreset = {
   },
 };
 
-export const LTW_PRESETS: LtwPreset[] = [mvPreset, niPreset, nwPreset, rpPreset, bwPreset, shPreset, stPreset, hePreset, byPreset, byWkrPreset, hhPreset, hhLandPreset, slPreset, hbPreset];
+// Brandenburg: Landeswahlleiter / Amt für Statistik Berlin-Brandenburg, DL_BB_2_LT2024.xlsx (Blätter A_1 Erststimme, A_2 Zweitstimme;
+// zwei Kopfzeilen, je Wahlvorschlag „Anzahl“ und „%“; Schlüssel LI01 … LI44 = Wahlkreise, GI9900 = Land)
+const bbFind = (c: Cell[][]) => findIn(c, r => r[0] === 'Stimmart' && /^Gebietsschlüssel/.test(r[1] || '') && r.includes('Wahlbezirke'), 5);
+function bbSheet(c: Cell[][]) {
+  const h = bbFind(c); if (h < 0) return null;
+  const H = txtRow(c[h]), U = txtRow(c[h + 1]);
+  const stimme = s(c.slice(h + 2).find(r => s(r?.[0]))?.[0] ?? null) === 'Zweitstimme' ? 'Zweitstimmen' : 'Erststimmen';
+  const cols: [string, number][] = [];
+  let last = '';
+  H.forEach((x, i) => {
+    const n = x.replace(/\s+/g, ' ').trim(); if (n) last = n;
+    if (U[i] !== 'Anzahl') return;
+    if (/^Wahlberechtigte insgesamt$/.test(n)) cols.push(['Wahlberechtigte', i]);
+    else if (n === 'Wählende') cols.push(['Wählende', i]);
+    else if (n === 'Briefwählende') cols.push(['Wählende mit Wahlschein', i]);
+    else if (n === 'Gültige Stimmen') cols.push([`Gültige Stimmen · ${stimme}`, i]);
+    else if (n === 'Ungültige Stimmen') cols.push([`Ungültige Stimmen · ${stimme}`, i]);
+    else if (i >= 20 && last) cols.push([`${last.replace(/^EB (.+)$/, 'Einzelbewerbung $1')} · ${stimme}`, i]);
+  });
+  const rows = new Map<string, Cell[]>();
+  for (const r of c.slice(h + 2)) { const k = s(r?.[1]); if (/^LI\d+$/.test(k) || k === 'GI9900') rows.set(k, r); }
+  return { stimme, cols, rows };
+}
+const bbPreset: LtwPreset = {
+  id: 'ltw-bb', code: 'bb', label: 'Brandenburg · Landtagswahl nach Wahlkreisen',
+  hint: 'Datei des Landeswahlleiters (DL_BB_2_LT2024.xlsx): Erst- und Zweitstimmen stehen auf zwei Blättern, Kartenwerk führt sie zusammen. Übernommen werden die 44 Wahlkreise; die Zeile „Brandenburg“ dient der Prüfung. Die Wahlkreise in Brandenburg an der Havel, Cottbus und Potsdam sind in der Karte genähert.',
+  headerRows: 2,
+  find: bbFind,
+  meta: () => ({ year: 2024, title: 'Landtagswahl Brandenburg 2024, endgültiges Ergebnis', attribution: 'Der Landeswahlleiter Brandenburg, Amt für Statistik Berlin-Brandenburg' }),
+  build: (c, _h, sheets) => {
+    const parts = (sheets && sheets.length ? sheets : [c]).map(bbSheet).filter((x): x is NonNullable<ReturnType<typeof bbSheet>> => !!x);
+    parts.sort((a, b) => (a.stimme === 'Erststimmen' ? -1 : 1) - (b.stimme === 'Erststimmen' ? -1 : 1));
+    const seen = new Set<string>(), cols: { label: string; part: number; i: number }[] = [];
+    parts.forEach((p, k) => p.cols.forEach(([l, i]) => { if (!seen.has(l)) { seen.add(l); cols.push({ label: l, part: k, i }); } }));
+    const keys = [...parts[0].rows.keys()].filter(k => k.startsWith('LI')).sort();
+    const row = (k: string) => cols.map(x => numOf(parts[x.part].rows.get(k)?.[x.i] ?? null));
+    const header = ['Wahlkreis', 'Name', ...cols.map(x => x.label)];
+    const t = dropEmpty({ header, body: keys.map(k => [String(Number(k.slice(2))), s(parts[0].rows.get(k)![3]), ...row(k)]), notes: [] }, 2);
+    t.notes.push(`${t.body.length} Wahlkreise; ${parts.map(p => p.stimme).join(' und ')} aus ${parts.length} Tabellenblättern zusammengeführt.`);
+    if (parts[0].rows.get('GI9900')) { const L = ['', '', ...row('GI9900')]; checkLand(t, t.header.map(x => L[header.indexOf(x)]), 2); }
+    return t;
+  },
+};
+
+// Sachsen: Statistisches Landesamt, statistik-sachsen_LW24_endgErgebniss.xlsx, Blatt „LW24_endgErgebnisse_SN&WK“
+// (Ebene SN = Land, WK = Wahlkreis; „_1“ = Direktstimme, „_2“ = Listenstimme; „x“ = nicht angetreten)
+const snPreset: LtwPreset = {
+  id: 'ltw-sn', code: 'sn', label: 'Sachsen · Landtagswahl nach Wahlkreisen',
+  hint: 'Datei des Statistischen Landesamts (Blatt „SN&WK“): übernommen werden die 60 Wahlkreise, die Zeile „Freistaat Sachsen“ dient der Prüfung. Direktstimmen erscheinen als Erststimmen, Listenstimmen als Zweitstimmen.',
+  find: c => findIn(c, r => r[0] === 'Wahl' && r[1] === 'Ebene' && r[2] === 'WK-Nr' && r.includes('gültige_1') && r.includes('gültige_2'), 5),
+  meta: c => { const y = s(c.find(r => /^LW\d\d$/.test(s(r[0])))?.[0] ?? null).slice(2); const yr = y ? 2000 + Number(y) : 2024; return { year: yr, title: `Landtagswahl Sachsen ${yr}, endgültiges Ergebnis`, attribution: 'Statistisches Landesamt des Freistaates Sachsen' }; },
+  build: (c, h) => {
+    const H = txtRow(c[h]);
+    const lab = (x: string) => x === 'WK-Nr' ? 'Wahlkreis' : x === 'WK-Name' ? 'Name' : x === 'Wahlberechtigte' ? 'Wahlberechtigte' : x === 'Wähler' ? 'Wählende' : x === 'darunter Briefwähler' ? 'Wählende mit Wahlschein'
+      : /^ungültige_[12]$/.test(x) ? `Ungültige Stimmen · ${x.endsWith('1') ? 'Erststimmen' : 'Zweitstimmen'}` : /^gültige_[12]$/.test(x) ? `Gültige Stimmen · ${x.endsWith('1') ? 'Erststimmen' : 'Zweitstimmen'}`
+      : /_1$/.test(x) ? x.replace(/_1$/, ' · Erststimmen') : /_2$/.test(x) ? x.replace(/_2$/, ' · Zweitstimmen') : '';
+    const cols = H.map((x, i) => [lab(x), i] as const).filter(([x]) => x);
+    const row = (r: Cell[]) => cols.map(([x, i]) => (x === 'Wahlkreis' ? wkKey(r[i]) : x === 'Name' ? s(r[i]) : numOf(r[i])));
+    const ix = H.indexOf('Ebene');
+    const rows = c.slice(h + 1).filter(r => s(r[ix]) === 'WK'), land = c.slice(h + 1).find(r => s(r[ix]) === 'SN');
+    const t = dropEmpty({ header: cols.map(x => x[0]), body: rows.map(row), notes: [] }, 2);
+    t.notes.push(`${t.body.length} Wahlkreise; Direktstimmen als Erststimmen, Listenstimmen als Zweitstimmen übernommen.`);
+    if (land) { const L = row(land), keep = cols.map(([x]) => x); checkLand(t, t.header.map(x => L[keep.indexOf(x)]), 2); }
+    return t;
+  },
+};
+
+// Thüringen: Landeswahlleiter, LWINFO2024.xlsx („Excel-Download – Wahlkreisübersicht“; vier Kopfzeilen: Spalte, Stimme, Partei, absolut/%;
+// Satzart L = Land, K = Wahlkreis). Wahlkreisstimme = Erststimme, Landesstimme = Zweitstimme.
+const thPreset: LtwPreset = {
+  id: 'ltw-th', code: 'th', label: 'Thüringen · Landtagswahl nach Wahlkreisen',
+  hint: 'Wahlkreisübersicht des Landeswahlleiters: je Wahlkreis eine Zeile, Wahlkreisstimmen erscheinen als Erststimmen, Landesstimmen als Zweitstimmen. Die Zeile „Land Thüringen“ dient der Prüfung.',
+  headerRows: 4,
+  find: c => { const h = findIn(c, r => r[0] === 'Stand' && r[1] === 'Satzart' && r.includes('Name'), 10); return h >= 0 && txtRow(c[h + 1]).includes('Wahlkreisstimmen') ? h : -1; },
+  meta: c => {
+    const t = s(c[0]?.[0]), st = s(c[1]?.[0]);
+    const y = t.match(/(20\d\d)/)?.[1] || '2024';
+    return { year: +y, title: `Landtagswahl Thüringen ${y}${/endgültig/.test(st) ? ', endgültiges Ergebnis' : /vorläufig/.test(st) ? ', vorläufiges Ergebnis' : ''}`, attribution: 'Der Landeswahlleiter Thüringen' };
+  },
+  build: (c, h) => {
+    const S = txtRow(c[h + 1]), P = txtRow(c[h + 3 - 1]), U = txtRow(c[h + 3]);
+    const cols: [string, number][] = [['Wahlkreis', 2], ['Name', 3], ['Wahlberechtigte', 6], ['Wählende', 10], ['Wählende mit Wahlschein', 11],
+      ['Ungültige Stimmen · Erststimmen', 13], ['Gültige Stimmen · Erststimmen', 14], ['Ungültige Stimmen · Zweitstimmen', 15], ['Gültige Stimmen · Zweitstimmen', 16]];
+    U.forEach((u, i) => { if (u === 'absolut' && P[i] && i > 16) cols.push([`${P[i].replace(/\s*\.\.$/, '').replace('Einzelbewerber', 'Einzelbewerbung')} · ${S[i] === 'Landesstimmen' ? 'Zweitstimmen' : 'Erststimmen'}`, i]); });
+    const row = (r: Cell[]) => cols.map(([x, i]) => (x === 'Wahlkreis' ? wkKey(r[i]) : x === 'Name' ? s(r[i]) : numOf(r[i])));
+    const rows = c.slice(h + 4).filter(r => s(r[1]) === 'K'), land = c.slice(h + 4).find(r => s(r[1]) === 'L');
+    const t = dropEmpty({ header: cols.map(x => x[0]), body: rows.map(row), notes: [] }, 2);
+    t.notes.push(`${t.body.length} Wahlkreise; Wahlkreisstimmen als Erststimmen, Landesstimmen als Zweitstimmen übernommen.`);
+    if (land) { const L = row(land); checkLand(t, t.header.map(x => L[cols.map(y => y[0]).indexOf(x)]), 2); }
+    return t;
+  },
+};
+
+export const LTW_PRESETS: LtwPreset[] = [mvPreset, niPreset, nwPreset, rpPreset, bwPreset, shPreset, stPreset, hePreset, byPreset, byWkrPreset, hhPreset, hhLandPreset, slPreset, hbPreset, bbPreset, snPreset, thPreset];
 export const ltwPreset = (id: string) => LTW_PRESETS.find(p => p.id === id) || null;
 /** Gebietsstand zur Vorlage: gleiches Land, passendes Jahr, sonst das neueste */
 export function ltwGeoFor(p: LtwPreset, year?: number): string {

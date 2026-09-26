@@ -55,7 +55,7 @@ const main = async () => {
       // Kennung und Name nach Katalog ableiten (etwa Rheinland-Pfalz: Nummer aus 26_IDEN)
       for (const f of L.features) { f.props.__id = e.geo.id ? e.geo.id(f.props) : f.props[e.geo.idField!]; f.props.__name = e.geo.name ? e.geo.name(f.props) : f.props[e.geo.nameField!]; }
     }
-    const crs = e.geo.fromVg ? crsFromCode('EPSG:25832') : crsFromWkt(L.wkt); if (!crs) throw new Error(`${id}: Koordinatensystem nicht erkannt`);
+    const crs = e.geo.fromVg ? crsFromCode('EPSG:25832') : (e.geo.crs ? crsFromCode(e.geo.crs) : null) || crsFromWkt(L.wkt) || crsFromCode(L.code); if (!crs) throw new Error(`${id}: Koordinatensystem nicht erkannt`);
     const { raw, report } = buildUserGeo(L, { crs, idField: '__id', nameField: '__name', tol: e.geo.fromVg ? 0 : e.geo.tol ?? (e.count > 100 ? 2 : 1) });
     const wrongBl = raw.areas.filter(a => a.bl !== e.bl).map(a => a.id);
     for (const a of raw.areas) { a.bl = e.bl; a.name = a.name.replace(/\s+/g, ' ').trim(); }

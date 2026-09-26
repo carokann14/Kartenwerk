@@ -16,7 +16,8 @@
     "vg250:preview": "VG_OUT=data-src/.tmp/preview VG_INTERVAL=100 node scripts/build-vg250.mjs 2025",
     "beispiele": "esbuild scripts/build-examples.ts --bundle --platform=node --format=esm --outfile=data-src/.tmp/build-examples.mjs --log-level=warning && node data-src/.tmp/build-examples.mjs",
     "berlin": "esbuild scripts/build-berlin.ts --bundle --platform=node --format=esm --packages=external --outfile=data-src/.tmp/build-berlin.mjs --log-level=warning && node data-src/.tmp/build-berlin.mjs",
-    "ltw": "esbuild scripts/build-ltw.ts --bundle --platform=node --format=esm --packages=external --outfile=data-src/.tmp/build-ltw.mjs --log-level=warning && node data-src/.tmp/build-ltw.mjs"
+    "ltw": "esbuild scripts/build-ltw.ts --bundle --platform=node --format=esm --packages=external --outfile=data-src/.tmp/build-ltw.mjs --log-level=warning && node data-src/.tmp/build-ltw.mjs",
+    "ltw:derive": "esbuild scripts/derive-ltw.ts --bundle --platform=node --format=esm --packages=external --outfile=data-src/.tmp/derive-ltw.mjs --log-level=warning && node data-src/.tmp/derive-ltw.mjs"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.3.0",
