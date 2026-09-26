@@ -1,6 +1,6 @@
 import React from 'react';
 import { create } from 'zustand';
-import { clamp, fmtInt, svgId } from '../../lib/util';
+import { clamp, fmtInt } from '../../lib/util';
 import { PRESETS } from '../../model/defaults';
 import { getDoc, getUI, setUI, toast, update, useStore } from '../../model/store';
 import { activeVariant, sourceText } from '../../render/elements';
@@ -11,13 +11,24 @@ import { Check, Field, Icon, Section, Seg, ratioIcon } from '../common';
 interface SvgResult extends SvgReport { svg: string; url: string; ms: number; doc: unknown }
 interface PngResult { blob: Blob; url: string; w: number; h: number; doc: unknown }
 // Ergebnisse überleben den Wechsel zwischen den Schritten
-const useExport = create<{ svg: SvgResult | null; png: PngResult | null; busy: boolean }>(() => ({ svg: null, png: null, busy: false }));
+// Dateiname für den Download: Vorschlag aus Projektname + Datum + Uhrzeit, frei änderbar (nicht im Projekt gespeichert)
+const useExport = create<{ svg: SvgResult | null; png: PngResult | null; busy: boolean; fname: string; fnameEdited: boolean }>(() => ({ svg: null, png: null, busy: false, fname: '', fnameEdited: false }));
 
-export function fileBase() {
-  const d = getDoc(), v = activeVariant(d);
-  const name = svgId(d.name).toLowerCase().slice(0, 48) || 'karte';
-  return `${name}-${v.preset.replace(':', 'x').toLowerCase()}`;
+/** Zeichen, die Windows/macOS in Dateinamen nicht erlauben, durch „-“ ersetzen; Leerzeichen bleiben; keine Punkte/Leerzeichen am Rand */
+export function cleanFileName(s: string) {
+  return s.replace(/\.(png|svg)$/i, '').replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '-').replace(/\s+/g, ' ').replace(/\s*-\s+/g, ' - ').replace(/^[\s.-]+|[\s.-]+$/g, '').slice(0, 120);
 }
+/** Vorschlag: Projektname_JJJJ-MM-TT_HH-MM – Projektname ohne Satzzeichen, Wörter mit „-“ (Doppelpunkt ist unter Windows verboten) */
+export function suggestFileName(now = new Date()) {
+  const p = (n: number) => String(n).padStart(2, '0');
+  let name = cleanFileName(getDoc()?.name || '').replace(/[·•,;!'’„“()[\]{}]+/g, ' ').trim().replace(/\s+/g, '-').replace(/-{2,}/g, '-').replace(/^-+|-+$/g, '');
+  if (name.length > 60) name = name.slice(0, 60).replace(/-[^-]*$/, '');
+  return `${name || 'Karte'}_${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}_${p(now.getHours())}-${p(now.getMinutes())}`;
+}
+/** Vorschlag auffrischen (neue Uhrzeit), solange der Name nicht von Hand geändert wurde */
+function refreshFileName(force = false) { if (force || !useExport.getState().fnameEdited) useExport.setState({ fname: suggestFileName(), fnameEdited: false }); }
+const downloadName = (ext: 'png' | 'svg') => (cleanFileName(useExport.getState().fname) || suggestFileName()) + '.' + ext;
+
 export function runSvgExport() {
   const t0 = performance.now();
   const svg = buildExportSvg(getDoc(), { merge: getUI().svgMerge, scale: 1 });
@@ -25,6 +36,7 @@ export function runSvgExport() {
   const old = useExport.getState().svg; if (old) URL.revokeObjectURL(old.url);
   const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
   useExport.setState({ svg: { ...a, svg, url, ms: Math.round(performance.now() - t0), doc: getDoc() } });
+  refreshFileName();
   toast(`SVG erzeugt · ${fmtInt(a.bytes / 1024)} KB`);
   return svg;
 }
@@ -36,6 +48,7 @@ async function runPngExport(w: number) {
     const blob = await renderPng(buildExportSvg(d, { merge: true, scale: w / v.w }), w, h);
     const old = useExport.getState().png; if (old) URL.revokeObjectURL(old.url);
     useExport.setState({ png: { blob, url: URL.createObjectURL(blob), w, h, doc: d } });
+    refreshFileName();
     toast(`PNG erzeugt · ${w} × ${h}`);
   } catch (e) { toast((e as Error).message); }
   finally { useExport.setState({ busy: false }); }
@@ -43,20 +56,21 @@ async function runPngExport(w: number) {
 async function download(kind: 'svg' | 'png') {
   const r = useExport.getState();
   let res: 'saved' | 'declined' | 'failed';
-  if (kind === 'svg') { const svg = r.svg && r.svg.doc === getDoc() ? r.svg.svg : runSvgExport(); res = await saveFile(fileBase() + '.svg', svg, 'image/svg+xml'); }
+  if (kind === 'svg') { const svg = r.svg && r.svg.doc === getDoc() ? r.svg.svg : runSvgExport(); res = await saveFile(downloadName('svg'), svg, 'image/svg+xml'); }
   else {
     if (!r.png) { toast('Erst PNG erzeugen'); return; }
     if (r.png.doc !== getDoc()) await runPngExport(r.png.w);
     const p = useExport.getState().png!;
-    res = await saveFile(fileBase() + `-${p.w}px.png`, p.blob, 'image/png');
+    res = await saveFile(downloadName('png'), p.blob, 'image/png');
   }
-  toast(res === 'saved' ? 'Datei gespeichert' : res === 'declined' ? 'Speichern abgebrochen' : 'Herunterladen ist in dieser Ansicht nicht möglich');
+  toast(res === 'saved' ? `Gespeichert als ${downloadName(kind)}` : res === 'declined' ? 'Speichern abgebrochen' : 'Herunterladen ist in dieser Ansicht nicht möglich');
 }
 
 export function PanelExport() {
   const doc = useStore(s => s.doc!);
   const ui = useStore(s => s.ui);
   const { svg, png, busy } = useExport();
+  React.useEffect(() => { refreshFileName(); }, [doc.name]);   // beim Öffnen des Schritts und wenn das Projekt umbenannt wird
   const v = activeVariant(doc);
   const pw = clamp(ui.pngWidth || v.w * 2, 200, 10000);
   const src = sourceText(doc);
@@ -84,6 +98,7 @@ export function PanelExport() {
             {svgStale && <p className="hint warn-text"><Icon.warn size={13} /> Die Grafik hat sich seitdem geändert. „Herunterladen“ erzeugt sie neu.</p>}
             <div className="stat-row"><div className="stat"><b>{(svg.bytes / 1024 / 1024).toFixed(2).replace('.', ',')}</b><span>MB</span></div><div className="stat"><b>{svg.colors}</b><span>Farben</span></div><div className="stat"><b>{fmtInt(svg.paths)}</b><span>Pfade</span></div></div>
             <div className="report">{svg.checks.map(c => <div key={c.label} className={'rr ' + (c.ok ? 'ok' : 'warn')}>{c.ok ? <Icon.check /> : <Icon.warn />}<span>{c.label}</span></div>)}</div>
+            <FileNameField ext="svg" />
             <div className="row-btns"><button className="btn small primary" onClick={() => download('svg')}><Icon.download /> Herunterladen</button><button className="btn small" onClick={async () => toast(await copyText(svg.svg) ? 'SVG-Code kopiert' : 'Kopieren nicht möglich')}><Icon.copy /> SVG-Code kopieren</button></div>
             <img className="preview-img" src={svg.url} alt="Vorschau des exportierten SVG" />
           </div>}
@@ -95,6 +110,7 @@ export function PanelExport() {
         {png && <div className="card">
           {pngStale && <p className="hint warn-text"><Icon.warn size={13} /> Die Grafik hat sich seitdem geändert. „Herunterladen“ erzeugt sie neu.</p>}
           <div className="meta-row"><span className="chip num">{png.w} × {png.h} px</span><span className="chip num">{fmtInt(png.blob.size / 1024)} KB</span>{doc.background === 'transparent' && <span className="chip">transparent</span>}</div>
+          <FileNameField ext="png" />
           <div className="row-btns"><button className="btn small primary" onClick={() => download('png')}><Icon.download /> Herunterladen</button></div>
           <img className={'preview-img' + (doc.background === 'transparent' ? ' checker' : '')} src={png.url} alt="Vorschau des PNG" />
         </div>}
@@ -109,4 +125,22 @@ export function PanelExport() {
       </Section>
     </>
   );
+}
+
+/** Dateiname vor dem Download: Endung fest, Name frei; ↺ setzt den Vorschlag mit aktueller Uhrzeit */
+function FileNameField({ ext }: { ext: 'png' | 'svg' }) {
+  const { fname, fnameEdited } = useExport();
+  const bad = fname.trim() !== '' && cleanFileName(fname) !== fname.replace(/\.(png|svg)$/i, '');
+  return <div className="fname">
+    <label htmlFor={'fname-' + ext}>Dateiname</label>
+    <div className="fname-row">
+      <input id={'fname-' + ext} type="text" value={fname} spellCheck={false} placeholder={suggestFileName()}
+        onChange={e => useExport.setState({ fname: e.target.value, fnameEdited: true })}
+        onKeyDown={e => { if (e.key === 'Enter') void download(ext); }} />
+      <span className="fname-ext">.{ext}</span>
+      <button className="btn icon ghost small" onClick={() => refreshFileName(true)} title="Vorschlag: Projektname mit Datum und Uhrzeit" aria-label="Dateinamen-Vorschlag einsetzen"><Icon.refresh /></button>
+    </div>
+    {bad ? <p className="hint">Wird gespeichert als <span className="num">{downloadName(ext)}</span></p>
+      : !fnameEdited && <p className="hint">Vorschlag aus Projektname, Datum und Uhrzeit; frei änderbar.</p>}
+  </div>;
 }

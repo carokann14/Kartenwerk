@@ -703,3 +703,11 @@ button.start-card:hover { border-color: var(--accent); }
 .mapmode-bar .mapzoom-val input[type="text"] { height: 24px; background: transparent; color: inherit; border-color: color-mix(in srgb, var(--panel) 30%, transparent); }
 .mapmode-bar .mapmode-hint { min-width: 0; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; }
 @media (max-width: 1440px) { .mapmode-bar .mapmode-hint { display: none; } .mapzoom.compact input[type="range"] { width: 100px; } }
+
+/* Dateiname vor dem Download (Export) */
+.fname { display: grid; gap: 4px; margin: 2px 0 6px; }
+.fname > label { color: var(--ink-2); font-size: 12px; }
+.fname-row { display: flex; align-items: center; gap: 4px; }
+.fname-row input[type="text"] { flex: 1; min-width: 0; font-family: var(--mono); font-size: 12px; }
+.fname-ext { font: 500 12px var(--mono); color: var(--muted); flex: none; }
+.fname .hint { margin: 0; }
