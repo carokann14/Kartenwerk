@@ -31,6 +31,8 @@ export function findRow(cells: Cell[][], test: (r: string[]) => boolean, limit =
 }
 export function detectPreset(raw: RawInput, sheet = 0): PresetId {
   const c = raw.sheets[sheet]?.cells || [];
+  // Landtagswahlen zuerst: das Saarland nutzt dasselbe KERG-Format wie die Bundeswahlleiterin
+  for (const p of LTW_PRESETS) if (p.find(c) >= 0) return p.id;
   if (findRow(c, r => r[0] === 'Nr' && r[1] === 'Gebiet' && r[2]?.startsWith('gehört')) >= 0) return 'bwl-kerg';
   if (findRow(c, r => r.includes('Gebietsart') && r.includes('Gruppenname') && r.includes('Stimme')) >= 0) return 'bwl-kerg2';
   if (findRow(c, r => r[0] === 'Wkr-Nr.' && r.includes('Wahlkreisname')) >= 0) return 'bwl-umrechnung';
@@ -38,7 +40,6 @@ export function detectPreset(raw: RawInput, sheet = 0): PresetId {
   if (findRow(c, r => r.includes('Kennziffer Briefwahlzugehörigkeit') && r.includes('Bezirksart')) >= 0) return 'bwl-wbz';
   if (findRow(c, isBeWbz, 5) >= 0) return 'be-wbz';
   if (findRow(c, isBeGebiete, 5) >= 0) return 'be-gebiete';
-  for (const p of LTW_PRESETS) if (p.find(c) >= 0) return p.id;
   return 'allgemein';
 }
 export function detectHeader(cells: Cell[][]) {
@@ -299,7 +300,7 @@ function autoRoles(columns: Column[], body: Cell[][], preset: PresetId) {
   } else if (preset === 'be-wbz') {
     set(columns[0], 'id'); set(by(c => c.label === 'Name'), 'name'); set(by(c => c.label === 'Bezirk'), 'category'); set(by(c => c.label === 'Briefwahl'), 'category'); set(by(c => c.label === 'Wahlkreis'), 'ignore');
   } else if (ltwPreset(preset)) {
-    set(by(c => c.label === 'Wahlkreis'), 'id'); set(by(c => c.label === 'Name'), ltwPreset(preset)!.nameRole || 'name');
+    set(by(c => c.label === 'Wahlkreis' || c.label === 'Stimmkreis' || c.label === 'Wahlbereich'), 'id'); set(by(c => c.label === 'Name'), ltwPreset(preset)!.nameRole || 'name');
   } else if (preset === 'be-gebiete') {
     set(by(c => c.label === 'Nummer'), 'id'); set(by(c => c.label === 'Gebietsname'), 'name');
   } else if (preset === 'bwl-kreis') {
@@ -333,11 +334,16 @@ function autoGroups(columns: Column[], st: ImportSettings, kinds: Record<string,
       ['Erststimmen', l => /Erststimmen/.test(l) && !/Vorperiode/.test(l)],
       ['Zweitstimmen (Vorperiode)', l => /Zweitstimmen/.test(l) && /Vorperiode/.test(l)],
       ['Erststimmen (Vorperiode)', l => /Erststimmen/.test(l) && /Vorperiode/.test(l)],
+      ['Gesamtstimmen', l => /Gesamtstimmen/.test(l) && !/Vorperiode/.test(l)],
+      ['Gesamtstimmen (Vorperiode)', l => /Gesamtstimmen/.test(l) && /Vorperiode/.test(l)],
+      ['Stimmen', l => / · Stimmen( |$)/.test(l) && !/Vorperiode/.test(l)],
+      ['Stimmen (Vorperiode)', l => / · Stimmen( |$)/.test(l) && /Vorperiode/.test(l)],
     ];
     for (const [label, test] of variants) {
       const cols = vals.filter(c => test(c.label) && isParty(c));
       if (cols.length < 2) continue;
-      const total = vals.find(c => test(c.label) && /^Gültig/.test(c.label));
+      // Länder mit einer Stimmenart (Saarland, Bremen): Summe heißt schlicht „Gültige Stimmen“
+      const total = vals.find(c => test(c.label) && /^Gültig/.test(c.label)) || (label.startsWith('Stimmen') ? vals.find(c => c.label === (label.includes('Vorperiode') ? 'Gültige Stimmen · Vorperiode' : 'Gültige Stimmen')) : undefined);
       out.push({ id: 'g-' + norm(label).replace(/\s/g, '-'), label, columns: cols.map(c => c.id), total: total ? total.id : null, parties: true });
     }
     return out;

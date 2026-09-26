@@ -75,10 +75,10 @@ export function GeoPicker({ value, onChange, label = 'Gebietsstand', customs = [
   const custom = customs.find(c => c.id === value);
   const cur = GEO_INDEX.find(e => e.id === (custom ? custom.base : value)) || GEO_INDEX[0];
   const levels = [...new Set(GEO_INDEX.filter(e => !e.region).map(e => e.level))].sort((a, b) => levelRank(a) - levelRank(b));
-  // Regionen mit eigenen Ebenen (Berlin) als eigene Gruppe; Länder, die nur Landtagswahlkreise haben, gemeinsam unter „Landtagswahlkreise“
+  // Regionen mit eigenen Ebenen (Berlin, Bayern mit Stimm- und Wahlkreisen) als eigene Gruppe; Länder mit genau einer Ebene Landtagswahlkreise gemeinsam unter „Landtagswahlkreise“
   const regionLevels = (r: string) => [...new Set(GEO_INDEX.filter(e => e.region === r).map(e => e.level))].sort((a, b) => levelRank(a) - levelRank(b));
   const allRegions = [...new Set(GEO_INDEX.filter(e => e.region).map(e => e.region!))];
-  const ltwOnly = allRegions.filter(r => regionLevels(r).every(isLtw)).sort((a, b) => a.localeCompare(b, 'de'));
+  const ltwOnly = allRegions.filter(r => regionLevels(r).length === 1 && isLtw(regionLevels(r)[0])).sort((a, b) => a.localeCompare(b, 'de'));
   const regions = allRegions.filter(r => !ltwOnly.includes(r));
   const stands = GEO_INDEX.filter(e => e.level === cur.level).sort((a, b) => b.year - a.year);
   // Ebenenwechsel: innerhalb der Verwaltungsgebiete den Stand behalten, sonst den neuesten nehmen

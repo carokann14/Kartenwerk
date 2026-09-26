@@ -7,8 +7,16 @@ export interface LtwEntry {
   bl: string; code: string; year: number; land: string;
   election: string;                  // „Landtagswahl Mecklenburg-Vorpommern 2026“
   count: number;                     // erwartete Zahl der Wahlkreise (Prüfung beim Bau)
+  levelLabel?: string;               // Bezeichnung der Ebene, sonst „Landtagswahlkreise“ (Bayern: „Stimmkreise“, Bremen: „Wahlbereiche“)
+  showNr?: boolean;                  // Nummer vor dem Namen zeigen (Standard ja)
+  // gröbere Ebene aus den Wahlkreisen, auf derselben Topologie (Bayern: Stimmkreise → Wahlkreise = Regierungsbezirke)
+  group?: { part: string; levelLabel: string; key: (id: string) => string; names: Record<string, string> };
   geo: {
-    file: string; idField: string; nameField: string;
+    file?: string; idField?: string; nameField?: string;
+    // statt einer Datei aus Kreisen oder Gemeinden der Verwaltungsgrenzen zusammengesetzt (Saarland, Bremen)
+    fromVg?: { level: 'krs' | 'gem'; parts: { id: string; name: string; members: string[] }[] };
+    seq?: boolean;                   // Nummern 1…n prüfen (Standard ja; Bayern hat Stimmkreise 101 ff.)
+    tol?: number;                    // Vereinfachung in 10-m-Zellen (Standard 1, ab 100 Wahlkreisen 2)
     layer?: string;                  // Ebene im Archiv, wenn es mehrere gibt (Dateiname ohne Endung)
     id?: (p: Record<string, unknown>) => string;     // Kennung aus den Attributen ableiten (sonst idField)
     name?: (p: Record<string, unknown>) => string;   // Name bereinigen (sonst nameField)
@@ -97,7 +105,46 @@ export const LTW: LtwEntry[] = [
       license: 'alle Rechte vorbehalten',
     },
   },
+  {
+    bl: '09', code: 'by', year: 2023, land: 'Bayern', election: 'Landtagswahl Bayern 2023', count: 91, levelLabel: 'Stimmkreise',
+    group: { part: 'wkr', levelLabel: 'Wahlkreise', key: id => '90' + id.slice(0, 1), names: { 901: 'Oberbayern', 902: 'Niederbayern', 903: 'Oberpfalz', 904: 'Oberfranken', 905: 'Mittelfranken', 906: 'Unterfranken', 907: 'Schwaben' } },
+    geo: {
+      file: 'shapefile_stimmkreiseltw_bayern_2023.zip', idField: 'SKR_NR', nameField: 'SKR_NAME', seq: false, tol: 3,
+      attribution: '© Bayerisches Landesamt für Statistik, Fürth 2022, Stimmkreiseinteilung zur Landtagswahl 2023',
+      source: 'https://www.statistik.bayern.de/wahlen/landtagswahlen/system/index.html',
+      license: 'keine Lizenz angegeben (© Bayerisches Landesamt für Statistik)',
+    },
+  },
+  {
+    bl: '02', code: 'hh', year: 2025, land: 'Hamburg', election: 'Bürgerschaftswahl Hamburg 2025', count: 17,
+    geo: {
+      file: 'Wahlkreis_BÜ2025_shape.zip', idField: 'WK_Nr', nameField: 'WK_Name',
+      attribution: '© Statistisches Amt für Hamburg und Schleswig-Holstein, Hamburg 2025, Wahlkreise zur Bürgerschaftswahl 2025',
+      source: 'https://www.statistik-nord.de/wahlen/wahlen-in-hamburg/buergerschaftswahlen/buergerschaftswahl-2025-in-hamburg',
+      license: 'Verbreitung mit Quellenangabe gestattet, alle übrigen Rechte vorbehalten',
+    },
+  },
+  {
+    bl: '10', code: 'sl', year: 2022, land: 'Saarland', election: 'Landtagswahl Saarland 2022', count: 3,
+    geo: {
+      // § 7 LWG Saarland: Wahlkreis Saarbrücken = Regionalverband, Saarlouis = Saarlouis + Merzig-Wadern, Neunkirchen = Neunkirchen + St. Wendel + Saarpfalz
+      fromVg: { level: 'krs', parts: [{ id: '1', name: 'Saarbrücken', members: ['10041'] }, { id: '2', name: 'Saarlouis', members: ['10042', '10044'] }, { id: '3', name: 'Neunkirchen', members: ['10043', '10045', '10046'] }] },
+      attribution: '© BKG (2026) dl-de/by-2-0 (Verwaltungsgebiete 1:250 000), Wahlkreise aus den Landkreisen zusammengesetzt',
+      source: 'https://daten.gdz.bkg.bund.de/produkte/vg/',
+      license: 'dl-de/by-2-0 (BKG)',
+    },
+  },
+  {
+    bl: '04', code: 'hb', year: 2023, land: 'Bremen', election: 'Bürgerschaftswahl Bremen 2023', count: 2, levelLabel: 'Wahlbereiche', showNr: false,
+    geo: {
+      fromVg: { level: 'gem', parts: [{ id: '1', name: 'Bremen', members: ['04011000'] }, { id: '2', name: 'Bremerhaven', members: ['04012000'] }] },
+      attribution: '© BKG (2026) dl-de/by-2-0 (Verwaltungsgebiete 1:250 000), Wahlbereiche = Städte Bremen und Bremerhaven',
+      source: 'https://daten.gdz.bkg.bund.de/produkte/vg/',
+      license: 'dl-de/by-2-0 (BKG)',
+    },
+  },
 ];
+export const ltwGroupId = (e: Pick<LtwEntry, 'code' | 'year' | 'group'>) => `ltw-${e.code}-${e.group!.part}-${e.year}`;
 export const ltwSetId = (e: Pick<LtwEntry, 'code' | 'year'>) => `ltw-${e.code}-${e.year}`;
 export const ltwLevel = (e: Pick<LtwEntry, 'code'>) => `ltw-${e.code}`;
 export const isLtwLevel = (level: string) => level.startsWith('ltw-');
@@ -114,6 +161,7 @@ export interface LtwPreset {
   headerRows?: number;
   meta: (cells: Cell[][], h: number, fileName: string) => { year?: number; title: string; attribution: string };
   build: (cells: Cell[][], h: number) => LtwTable;
+  group?: boolean;                                   // Ergebnis für die Zusammenfassung (Bayern: Wahlkreise über den Stimmkreisen)
   nameRole?: 'name' | 'label';                       // abgekürzte Namen in der Datei: nur zur Anzeige, zugeordnet wird über die Nummer
 }
 const s = (v: Cell) => String(v ?? '').trim();
@@ -404,10 +452,182 @@ const hePreset: LtwPreset = {
   },
 };
 
-export const LTW_PRESETS: LtwPreset[] = [mvPreset, niPreset, nwPreset, rpPreset, bwPreset, shPreset, stPreset, hePreset];
+// Bayern: Landesamt für Statistik, Stimmkreise und Wahlkreise (CSV, cp1252). Je Partei Erst-, Zweit- und Gesamtstimmen 2023 und 2018;
+// Sitze werden nach Gesamtstimmen (Erst- + Zweitstimmen) verteilt. „X“ = nicht angetreten.
+const byLabel = (x: string): string => {
+  const t = x.trim();
+  if (t === 'Stimmberechtigte') return 'Wahlberechtigte';
+  if (t === 'Wähler') return 'Wählende';
+  if (t === 'Wahlbeteiligung in %') return 'Wahlbeteiligung';
+  let m = t.match(/^(gültige|ungültige) (Erst|Zweit|Gesamt)stimmen(?: insgesamt)? (20\d\d)$/);
+  if (m) return `${m[1] === 'gültige' ? 'Gültige' : 'Ungültige'} Stimmen · ${m[2]}stimmen${m[3] === '2018' ? ' · Vorperiode' : ''}`;
+  m = t.match(/^(Erst|Zweit|Gesamt)stimmen (.+) (20\d\d)$/);
+  if (m) return `${m[2].replace(/ 2018$/, '')} · ${m[1]}stimmen${m[3] === '2018' ? ' · Vorperiode' : ''}`;
+  return '';
+};
+function byBuild(c: Cell[][], h: number, keep: (k: string) => boolean, idLabel: string, what: string): LtwTable {
+  const H = txtRow(c[h]), ix = (n: string) => H.indexOf(n);
+  const cols: [string, number][] = [[idLabel, ix('Schlüsselnummer')], ['Name', ix('Name der Regionaleinheit')]];
+  H.forEach((x, i) => { const l = byLabel(x); if (l) cols.push([l, i]); });
+  const dm = ix('Bewerber mit Erststimmenmehrheit'), dp = ix('Partei mit Erststimmenmehrheit');
+  const row = (r: Cell[]) => [...cols.map(([x, i]) => (x === idLabel ? s(r[i]) : x === 'Name' ? s(r[i]) : numOf(r[i]))), ...(dm >= 0 ? [s(r[dm]) ? `${s(r[dm])}${s(r[dp]) ? ` (${s(r[dp])})` : ''}` : ''] : [])];
+  const header = [...cols.map(x => x[0]), ...(dm >= 0 ? ['Direktmandat'] : [])];
+  const all = c.slice(h + 1).filter(r => /^\d{3}$/.test(s(r[0])));
+  const t = dropEmpty({ header, body: all.filter(r => keep(s(r[0]))).map(row), notes: [] }, 2);
+  t.notes.push(`${t.body.length} ${what} mit Erst-, Zweit- und Gesamtstimmen 2023; die Werte von 2018 stehen als „… · Vorperiode“ daneben.`);
+  const land = all.find(r => s(r[0]) === '990');
+  if (land) { const L = row(land); checkLand(t, t.header.map(x => L[header.indexOf(x)]), 2, l => isRateLabel(l) || l === 'Direktmandat'); }
+  return t;
+}
+const byMeta = (c: Cell[][], h: number) => {
+  const r = c[h + 1] || [], d = s(r[txtRow(c[h]).indexOf('Stand Tagesdatum')]);
+  return { year: 2023, title: `Landtagswahl Bayern 2023${d ? ', Stand ' + d : ''}`, attribution: 'Bayerisches Landesamt für Statistik' };
+};
+const byPreset: LtwPreset = {
+  id: 'ltw-by', code: 'by', label: 'Bayern · Landtagswahl nach Stimmkreisen',
+  hint: 'Datei des Landesamts für Statistik mit den 91 Stimmkreisen: je Partei Erst-, Zweit- und Gesamtstimmen, dazu die Werte von 2018 als Vorperiode. In Bayern zählen für die Sitzverteilung die Gesamtstimmen; die Karte färbt deshalb zuerst nach ihnen. Die gewählte Person steht in der Spalte „Direktmandat“.',
+  find: c => findIn(c, r => r[0] === 'Schlüsselnummer' && r.includes('Bewerber mit Erststimmenmehrheit') && r.some(x => /^\s*Gesamtstimmen .+ 2023$/.test(x)), 5),
+  meta: byMeta,
+  build: (c, h) => byBuild(c, h, k => +k < 900, 'Stimmkreis', 'Stimmkreise'),
+};
+const byWkrPreset: LtwPreset = {
+  id: 'ltw-by-wkr', code: 'by', group: true, label: 'Bayern · Landtagswahl nach Wahlkreisen (Regierungsbezirken)',
+  hint: 'Datei des Landesamts für Statistik mit den sieben Wahlkreisen (Oberbayern … Schwaben). Die kreisfreien Städte München, Nürnberg und Augsburg in derselben Datei bleiben außen vor; die Zeile „Bayern“ dient der Prüfung.',
+  find: c => findIn(c, r => r[0] === 'Schlüsselnummer' && r.includes('Zahl der ausgewerteten Stimmkreise') && r.some(x => /^\s*Gesamtstimmen .+ 2023$/.test(x)), 5),
+  meta: byMeta,
+  build: (c, h) => byBuild(c, h, k => /^90[1-7]$/.test(k), 'Wahlkreis', 'Wahlkreise'),
+};
+
+// Hamburg: Statistikamt Nord, ergebnis-download-wahlkreis.csv (Wahlkreisstimmen) und ergebnis-download-land.csv (Landesstimmen),
+// je Stimm- und Briefwahlbezirk; Kartenwerk summiert zu den 17 Wahlkreisen. Jede Person hat fünf Stimmen je Stimmzettel.
+// D1… sind je Wahlkreis andere Wahlvorschläge (Feldbezeichner 2025), F1… die Landeslisten.
+const HH_2025_F = ['SPD', 'CDU', 'FDP', 'GRÜNE', 'Volt', 'Die Linke', 'AfD', 'DieWahl - WFG', 'DAVA-Hamburg', 'FREIE WÄHLER', 'Die PARTEI', 'ÖDP', 'Tierschutzpartei', 'BÜNDNIS DEUTSCHLAND', 'BSW', 'NPD'];
+const EB = 'Einzelbewerbung';
+const HH_2025_D: Record<string, string[]> = {
+  1: ['SPD', 'CDU', 'FDP', 'Volt', 'DieWahl - WFG', 'Die Linke', 'GRÜNE', 'AfD'],
+  2: ['SPD', 'CDU', 'FDP', 'DieWahl - WFG', 'Die Linke', 'AfD', 'GRÜNE', 'Volt', 'DAVA-Hamburg', EB],
+  3: ['SPD', 'GRÜNE', 'CDU', 'FDP', 'Volt', 'Die Linke', 'AfD', 'FREIE WÄHLER', 'DAVA-Hamburg', EB],
+  4: ['SPD', 'CDU', 'FDP', 'GRÜNE', 'Die Linke', 'Volt', 'AfD'],
+  5: ['SPD', 'GRÜNE', 'CDU', 'FDP', 'Volt', 'Die Linke', 'AfD'],
+  6: ['SPD', 'GRÜNE', 'CDU', 'FDP', 'Volt', 'Die Linke', 'AfD'],
+  7: ['SPD', 'GRÜNE', 'CDU', 'AfD', 'Volt', 'Die Linke', 'FDP'],
+  8: ['SPD', 'CDU', 'FDP', 'Volt', 'GRÜNE', 'Die Linke', 'AfD', 'FREIE WÄHLER'],
+  9: ['SPD', 'CDU', 'FDP', 'DieWahl - WFG', 'Die Linke', 'Volt', 'GRÜNE', 'AfD', 'DAVA-Hamburg', 'DIE KONSERVATIVEN'],
+  10: ['SPD', 'CDU', 'FDP', 'Volt', 'GRÜNE', 'Die Linke', 'AfD'],
+  11: ['SPD', 'CDU', 'AfD', 'FDP', 'GRÜNE', 'Die Linke', 'Volt'],
+  12: ['SPD', 'CDU', 'FDP', 'GRÜNE', 'Die Linke', 'Volt', 'FREIE WÄHLER', 'DAVA-Hamburg'],
+  13: ['SPD', 'CDU', 'AfD', 'FDP', 'GRÜNE', 'Volt', 'Die Linke'],
+  14: ['SPD', 'CDU', 'FDP', 'AfD', 'GRÜNE', 'Die Linke', 'Volt'],
+  15: ['SPD', 'CDU', 'FDP', 'DieWahl - WFG', 'Die Linke', 'AfD', 'Volt', 'GRÜNE', 'FREIE WÄHLER', 'DAVA-Hamburg', EB],
+  16: ['SPD', 'CDU', 'Die Linke', 'FDP', 'Volt', 'GRÜNE', 'AfD'],
+  17: ['SPD', 'CDU', 'Die Linke', 'FDP', 'Volt', 'GRÜNE'],
+};
+function hhBuild(c: Cell[][], h: number, land: boolean): LtwTable {
+  const H = txtRow(c[h]), ix = (n: string) => H.findIndex(x => x.startsWith(n));
+  const st = land ? 'Zweitstimmen' : 'Erststimmen', V = land ? 'F' : 'D';
+  const fix: [string, number][] = [['Wahlberechtigte', ix('Wahlberechtigte gesamt')], ['Wählende', ix('Waehler gesamt')], [`Ungültige Stimmzettel · ${st}`, ix('Stimmzettel ungueltig')], [`Gültige Stimmen · ${st}`, ix(`Stimmen gueltige (${V})`)]];
+  const pcols = H.map((x, i) => [x, i] as const).filter(([x]) => new RegExp(`^${V}\\d+$`).test(x)).map(([x, i]) => [Number(x.slice(1)), i] as const);
+  const wkI = ix('Wahlkreis');
+  const acc = new Map<string, { name: string; v: Map<string, number> }>(); let n = 0;
+  const order: string[] = land ? [...HH_2025_F] : [...HH_2025_F, 'DIE KONSERVATIVEN', EB];
+  for (const r of c.slice(h + 1)) {
+    const m = s(r[wkI]).match(/^Wahlkreis (\d+)\s*-\s*(.+)$/); if (!m) continue; n++;
+    const k = m[1]; let a = acc.get(k); if (!a) { a = { name: m[2], v: new Map() }; acc.set(k, a); }
+    const add = (lab: string, x: number | null) => { if (x != null) a!.v.set(lab, (a!.v.get(lab) ?? 0) + x); };
+    for (const [lab, i] of fix) add(lab, numOf(r[i]));
+    for (const [nr, i] of pcols) {
+      const p = land ? HH_2025_F[nr - 1] : HH_2025_D[k]?.[nr - 1];
+      const lab = p || `Wahlvorschlag ${V}${nr}`; if (!order.includes(lab)) order.push(lab);
+      add(`${lab} · ${st}`, numOf(r[i]));
+    }
+  }
+  const header = ['Wahlkreis', 'Name', ...fix.map(x => x[0]), ...order.map(p => `${p} · ${st}`)];
+  const body: Cell[][] = [...acc].sort((a, b) => +a[0] - +b[0]).map(([k, a]) => [k, a.name, ...header.slice(2).map(l => a.v.get(l) ?? null)]);
+  const t = dropEmpty({ header, body, notes: [] }, 2);
+  t.notes.push(`${n} Stimm- und Briefwahlbezirke zu ${t.body.length} Wahlkreisen summiert; ${land ? 'Landesstimmen als Zweitstimmen' : 'Wahlkreisstimmen als Erststimmen'} übernommen (je Person bis zu fünf Stimmen).`);
+  return t;
+}
+const hhMeta = () => ({ year: 2025, title: 'Bürgerschaftswahl Hamburg 2025', attribution: 'Statistisches Amt für Hamburg und Schleswig-Holstein' });
+const hhFind = (V: string) => (c: Cell[][]) => findIn(c, r => r[0] === 'Bezirk' && r[1] === 'Wahlkreis' && r.includes('Erfassungsgebietsart') && r.includes(`Stimmen gueltige (${V})`), 5);
+const hhPreset: LtwPreset = {
+  id: 'ltw-hh', code: 'hh', label: 'Hamburg · Bürgerschaftswahl, Wahlkreisstimmen',
+  hint: 'Downloaddatei des Statistikamts Nord mit den Wahlkreisstimmen je Stimm- und Briefwahlbezirk; Kartenwerk summiert zu den 17 Wahlkreisen. Die Wahlvorschläge D1… sind in jedem Wahlkreis andere, die Namen stammen aus den Feldbezeichnern 2025. Wahlkreisstimmen erscheinen als Erststimmen.',
+  find: hhFind('D'), meta: hhMeta, build: (c, h) => hhBuild(c, h, false),
+};
+const hhLandPreset: LtwPreset = {
+  id: 'ltw-hh-land', code: 'hh', label: 'Hamburg · Bürgerschaftswahl, Landesstimmen',
+  hint: 'Downloaddatei des Statistikamts Nord mit den Landesstimmen je Stimm- und Briefwahlbezirk; Kartenwerk summiert zu den 17 Wahlkreisen. Landesstimmen erscheinen als Zweitstimmen; die Parteinamen stammen aus den Feldbezeichnern 2025.',
+  find: hhFind('F'), meta: hhMeta, build: (c, h) => hhBuild(c, h, true),
+};
+
+// Saarland: Landeswahlleiterin, KERG_SAARLAND.csv (Aufbau wie kerg.csv der Bundeswahlleiterin: Gemeinden, Wahlkreise 1–3, Land 10;
+// je Partei „Endgültig“ und „Vorperiode“). Eine Stimme je Person.
+const SL_SHORT: Record<string, string> = {
+  'Christlich Demokratische Union Deutschlands': 'CDU', 'Sozialdemokratische Partei Deutschlands': 'SPD', 'Alternative für Deutschland': 'AfD', 'BÜNDNIS 90/DIE GRÜNEN': 'GRÜNE',
+  'Freie Demokratische Partei': 'FDP', 'Familien-Partei Deutschlands': 'FAMILIE', 'Piratenpartei Deutschland': 'PIRATEN', 'Basisdemokratische Partei Deutschland': 'dieBasis',
+  'bunt.saar sozial-ökologische liste': 'bunt.saar', 'Ökologisch-Demokratische Partei': 'ÖDP', 'Partei der Humanisten': 'PdH',
+  'Partei für Arbeit, Rechtsstaat, Tierschutz, Elitenförderung und basisdemokratische Initiative': 'Die PARTEI', 'Partei für Gesundheitsforschung': 'Gesundheitsforschung',
+  'PARTEI MENSCH UMWELT TIERSCHUTZ': 'Tierschutzpartei', 'SGV Solidarität, Gerechtigkeit, Veränderung': 'SGV', 'Volt Deutschland': 'Volt', 'Übrige': 'Sonstige',
+};
+const SL_FIX: Record<string, string> = { Wahlberechtigte: 'Wahlberechtigte', 'Wähler': 'Wählende', 'Ungültige Stimmen': 'Ungültige Stimmen', 'Gültige Stimmen': 'Gültige Stimmen' };
+const slPreset: LtwPreset = {
+  id: 'ltw-sl', code: 'sl', label: 'Saarland · Landtagswahl nach Wahlkreisen',
+  hint: 'Datei der Landeswahlleiterin (Aufbau wie kerg.csv): übernommen werden die drei Wahlkreise, die Zeile „Saarland“ dient der Prüfung. Jede Person hat eine Stimme; die Werte der Vorperiode (2017) stehen als „… · Vorperiode“ daneben.',
+  headerRows: 3,
+  find: c => (findIn(c, r => /Landtagswahl/.test(r[0]), 3) >= 0 ? findIn(c, r => r[0] === 'Nr' && r[1] === 'Gebiet' && !!r[2]?.startsWith('gehört'), 10) : -1),
+  meta: c => {
+    const y = s(c[0]?.[0]).match(/(20\d\d)/)?.[1] || '2022', art = s(c[1]?.[0]).replace(/;+$/, '');
+    return { year: +y, title: `Landtagswahl Saarland ${y}${art ? ', ' + art.replace(/^Amtliches /, 'amtliches ') : ''}`, attribution: 'Die Landeswahlleiterin des Saarlandes' };
+  },
+  build: (c, h) => {
+    const names = txtRow(c[h]), per = txtRow(c[h + 2]);
+    const cols: [string, number][] = [['Wahlkreis', 0], ['Name', 1]];
+    let cur = '';
+    names.forEach((x, i) => {
+      if (i < 3) return;
+      if (x) cur = x.replace(/\s+/g, ' ').trim();
+      if (!cur || (per[i] !== 'Endgültig' && per[i] !== 'Vorperiode')) return;
+      const prev = per[i] === 'Vorperiode' ? ' · Vorperiode' : '';
+      cols.push([SL_FIX[cur] ? SL_FIX[cur] + prev : `${SL_SHORT[cur] || cur} · Stimmen${prev}`, i]);
+    });
+    const row = (r: Cell[]) => cols.map(([x, i]) => (x === 'Wahlkreis' ? s(r[i]) : x === 'Name' ? s(r[i]).replace(/^Wahlkreis\s+/, '') : numOf(r[i])));
+    const data = c.slice(h + 3), wk = data.filter(r => /^[1-9]$/.test(s(r[0])) && /^Wahlkreis/.test(s(r[1]))), land = data.find(r => s(r[1]) === 'Saarland');
+    const t = dropEmpty({ header: cols.map(x => x[0]), body: wk.map(row), notes: [] }, 2);
+    t.notes.push(`${t.body.length} Wahlkreise; die Gemeinden in derselben Datei bleiben außen vor.`);
+    if (land) { const L = row(land), keep = cols.map(([x]) => x); checkLand(t, t.header.map(x => L[keep.indexOf(x)]), 2); }
+    return t;
+  },
+};
+
+// Bremen: Statistisches Landesamt, Ergebnis nach Wahlbereichen (von den Ergebnisseiten übertragen, #-Zeilen = Vorspann).
+// Fünf Stimmen je Person; Stimmen = Listen- und Personenstimmen zusammen.
+const hbPreset: LtwPreset = {
+  id: 'ltw-hb', code: 'hb', label: 'Bremen · Bürgerschaftswahl nach Wahlbereichen',
+  hint: 'Ergebnis der beiden Wahlbereiche Bremen und Bremerhaven (Listen- und Personenstimmen zusammen, bis zu fünf Stimmen je Person). Zugeordnet wird über den Gemeindeschlüssel.',
+  find: c => findIn(c, r => r[0] === 'AGS' && r[1] === 'Wahlbereich' && r.includes('Gültige Stimmen'), 10),
+  meta: c => {
+    const pre = c.map(r => s(r[0])).filter(x => x.startsWith('#')).map(x => x.replace(/^#\s*/, ''));
+    const y = (pre.find(x => /Bürgerschaftswahl/.test(x)) || '').match(/(20\d\d)/)?.[1] || '2023';
+    return { year: +y, title: `Bürgerschaftswahl Bremen ${y}${pre.some(x => /endgültig/.test(x)) ? ', endgültiges Ergebnis' : ''}`, attribution: copyOf(pre, 'Statistisches Landesamt Bremen') };
+  },
+  build: (c, h) => {
+    const H = txtRow(c[h]), key: Record<string, string> = { '04011000': '1', '04012000': '2' };
+    const FIX: Record<string, string> = { Wahlberechtigte: 'Wahlberechtigte', 'Wählende': 'Wählende', 'Ungültige Stimmzettel': 'Ungültige Stimmzettel', 'Gültige Stimmen': 'Gültige Stimmen' };
+    const cols: [string, number][] = [['Wahlbereich', 0], ['Name', 1], ...H.map((x, i) => [i < 2 || !x ? '' : FIX[x] || `${x} · Stimmen`, i] as [string, number]).filter(([x]) => x)];
+    const k8 = (v: Cell) => key[s(v).padStart(8, '0')];
+    const rows = c.slice(h + 1).filter(r => k8(r[0]));
+    const body = rows.map(r => cols.map(([x, i]) => (x === 'Wahlbereich' ? k8(r[i]) : x === 'Name' ? s(r[i]) : numOf(r[i]))));
+    const t = dropEmpty({ header: cols.map(x => x[0]), body, notes: [] }, 2);
+    t.notes.push(`${t.body.length} Wahlbereiche (Bremen und Bremerhaven) mit Listen- und Personenstimmen zusammen.`);
+    return t;
+  },
+};
+
+export const LTW_PRESETS: LtwPreset[] = [mvPreset, niPreset, nwPreset, rpPreset, bwPreset, shPreset, stPreset, hePreset, byPreset, byWkrPreset, hhPreset, hhLandPreset, slPreset, hbPreset];
 export const ltwPreset = (id: string) => LTW_PRESETS.find(p => p.id === id) || null;
 /** Gebietsstand zur Vorlage: gleiches Land, passendes Jahr, sonst das neueste */
 export function ltwGeoFor(p: LtwPreset, year?: number): string {
   const c = LTW.filter(e => e.code === p.code).sort((a, b) => b.year - a.year);
-  return ltwSetId(c.find(e => e.year === year) || c[0]);
+  const e = c.find(e => e.year === year) || c[0];
+  return p.group && e.group ? ltwGroupId(e) : ltwSetId(e);
 }

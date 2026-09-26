@@ -16,7 +16,7 @@ import { saveLocal } from './persist';
 import { withDefaultLogo } from './logo';
 
 /** Gebietsbezeichnung im Singular, z. B. für „Stärkste Partei je Wahlkreis“ */
-const SING_: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Regierungsbezirk', krs: 'Kreis', vwg: 'Gemeindeverband', gem: 'Gemeinde', custom: 'Region', 'be-wk': 'Wahlkreis', 'be-bez': 'Bezirk', 'be-bwb': 'Briefwahlbezirk', 'be-wbz': 'Wahlbezirk' };
+const SING_: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Regierungsbezirk', krs: 'Kreis', vwg: 'Gemeindeverband', gem: 'Gemeinde', custom: 'Region', 'be-wk': 'Wahlkreis', 'be-bez': 'Bezirk', 'be-bwb': 'Briefwahlbezirk', 'be-wbz': 'Wahlbezirk', 'ltw-by': 'Stimmkreis', 'ltw-by-wkr': 'Wahlkreis', 'ltw-hb': 'Wahlbereich' };
 const SING = new Proxy(SING_, { get: (t, k: string) => t[k] ?? (typeof k === 'string' && k.startsWith('ltw-') ? 'Wahlkreis' : undefined) });
 export const refit = (d: Draft<Doc>, which: 'main' | 'inset' | 'both' = 'main') => {
   const plain = current(d) as Doc;
@@ -89,7 +89,8 @@ export async function setGeoSet(id: string, opts: { fokus?: Fokus; from?: Fokus 
   toast(gl + (nf.kind !== 'de' && !fl.startsWith(gl) ? ' · ' + fl : ''));
 }
 export function autoRule(ds: Dataset): ColorRule {
-  const grp = ds.groups.find(g => g.parties && /Zweit/.test(g.label)) || ds.groups.find(g => g.parties) || ds.groups[0];
+  // Bayern: Sitze nach Gesamtstimmen; sonst Zweitstimmen
+  const grp = ds.groups.find(g => g.parties && /^Gesamtstimmen$/.test(g.label)) || ds.groups.find(g => g.parties && /Zweit/.test(g.label)) || ds.groups.find(g => g.parties) || ds.groups[0];
   if (grp) return { mode: 'siegerStaerke', dataset: ds.id, group: grp.id, basis: 'anteil', steps: 4 };
   const num = ds.columns.find(c => c.role === 'value' && c.kind === 'number');
   if (num) return { mode: 'wert', dataset: ds.id, column: num.id, method: 'rund', classes: 5, hue: '#2F5D8A' };
@@ -162,8 +163,10 @@ export function addDataset(ds: Dataset, useIt = true) {
       if (prev) swapDatasetTexts(d, prev, ds, before.color);   // Titel und Unterzeile, die den bisherigen Datensatz nennen
       if (d.texts.title.text === 'Titel der Grafik' && ds.groups.some(g => g.parties)) {
         d.texts.title.text = 'Stärkste Partei je ' + (SING[GEO[ds.geoSet]?.meta.level] || 'Gebiet');
-        const grp = ds.groups.find(g => g.parties && /Zweit/.test(g.label)) || ds.groups.find(g => g.parties);
-        d.texts.subtitle.text = `${grp && !ds.name.includes(grp.label) ? grp.label + ', ' : ''}${ds.name}. Je kräftiger die Farbe, desto höher der Anteil der stärksten Partei.`;
+        // Gruppe, nach der die Karte gefärbt ist (Bayern: Gesamtstimmen); nur eine Stimmenart (Saarland, Bremen) wird nicht genannt
+        const cg = (d.color as { group?: string }).group;
+        const grp = ds.groups.find(g => g.id === cg && g.parties) || ds.groups.find(g => g.parties && /Zweit/.test(g.label)) || ds.groups.find(g => g.parties);
+        d.texts.subtitle.text = `${grp && grp.label !== 'Stimmen' && !ds.name.includes(grp.label) ? grp.label + ', ' : ''}${ds.name}. Je kräftiger die Farbe, desto höher der Anteil der stärksten Partei.`;
         d.name = d.name === 'Neues Projekt' ? ds.name : d.name;
       }
       if (!prev || moved) {   // erster Datensatz oder andere Karte: Layout neu; sonst bleibt die Gestaltung

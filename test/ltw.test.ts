@@ -9,6 +9,7 @@ const { readFile } = await import('../src/data/parse');
 const { buildDataset, buildTable, defaultSettings, shortTitle, suggestGeoSetAsync } = await import('../src/data/pipeline');
 const { datasetFor } = await import('../src/data/aggregate');
 const { groupMetrics } = await import('../src/data/derive');
+const { autoRule } = await import('../src/model/actions');
 const { defaultDoc } = await import('../src/model/defaults');
 const { finerSet, sisterSets, translateFokus } = await import('../src/geo/relate');
 const ok = (c: boolean, m: string) => { console.log((c ? 'ok: ' : 'FEHLER: ') + m); if (!c) process.exitCode = 1; };
@@ -117,4 +118,34 @@ for (const [file, preset, geoId, n, ms] of [
   const gz = d2.columns.findIndex(c => c.label === 'Gültige Stimmen · Zweitstimmen');
   console.log('   gültige Zweitstimmen gesamt:', d2.rows.reduce((a, row) => a + ((row[gz] as number) || 0), 0).toLocaleString('de-DE'));
   for (const g of [g2!, g1!]) { const win: Record<string, number> = {}; groupMetrics(d2, g).forEach(m => { const c = d2.columns.find(x => x.id === g.columns[m.win]); const k = c?.label.split(' · ')[0] || '?'; win[k] = (win[k] || 0) + 1; }); console.log(`   Stärkste (${g.label}):`, JSON.stringify(win)); }
+}
+
+// Etappe 2c: Bayern (Stimm- und Wahlkreise, Gesamtstimmen), Hamburg (zwei Dateien), Saarland, Bremen (eine Stimmenart)
+for (const [file, preset, geoId, n, groups, first] of [
+  ['by-2023/08_10_2023_Landtagswahl_2023_Stimmkreise_Bayern.csv', 'ltw-by', 'ltw-by-2023', 91, ['Erststimmen', 'Zweitstimmen', 'Gesamtstimmen', 'Gesamtstimmen (Vorperiode)'], 'Gesamtstimmen'],
+  ['by-2023/08_10_2023_Landtagswahl_2023_Wahlkreise_Bayern.csv', 'ltw-by-wkr', 'ltw-by-wkr-2023', 7, ['Erststimmen', 'Zweitstimmen', 'Gesamtstimmen'], 'Gesamtstimmen'],
+  ['hh-2025/ergebnis-download-wahlkreis.csv', 'ltw-hh', 'ltw-hh-2025', 17, ['Erststimmen'], 'Erststimmen'],
+  ['hh-2025/ergebnis-download-land.csv', 'ltw-hh-land', 'ltw-hh-2025', 17, ['Zweitstimmen'], 'Zweitstimmen'],
+  ['sl-2022/KERG_SAARLAND.csv', 'ltw-sl', 'ltw-sl-2022', 3, ['Stimmen', 'Stimmen (Vorperiode)'], 'Stimmen'],
+  ['hb-2023/HB_Buergerschaftswahl_2023_Wahlbereiche.csv', 'ltw-hb', 'ltw-hb-2023', 2, ['Stimmen'], 'Stimmen'],
+] as const) {
+  await ensureGeo([geoId]);
+  const r = await readFile(file.split('/')[1], buf('data-src/ltw/' + file));
+  const st2 = defaultSettings(r);
+  ok(st2.preset === preset && st2.geoSet === geoId, `${file}: Vorlage ${st2.preset} → ${st2.geoSet} · „${st2.sourceTitle}“ · ${st2.attribution}`);
+  const t2 = buildTable(r, st2); t2.notes.forEach(x => console.log('   ' + x));
+  const d2 = buildDataset(r, st2, t2, shortTitle(st2.sourceTitle));
+  ok(d2.report.exact === n && d2.report.unknown === 0 && d2.report.duplicate === 0 && d2.report.missing.length === 0, `${preset}: ${d2.report.exact}/${n} zugeordnet, ${d2.report.nameMismatch.length} Namensabweichungen${d2.report.nameMismatch.length ? ' (' + d2.report.nameMismatch.slice(0, 3).map(x => x.dataName + ' ≠ ' + x.geoName).join('; ') + ')' : ''}`);
+  const gs = groups.map(l => d2.groups.find(g => g.label === l));
+  ok(gs.every(g => !!g?.total && g.columns.length >= 3), `${preset}: Gruppen ${groups.map((l, k) => `${l} (${gs[k]?.columns.length ?? '–'}${gs[k]?.total ? '' : ', ohne Bezug'})`).join(', ')}`);
+  ok(autoRule(d2).mode === 'siegerStaerke' && d2.groups.find(g => g.id === (autoRule(d2) as { group: string }).group)?.label === first, `${preset}: Färbung zuerst nach ${first}`);
+  ok(!t2.notes.some(x => /^Achtung/.test(x)), `${preset}: keine Abweichung zum Landesergebnis gemeldet`);
+  for (const g of gs.slice(0, 1)) {
+    const win: Record<string, number> = {}, sum: Record<string, number> = {};
+    groupMetrics(d2, g!).forEach(m => { const c = d2.columns.find(x => x.id === g!.columns[m.win]); const k = c?.label.split(' · ')[0] || '?'; win[k] = (win[k] || 0) + 1; });
+    g!.columns.forEach(id => { const i = d2.columns.findIndex(c => c.id === id); sum[d2.columns[i].label.split(' · ')[0]] = d2.rows.reduce((a, row) => a + ((row[i] as number) || 0), 0); });
+    const tot = d2.rows.reduce((a, row) => a + ((row[d2.columns.findIndex(c => c.id === g!.total)] as number) || 0), 0);
+    console.log(`   Stärkste (${g!.label}):`, JSON.stringify(win));
+    console.log(`   Anteile Land:`, Object.entries(sum).sort((a, b) => b[1] - a[1]).slice(0, 7).map(([k, v]) => `${k} ${(100 * v / tot).toFixed(1)}`).join(', '));
+  }
 }

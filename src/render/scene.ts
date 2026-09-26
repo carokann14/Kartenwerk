@@ -14,8 +14,8 @@ export function fokusIdx(doc: Doc, f: Fokus = doc.fokus): number[] {
   if (f.kind === 'area') { const i = g.byId.get(f.id); return i == null ? [] : [i]; }
   return f.ids.map(id => g.byId.get(id)).filter((x): x is number => x != null);
 }
-/** Grenzen der Gruppierungsebene: Kreise, in Berlin die Bezirke */
-export const krLinesLabel = (g: GeoSet) => (g.meta.level.startsWith('be-') ? 'Bezirksgrenzen' : 'Kreisgrenzen');
+/** Grenzen der Gruppierungsebene: Kreise, in Berlin die Bezirke, in Bayern die Wahlkreise über den Stimmkreisen */
+export const krLinesLabel = (g: GeoSet) => (g.meta.level.startsWith('be-') ? 'Bezirksgrenzen' : g.meta.level.startsWith('ltw-') ? 'Wahlkreisgrenzen' : 'Kreisgrenzen');
 /** Fokus „alles“: Deutschland, bei importierten Geodaten deren Name */
 export const allLabel = (g: GeoSet) => (g.meta.level === 'user' ? g.meta.label : g.meta.level.startsWith('be-') ? 'Berlin' : g.meta.level.startsWith('ltw-') ? GEO_INDEX.find(e => e.id === g.meta.id)?.region || 'Deutschland' : 'Deutschland');
 export function fokusLabel(doc: Doc, f: Fokus = doc.fokus): string {

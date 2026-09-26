@@ -47,7 +47,8 @@ export const LEVEL_ORDER = ['btw-wk', 'lan', 'rbz', 'krs', 'vwg', 'gem', 'be-wk'
 /** Landtagswahlkreise eines Landes (`ltw-mv` usw., Katalog in data/ltw.ts) */
 export const isLtw = (level: string) => level.startsWith('ltw-');
 /** Rang einer Ebene für Auswahllisten: bekannte Ebenen in fester Folge, Landtagswahlkreise danach */
-export const levelRank = (level: string) => { const i = LEVEL_ORDER.indexOf(level); return i >= 0 ? i : isLtw(level) ? LEVEL_ORDER.length : LEVEL_ORDER.length + 1; };
+// Zusammenfassungen (Bayern: Wahlkreise `ltw-by-wkr` über den Stimmkreisen `ltw-by`) stehen vor der Grundebene
+export const levelRank = (level: string) => { const i = LEVEL_ORDER.indexOf(level); return i >= 0 ? i : isLtw(level) ? LEVEL_ORDER.length + (level.split('-').length > 2 ? 0 : 0.5) : LEVEL_ORDER.length + 1; };
 /** Schlüssellänge je Verwaltungsebene (ARS-Präfix bzw. AGS bei Gemeinden) */
 export const KEY_LEN: Record<string, number> = { lan: 2, rbz: 3, krs: 5, vwg: 9, gem: 8 };
 
@@ -234,8 +235,8 @@ export const bboxOfIds = (g: GeoSet, ids: number[]): BBox => {
 export const areaTitle = (g: GeoSet, i: number) => { const a = g.areas[i]; return g.meta.showNr ? `${a.nr} · ${a.name}` : a.name; };
 export const areaLabel = (g: GeoSet, i: number) => g.meta.showNr ? `${g.areas[i].nr} ${g.areas[i].name}` : g.areas[i].name;
 /** Zusatz für Listen und Tooltips: Land, bei Gemeinden auch der Kreis */
-const PLURAL: Record<string, string> = { 'btw-wk': 'Wahlkreise', lan: 'Länder', rbz: 'Bezirke', krs: 'Kreise', vwg: 'Verbände', gem: 'Gemeinden', 'be-wk': 'Wahlkreise', 'be-bez': 'Bezirke', 'be-bwb': 'Briefwahlbezirke', 'be-wbz': 'Wahlbezirke' };
-const SINGULAR: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Bezirk', krs: 'Kreis', vwg: 'Verband', gem: 'Gemeinde', 'be-wk': 'Wahlkreis', 'be-bez': 'Bezirk', 'be-bwb': 'Briefwahlbezirk', 'be-wbz': 'Wahlbezirk' };
+const PLURAL: Record<string, string> = { 'btw-wk': 'Wahlkreise', lan: 'Länder', rbz: 'Bezirke', krs: 'Kreise', vwg: 'Verbände', gem: 'Gemeinden', 'be-wk': 'Wahlkreise', 'be-bez': 'Bezirke', 'be-bwb': 'Briefwahlbezirke', 'be-wbz': 'Wahlbezirke', 'ltw-by': 'Stimmkreise', 'ltw-by-wkr': 'Wahlkreise', 'ltw-hb': 'Wahlbereiche' };
+const SINGULAR: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Bezirk', krs: 'Kreis', vwg: 'Verband', gem: 'Gemeinde', 'be-wk': 'Wahlkreis', 'be-bez': 'Bezirk', 'be-bwb': 'Briefwahlbezirk', 'be-wbz': 'Wahlbezirk', 'ltw-by': 'Stimmkreis', 'ltw-by-wkr': 'Wahlkreis', 'ltw-hb': 'Wahlbereich' };
 /** „12 Kreise“, „1 Gemeinde“ */
 export const levelWord = (level: string, plural: boolean) => (plural ? PLURAL : SINGULAR)[level] || (isLtw(level) ? (plural ? 'Wahlkreise' : 'Wahlkreis') : plural ? 'Gebiete' : 'Gebiet');
 export const countLabel = (n: number, level: string) => `${n.toLocaleString('de-DE')} ${levelWord(level, n !== 1)}`;
