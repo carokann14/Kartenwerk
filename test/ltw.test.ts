@@ -94,11 +94,14 @@ ok(f.kind === 'area' && f.id === '13', `Fokus Wahlkreis Greifswald → Länder: 
   const n = normalizeDoc(old);
   ok(n.layers.laender === false && n.style.laender === '#E2DDD2' && defaultDoc().layers.laender === true, 'ältere Projekte: Nachbarländer aus (Aussehen bleibt), neue Projekte: an; Farben ergänzt');
 }
-// Weitere Länder: Vorlagen für die Ergebnisdateien (Niedersachsen, Nordrhein-Westfalen, Rheinland-Pfalz)
+// Weitere Länder: Vorlagen für die Ergebnisdateien (NI, NW, RP, BW, SH, ST)
 for (const [file, preset, geoId, n, ms] of [
   ['ni-2022/Landtagswahlen-NI.txt', 'ltw-ni', 'ltw-ni-2022', 87, 0],
   ['nw-2022/Landtagswahlen-NW.txt', 'ltw-nw', 'ltw-nw-2022', 128, 0],
   ['rp-2026/Endgueltiges_Ergebnis_LW_2026_Wahlkreise.xlsx', 'ltw-rp', 'ltw-rp-2026', 52, 0],
+  ['bw-2026/ltw26-ergebnisse.csv', 'ltw-bw', 'ltw-bw-2026', 70, 0],
+  ['sh-2022/ergebnis-download.csv', 'ltw-sh', 'ltw-sh-2022', 35, 0],
+  ['st-2026/Ergebnisse_LT_2026.xlsx', 'ltw-st', 'ltw-st-2026', 41, 0],
 ] as const) {
   await ensureGeo([geoId]);
   const r = await readFile(file.split('/')[1], buf('data-src/ltw/' + file));

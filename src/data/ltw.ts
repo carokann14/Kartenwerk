@@ -72,9 +72,9 @@ export const LTW: LtwEntry[] = [
       file: 'Landtagswahlkreise_Niedersachsen_2022.zip', idField: 'WKNum', nameField: 'WKName',
       // Die Datei kürzt Namen am ersten Leerzeichen („Bad“, „Sarstedt/Bad“); volle Namen laut wahlen.statistik.niedersachsen.de/LW2022
       name: p => ({ 21: 'Sarstedt/Bad Salzdetfurth', 35: 'Bad Pyrmont', 79: 'Grafschaft Bentheim' } as Record<number, string>)[Number(p.WKNum)] || String(p.WKName),
-      attribution: '© Landesamt für Statistik Niedersachsen (LSN), Landtagswahlkreise 2022 (Gebietsstand 01.11.2021)',
+      attribution: '© Landesamt für Statistik Niedersachsen, Hannover 2022, Wahlkreiskarte für die Wahl zum 19. Niedersächsischen Landtag; Grundlage der Geoinformationen: Auszug aus den Geodaten des Landesamtes für Geoinformation und Landesvermessung Niedersachsen, © 2022; Stadt Braunschweig (dl-de/by-2-0), Stadt Göttingen, Landeshauptstadt Hannover, Stadt Oldenburg, Stadt Osnabrück, Stadt Salzgitter, Stadt Wolfsburg',
       source: 'https://www.statistik.niedersachsen.de/themen/Landtagswahlen-niedersachsen/landtagswahlen-in-niedersachsen-tabellen-und-wahlkreiskarten-227429.html',
-      license: 'eigene Nutzungshinweise des LSN (PDF, noch nicht vorliegend)',
+      license: 'keine Lizenz angegeben; Weiterverwendung mit Copyright-Vermerk laut Nutzungshinweisen des LSN verlangt',
     },
   },
   {
@@ -85,6 +85,16 @@ export const LTW: LtwEntry[] = [
       attribution: '© Ministerium des Innern des Landes Nordrhein-Westfalen, IT.NRW, Düsseldorf, Wahlkreiseinteilung des Landes Nordrhein-Westfalen zur Landtagswahl am 15. Mai 2022',
       source: 'https://www.wahlergebnisse.nrw/landtagswahlen/2022/wahlkreiskarten.shtml',
       license: 'Pflichtvermerk von IT.NRW (keine weitere Lizenz angegeben)',
+    },
+  },
+  {
+    bl: '15', code: 'st', year: 2026, land: 'Sachsen-Anhalt', election: 'Landtagswahl Sachsen-Anhalt 2026', count: 41,
+    geo: {
+      file: 'Wahlkreise_LTW_2026.zip', idField: 'Nr. Wahlkr', nameField: 'Name Wahlk',
+      name: p => String(p['Name Wahlk']).replace('Wittenebrg', 'Wittenberg'),   // Schreibfehler in der Datei
+      attribution: '© Statistisches Landesamt Sachsen-Anhalt, Wahlkreise zur Landtagswahl 2026',
+      source: 'https://statistik.sachsen-anhalt.de/themen/gebiet-und-wahlen/wahlen/landtagswahl-2026-2/uebersicht-wahlkreiseinteilung',
+      license: 'alle Rechte vorbehalten',
     },
   },
 ];
@@ -271,7 +281,101 @@ const rpPreset: LtwPreset = {
   },
 };
 
-export const LTW_PRESETS: LtwPreset[] = [mvPreset, niPreset, nwPreset, rpPreset];
+// Baden-Württemberg: Statistisches Landesamt, ltw26-ergebnisse.csv (alle Ebenen; Wahlvorschläge nur als D…/F… nummeriert,
+// Namen laut „Hinweise-Datensatzbeschreibung“). D22 = anderer Kreiswahlvorschlag je Wahlkreis, wird nicht aufs Land summiert.
+const BW_2026: Record<string, string> = {
+  1: 'GRÜNE', 2: 'CDU', 3: 'SPD', 4: 'FDP', 5: 'AfD', 6: 'Die Linke', 7: 'FREIE WÄHLER', 8: 'Die PARTEI', 9: 'dieBasis', 10: 'KlimalisteBW', 11: 'ÖDP', 12: 'Volt',
+  13: 'Bündnis C', 14: 'PDH', 15: 'Verjüngungsforschung', 16: 'BSW', 17: 'Die Gerechtigkeitspartei', 18: 'PDR', 19: 'PdF', 20: 'Tierschutzpartei', 21: 'Werteunion', 22: 'Andere Kreiswahlvorschläge',
+};
+/** Votemanager-Spalten: A…F und D1…/F1… in Kartenwerk-Beschriftungen */
+function vmLabel(h: string, names: Record<string, string>, D: Record<string, string> = names): string {
+  const m = h.match(/^([DF])(\d+)$/); if (m) { const n = (m[1] === 'D' ? D : names)[m[2]]; return n ? `${n} · ${m[1] === 'D' ? 'Erststimmen' : 'Zweitstimmen'}` : `Wahlvorschlag ${h} · ${m[1] === 'D' ? 'Erststimmen' : 'Zweitstimmen'}`; }
+  if (/\(A\)$/.test(h)) return 'Wahlberechtigte';
+  if (/\(B\)$/.test(h)) return 'Wählende';
+  if (/\(C\)$/.test(h)) return 'Ungültige Stimmen · Erststimmen';
+  if (/\(D\)$/.test(h)) return 'Gültige Stimmen · Erststimmen';
+  if (/\(E\)$/.test(h)) return 'Ungültige Stimmen · Zweitstimmen';
+  if (/\(F\)$/.test(h)) return 'Gültige Stimmen · Zweitstimmen';
+  return '';
+}
+const bwPreset: LtwPreset = {
+  id: 'ltw-bw', code: 'bw', label: 'Baden-Württemberg · Landtagswahl nach Wahlkreisen',
+  hint: 'Downloaddatei des Statistischen Landesamts: alle Ebenen bis zum Wahlbezirk. Übernommen werden die 70 Wahlkreise; die Parteien stehen in der Datei nur als D1…/F1…, die Namen stammen aus der Datensatzbeschreibung 2026. „Andere Kreiswahlvorschläge“ (D22) sind je nach Wahlkreis BÜNDNIS DEUTSCHLAND, PIRATEN oder Einzelbewerbungen.',
+  find: c => findIn(c, r => r.includes('Wahlkreisnummer') && r.includes('Gebietsart') && r.includes('Erststimmen gueltige (D)') && r.includes('Zweitstimmen gueltige (F)'), 5),
+  meta: () => ({ year: 2026, title: 'Landtagswahl Baden-Württemberg 2026', attribution: 'Statistisches Landesamt Baden-Württemberg' }),
+  build: (c, h) => {
+    const H = txtRow(c[h]), ix = (n: string) => H.indexOf(n), ga = ix('Gebietsart');
+    const cols: [string, number][] = [['Wahlkreis', ix('Wahlkreisnummer')], ['Name', ix('Wahlkreisname')]];
+    H.forEach((x, i) => { const l = vmLabel(x, BW_2026); if (l) cols.push([l, i]); });
+    const row = (r: Cell[]) => cols.map(([x, i]) => (x === 'Wahlkreis' ? wkKey(r[i]) : x === 'Name' ? s(r[i]).replace(/^\d+\s*-\s*/, '') : numOf(r[i])));
+    const rows = c.slice(h + 1).filter(r => s(r[ga]) === 'WAHLKREIS');
+    const land = c.slice(h + 1).find(r => s(r[ga]) === 'LAND');
+    const t = dropEmpty({ header: cols.map(x => x[0]), body: rows.map(row), notes: [] }, 2);
+    const inc = rows.filter(r => s(r[ix('gemeldete Wahlbezirke')]) !== s(r[ix('Anzahl Wahlbezirke')])).length;
+    t.notes.push(`${t.body.length} Wahlkreise mit Erst- und Zweitstimmen.` + (inc ? ` In ${inc} Wahlkreisen sind noch nicht alle Wahlbezirke gemeldet.` : ''));
+    if (land) { const L = row(land), keep = cols.map(([x]) => x); checkLand(t, t.header.map(x => L[keep.indexOf(x)]), 2, l => /^Andere Kreiswahlvorschläge/.test(l)); }
+    return t;
+  },
+};
+
+// Schleswig-Holstein: Statistikamt Nord, ergebnis-download.csv (nur Wahlbezirke, Wahlkreis „01“ + Nummer; Namen laut Feldbezeichnungen 2022)
+const SH_2022_D: Record<string, string> = { 1: 'CDU', 2: 'SPD', 3: 'GRÜNE', 4: 'FDP', 5: 'AfD', 6: 'DIE LINKE', 7: 'SSW', 9: 'FREIE WÄHLER', 10: 'Die PARTEI', 11: 'Z.', 12: 'dieBasis', 13: 'Die Humanisten', 16: 'Volt', 17: 'Bündnis C', 18: 'FAMILIE', 19: 'LKR', 20: 'Einzelbewerbung' };
+const SH_2022_F: Record<string, string> = { 1: 'CDU', 2: 'SPD', 3: 'GRÜNE', 4: 'FDP', 5: 'AfD', 6: 'DIE LINKE', 7: 'SSW', 8: 'PIRATEN', 9: 'FREIE WÄHLER', 10: 'Die PARTEI', 11: 'Z.', 12: 'dieBasis', 13: 'Die Humanisten', 14: 'Gesundheitsforschung', 15: 'Tierschutzpartei', 16: 'Volt' };
+const shPreset: LtwPreset = {
+  id: 'ltw-sh', code: 'sh', label: 'Schleswig-Holstein · Landtagswahl nach Wahlkreisen',
+  hint: 'Downloaddatei des Statistikamts Nord mit allen Wahl- und Briefwahlbezirken; Kartenwerk summiert sie zu den 35 Wahlkreisen. Direktstimmen erscheinen als Erst-, Listenstimmen als Zweitstimmen; die Parteinamen stammen aus den Feldbezeichnungen 2022.',
+  find: c => findIn(c, r => r[0] === 'Wahlkreis' && r.includes('Erfassungsgebietsart') && r.includes('Listenstimmen gueltige (F)'), 5),
+  meta: () => ({ year: 2022, title: 'Landtagswahl Schleswig-Holstein 2022', attribution: 'Statistisches Amt für Hamburg und Schleswig-Holstein' }),
+  build: (c, h) => {
+    const H = txtRow(c[h]);
+    const lab = (x: string) => /Direktstimmen ungueltige/.test(x) ? 'Ungültige Stimmen · Erststimmen' : /Direktstimmen gueltige/.test(x) ? 'Gültige Stimmen · Erststimmen' : /Listenstimmen ungueltige/.test(x) ? 'Ungültige Stimmen · Zweitstimmen' : /Listenstimmen gueltige/.test(x) ? 'Gültige Stimmen · Zweitstimmen'
+      : /^D\d+$/.test(x) ? vmLabel(x, SH_2022_F, SH_2022_D) : /^F\d+$/.test(x) ? vmLabel(x, SH_2022_F) : vmLabel(x, {});
+    const cols = H.map((x, i) => [lab(x), i] as const).filter(([x]) => x);
+    const acc = new Map<string, (number | null)[]>(); let n = 0;
+    for (const r of c.slice(h + 1)) {
+      const code = s(r[0]); if (!/^\d{4}$/.test(code)) continue; n++;
+      const k = String(Number(code.slice(2)));
+      const v = acc.get(k) || cols.map(() => null as number | null);
+      cols.forEach(([, i], j) => { const x = numOf(r[i]); if (x != null) v[j] = (v[j] ?? 0) + x; });
+      acc.set(k, v);
+    }
+    const body: Cell[][] = [...acc].sort((a, b) => +a[0] - +b[0]).map(([k, v]) => [k, ...v]);
+    const t = dropEmpty({ header: ['Wahlkreis', ...cols.map(x => x[0])], body, notes: [] }, 1);
+    t.notes.push(`${n} Wahl- und Briefwahlbezirke zu ${t.body.length} Wahlkreisen summiert.`);
+    return t;
+  },
+};
+
+// Sachsen-Anhalt: Statistisches Landesamt, Ergebnisse_LT_2026.xlsx, Blatt „Land RKR WKR“ (Satzart WKR, Wahllokal leer = Urne + Brief)
+const stPreset: LtwPreset = {
+  id: 'ltw-st', code: 'st', label: 'Sachsen-Anhalt · Landtagswahl nach Wahlkreisen',
+  hint: 'Datei des Statistischen Landesamts (Blatt „Land RKR WKR“): übernommen werden die 41 Wahlkreise mit Urnen- und Briefwahl zusammen; die gewählte Person je Wahlkreis steht in der Spalte „Direktmandat“.',
+  find: c => findIn(c, r => r.includes('Satzart') && r.includes('Schlüsselnummer') && r.includes('Wahllokal') && r.some(x => /^F\d+\./.test(x)) && r.some(x => /^D\d+\./.test(x)), 3),
+  meta: c => {
+    const r = c.find((x, i) => i > 0 && s(x[2]) === 'LAN');
+    const d = r?.[1] as unknown;
+    const y = d instanceof Date ? d.getFullYear() : typeof d === 'number' && d > 30000 ? new Date(Date.UTC(1899, 11, 30) + d * 864e5).getUTCFullYear() : Number(s((d ?? '') as Cell).match(/(20\d\d)/)?.[1]) || 2026;
+    const art = r && s(r[0]) === 'E' ? ', endgültiges Ergebnis' : r && s(r[0]) === 'V' ? ', vorläufiges Ergebnis' : '';
+    return { year: y, title: `Landtagswahl Sachsen-Anhalt ${y}${art}`, attribution: 'Statistisches Landesamt Sachsen-Anhalt' };
+  },
+  build: (c, h) => {
+    const H = txtRow(c[h]), ix = (n: string) => H.indexOf(n);
+    const lab = (x: string) => x === 'Schlüsselnummer' ? 'Wahlkreis' : x === 'Name' ? 'Name' : x === 'A.Wahlberechtigte' ? 'Wahlberechtigte' : x === 'B.Wähler' ? 'Wählende'
+      : x === 'C.Ungültige.Erststimmen' ? 'Ungültige Stimmen · Erststimmen' : x === 'D.Gültige.Erststimmen' ? 'Gültige Stimmen · Erststimmen' : x === 'E.Ungültige.Zweitstimmen' ? 'Ungültige Stimmen · Zweitstimmen' : x === 'F.Gültige.Zweitstimmen' ? 'Gültige Stimmen · Zweitstimmen'
+      : /^D\d+\.EB$/.test(x) ? 'Einzelbewerbung · Erststimmen' : /^D\d+\./.test(x) ? x.replace(/^D\d+\./, '') + ' · Erststimmen' : /^F\d+\./.test(x) ? x.replace(/^F\d+\./, '') + ' · Zweitstimmen' : x === 'Gewählt.im.Wahlkreis' ? 'Direktmandat' : '';
+    const cols = H.map((x, i) => [lab(x), i] as const).filter(([x]) => x);
+    const tot = (r: Cell[]) => s(r[ix('Wahllokal')]) === '';
+    const row = (r: Cell[]) => cols.map(([x, i]) => (x === 'Wahlkreis' ? wkKey(r[i]) : x === 'Name' || x === 'Direktmandat' ? s(r[i]) : numOf(r[i])));
+    const rows = c.slice(h + 1).filter(r => s(r[ix('Satzart')]) === 'WKR' && tot(r));
+    const land = c.slice(h + 1).find(r => s(r[ix('Satzart')]) === 'LAN' && tot(r));
+    const t = dropEmpty({ header: cols.map(x => x[0]), body: rows.map(row), notes: [] }, 2);
+    t.notes.push(`${t.body.length} Wahlkreise (Urnen- und Briefwahl zusammen) mit Erst- und Zweitstimmen.`);
+    if (land) { const L = row(land), keep = cols.map(([x]) => x); checkLand(t, t.header.map(x => L[keep.indexOf(x)]), 2, l => l === 'Direktmandat'); }
+    return t;
+  },
+};
+
+export const LTW_PRESETS: LtwPreset[] = [mvPreset, niPreset, nwPreset, rpPreset, bwPreset, shPreset, stPreset];
 export const ltwPreset = (id: string) => LTW_PRESETS.find(p => p.id === id) || null;
 /** Gebietsstand zur Vorlage: gleiches Land, passendes Jahr, sonst das neueste */
 export function ltwGeoFor(p: LtwPreset, year?: number): string {
