@@ -109,7 +109,9 @@ export function legendPrims(doc: Doc, P: { x: number; y: number; w?: number } = 
       if (e.kind === 'hatch' && !e.bg) paths.push({ d: `M${ax} ${ay}h${w}v${h}h${-w}z`, fill: 'none', stroke: '#C9C3B8', width: 0.8 });
     }
   };
-  for (const tl of wrapText(M.title, 'bold', base, Math.max(220, 300 * ts))) { T(0, y + base * 0.95, tl, 'bold', base, ink); y += base * 1.3; }
+  // Umbruchbreite wie bei den Einträgen: von Hand gesetzte Breite (Ziehgriff, siehe m4-1o) hat Vorrang, sonst wie bisher.
+  const titleWrapW = P.w ? Math.max(220, P.w) : Math.max(220, 300 * ts);
+  for (const tl of wrapText(M.title, 'bold', base, titleWrapW)) { T(0, y + base * 0.95, tl, 'bold', base, ink); y += base * 1.3; }
   y += base * 0.25;
   // Klassenbreite: mindestens so breit wie die längste Grenzbeschriftung (große Zahlen überlappen sonst)
   const segW = (n: number, min: number) => Math.round(Math.max(min, ...cm.breaks.slice(0, Math.max(0, n - 1)).map(b => measureW(fmtBreak(b), 'text', small) + small * 0.8)));
