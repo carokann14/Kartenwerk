@@ -5,7 +5,7 @@ import { GEO, bboxOfIds } from '../geo/geo';
 import { legendPrims, textBlock } from '../render/elements';
 import { fokusBBox, insetBBox } from '../render/scene';
 import { PRESET_GUIDES, PRESETS } from './defaults';
-import { defaultLogoBox, logoRatio } from './logo';
+import { PRESET_LOGO_BOX, defaultLogoBox, logoRatio } from './logo';
 import type { Doc, FrameBox, Guides, Layout, Margin, Variant, View } from './types';
 
 export const defaultTS = (W: number, H: number) => Math.round(clamp(Math.sqrt(W * H) / 1207, 0.7, 1.25) * 100) / 100;
@@ -61,7 +61,21 @@ export function makeLayout(doc: Doc, W: number, H: number, ts: number, guides?: 
   const L: Layout = { m, reserve: 0, title: { x: mL, y: mT, w: 100 }, subtitle: { x: mL, y: mT, w: 100 }, source: { x: mL, y: H - mB - srcH, w: srcW }, legend: { x: mL, y: mT, w: 0 }, main: { ...blank }, inset: { ...blank }, logo: { x: mL, y: mT, w: 100 } };
   const titleH = (w: number) => doc.texts.title.visible ? tb('title', w) + Math.round(12 * s) : 0;
   const subH = (w: number) => doc.texts.subtitle.visible ? tb('subtitle', w) : 0;
-  const bottom = H - mB - srcH - Math.round(16 * s);
+  // Fester Logo-Platz des Formats (z. B. 9:16, 4:5) über der Quellenzeile: Quellenzeile rechts neben das Logo,
+  // Unterkante bündig mit dem Logo; der Inhalt darüber hält Abstand zum höheren der beiden.
+  let srcTop = H - mB - srcH;
+  const fixedLogo = PRESET_LOGO_BOX[`${W}x${H}`], logoAsset = doc.logo?.visible ? doc.logo.asset : null;
+  if (fixedLogo && logoAsset && doc.texts.source.visible) {
+    const lh = fixedLogo.w * logoRatio(logoAsset), lBottom = fixedLogo.y + lh;
+    const overlap = fixedLogo.y < H - mB && lBottom > srcTop && fixedLogo.x < mL + srcW && fixedLogo.x + fixedLogo.w > mL;
+    const gap = Math.round(Math.min(W, H) * 0.02), x2 = fixedLogo.x + fixedLogo.w + gap, w2 = W - mR - x2;
+    if (overlap && w2 >= srcW * 0.35) {
+      const h2 = tb('source', w2);
+      L.source = { x: x2, y: Math.round((lBottom - h2) * 10) / 10, w: w2 };
+      srcTop = Math.min(L.source.y, fixedLogo.y);
+    }
+  }
+  const bottom = srcTop - Math.round(16 * s);
   if (tall) {
     const tw = W - mL - mR;
     L.title = { x: mL, y: mT, w: tw };
@@ -87,7 +101,7 @@ export function makeLayout(doc: Doc, W: number, H: number, ts: number, guides?: 
     let y = mT + titleH(tw); L.subtitle = { x: mL, y, w: tw }; y += subH(tw) + Math.round(34 * s);
     L.legend = { x: mL, y, w: 0 };
     const mx = mL + tw + Math.round(W * 0.03);
-    L.main = { ...blank, x: mx, y: mT, w: W - mx - mR, h: H - mT - mB - srcH - Math.round(14 * s) };
+    L.main = { ...blank, x: mx, y: mT, w: W - mx - mR, h: srcTop - mT - Math.round(14 * s) };
     const colW = Math.round(L.main.w * 0.27);
     L.reserve = colW + Math.round(10 * s);
     L.inset = { ...blank, x: L.main.x + L.main.w - colW, y: L.main.y + Math.round(4 * s), w: colW, h: Math.round(colW * 1.08) };
