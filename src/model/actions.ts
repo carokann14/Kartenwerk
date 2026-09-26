@@ -3,7 +3,8 @@ import { current, Draft } from 'immer';
 import { getDoc, getUI, setDoc, setUI, toast, update } from './store';
 import { defaultDoc, normalizeDoc } from './defaults';
 import { fitInset, fitMain, makeVariant, relayout } from './layout';
-import type { ColorRule, Doc, Fokus, Variant } from './types';
+import type { ColorRule, Doc, Fokus, Variant, View } from './types';
+import { clamp } from '../lib/util';
 import type { Dataset } from '../data/types';
 import { GEO, ensureGeo, geoLabel } from '../geo/geo';
 import { translateFokus } from '../geo/relate';
@@ -209,6 +210,31 @@ export function relayoutActive() { update(d => { const plain = current(d) as Doc
 export function refitMain() { update(d => refit(d)); }
 export function refitFrame(id: 'main' | 'inset') {
   update(d => { const plain = current(d) as Doc; const v: Variant = JSON.parse(JSON.stringify(plain.variants[plain.active])); if (id === 'main') { fitMain(plain, v); d.variants[d.active].L.main.view = v.L.main.view; } else { fitInset(plain, v); d.variants[d.active].L.inset.view = v.L.inset.view; } });
+}
+/** Ausschnitt, den „Einpassen“ für diesen Kartenrahmen setzen würde – ohne das Dokument zu ändern. Je Dokumentstand zwischengespeichert. */
+const fitCache = new WeakMap<Doc, Partial<Record<'main' | 'inset', View>>>();
+export function fittedView(doc: Doc, id: 'main' | 'inset'): View {
+  let c = fitCache.get(doc); if (!c) { c = {}; fitCache.set(doc, c); }
+  if (!c[id]) {
+    const v0 = doc.variants[doc.active];
+    const v = { ...v0, L: { ...v0.L, [id]: { ...v0.L[id] } } } as Variant;
+    if (id === 'main') fitMain(doc, v); else fitInset(doc, v);
+    c[id] = v.L[id].view;
+  }
+  return c[id]!;
+}
+/** Zoom des Kartenausschnitts in Prozent; 100 % = eingepasst wie mit „Einpassen“ */
+export const MAP_ZOOM_MIN = 10, MAP_ZOOM_MAX = 2000;
+export function mapZoomPct(doc: Doc, id: 'main' | 'inset'): number {
+  const fk = fittedView(doc, id).k, k = doc.variants[doc.active].L[id].view.k;
+  return fk > 0 ? k / fk * 100 : 100;
+}
+/** Zoom des Kartenausschnitts setzen; die Mitte des Rahmens bleibt stehen */
+export function setMapZoom(id: 'main' | 'inset', pct: number) {
+  const d = getDoc(); if (!d) return;
+  if (d.variants[d.active].locked[id]) { toast('Ausschnitt gesperrt'); return; }
+  const k = clamp(fittedView(d, id).k * clamp(pct, MAP_ZOOM_MIN, MAP_ZOOM_MAX) / 100, 0.002, 3);
+  update(dd => { dd.variants[dd.active].L[id].view.k = k; }, { key: 'mapzoom-' + id });
 }
 export function refitAfterInset() { update(d => refit(d, 'both')); }
 

@@ -16,7 +16,7 @@ export const PRESETS: Record<string, { w: number; h: number; label: string }> = 
  *  beim „Neuen Projekt“ ebenso wie bei „+ Format“. Formate ohne Eintrag bekommen weiterhin keine Hilfslinien. */
 export const PRESET_GUIDES: Partial<Record<string, { x: number[]; y: number[] }>> = {
   '4:5': { x: [80, 1000], y: [80, 1270] },     // Instagram 4:5: 80 px Rand rundum
-  '9:16': { x: [80, 1000], y: [260, 1620] },   // Story/Reel 9:16: Safe Zone, oben schmal (260 px), unten breit (1920 − 1620 = 300 px) für Bedienelemente
+  '9:16': { x: [80, 1000], y: [290, 1630] },   // Story/Reel 9:16: Safe Zone, oben 290 px, unten 1920 − 1630 = 290 px
 };
 export const LABEL_PRESETS: Record<string, { label: string; template: string | null }> = {
   nr: { label: 'Wahlkreisnummer', template: '{nr}' },

@@ -18,6 +18,7 @@ import { bubbleSet } from '../render/bubbles';
 import { groupMetrics, areaRowIndex } from '../data/derive';
 import { LAENDER } from '../geo/geo';
 import { Icon } from './common';
+import { MapZoom } from './MapZoom';
 import { logoRatio, logoRect } from '../model/logo';
 
 // Zeiger-Zustand außerhalb des Dokuments (kein Neuzeichnen der Panels)
@@ -301,7 +302,8 @@ function MapModeBar({ wrap }: { wrap: React.RefObject<HTMLDivElement> }) {
   const id = ui.mapMode;
   return (
     <div className="mapmode-bar">
-      <b>Kartenmodus</b><span style={{ opacity: .7 }}>{locked ? 'Ausschnitt gesperrt' : 'Mausrad zoomt · Ziehen verschiebt · Doppelklick: tiefer'}</span>
+      <b>Kartenmodus</b><span className="mapmode-hint" style={{ opacity: .7 }}>{locked ? 'Ausschnitt gesperrt' : 'Mausrad zoomt · Ziehen verschiebt · Doppelklick: tiefer'}</span>
+      <MapZoom doc={doc} id={id} compact />
       <button className="btn small" onClick={() => refitFrame(id)}><Icon.fit /> Einpassen</button>
       <button className={'btn small' + (locked ? ' on' : '')} onClick={() => update(d => { d.variants[d.active].locked[id] = !d.variants[d.active].locked[id]; })}><Icon.lock /> {locked ? 'Gesperrt' : 'Sperren'}</button>
       <button className="btn small" onClick={() => setUI({ mapMode: null })}>Fertig <span className="kbd kbd-inv">Esc</span></button>

@@ -18,6 +18,7 @@ import { AnnProps, ArrowIcon, MarkerIcon } from './elementsUI';
 import { BubbleSection } from './panels/Blasen';
 import { elName } from '../render/annotations';
 import { LogoProps } from './LogoUI';
+import { MapZoom } from './MapZoom';
 import { setLogoVisible } from '../model/logo';
 
 // ---------- Ebenen ----------
@@ -170,10 +171,11 @@ function FrameProps({ doc, id }: { doc: Doc; id: 'main' | 'inset' }) {
       <button className={'btn' + (ui.mapMode === id ? ' primary' : '')} onClick={() => setUI({ mapMode: ui.mapMode === id ? null : id })}><Icon.target /> {ui.mapMode === id ? 'Kartenmodus beenden' : 'Kartenmodus'}</button>
       <button className="btn" onClick={() => refitFrame(id)}><Icon.fit /> Einpassen</button>
     </div>
+    <Field stack label="Zoom der Karte"><MapZoom doc={doc} id={id} /></Field>
     <Check checked={v.locked[id]} onChange={on => update(d => { d.variants[d.active].locked[id] = on; })}>Ausschnitt sperren</Check>
     <dl className="kv"><dt>Position</dt><dd>{Math.round(F.x)}, {Math.round(F.y)}</dd><dt>Größe</dt><dd>{Math.round(F.w)} × {Math.round(F.h)}</dd><dt>1 px entspricht</dt><dd>{mpp >= 1000 ? fmt1(mpp / 1000) + ' km' : Math.round(mpp) + ' m'}</dd><dt>Projektion</dt><dd>ETRS89 / UTM 32</dd></dl>
     {id === 'inset' && <Field label="Gebiet"><select value={doc.inset.preset} onChange={e => { const p = e.target.value; update(d => { d.inset.preset = p; }); refitAfterInset(); }} aria-label="Gebiet der Detail-Lupe">{Object.entries(INSET_DEFS).map(([k, x]) => <option key={k} value={k} disabled={!x.pick(g).length}>{x.label}</option>)}</select></Field>}
-    <p className="hint">Rahmen ziehen verschiebt ihn, das Quadrat unten rechts ändert die Größe. Ein gesperrter Ausschnitt bleibt beim Wechsel des Fokus stehen.</p>
+    <p className="hint">Zoom: 100 % entspricht „Einpassen“; die Mitte des Rahmens bleibt beim Zoomen stehen. Rahmen ziehen verschiebt ihn, die Griffe ändern die Größe. Ein gesperrter Ausschnitt bleibt beim Wechsel des Fokus stehen.</p>
   </>;
 }
 
