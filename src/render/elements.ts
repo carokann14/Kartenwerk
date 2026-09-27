@@ -108,6 +108,7 @@ export function legendPrims(doc: Doc, P: { x: number; y: number; w?: number } = 
   if (!doc.legend.visible || isChart(doc)) return null;   // Diagramme: Zeichenerklärung im Diagramm selbst
   const M = legendModel(doc); if (!M) return null;
   const cm = colorModel(doc), c = doc.color;
+  const unit = doc.legend.unitOn ? doc.legend.unit : cm.unit;   // eigenes Zeichen (an) überschreibt das automatische (%, Pkt. …), sonst wie bisher
   const base = +(doc.legend.size * ts).toFixed(2), small = Math.round(base * 0.74), ink = doc.style.ink, soft = doc.style.inkSoft;
   // Umbruchbreite bei „Neben“: von Hand gesetzte Breite (Ziehgriff/Feld, siehe m4-1o) hat Vorrang, sonst wie bisher aus der Kartenbreite abgeleitet.
   const wrapW = P.w ? Math.max(150, P.w) : Math.max(260, mainW * 0.8);
@@ -143,7 +144,7 @@ export function legendPrims(doc: Doc, P: { x: number; y: number; w?: number } = 
   y += base * 0.25;
   // Klassenbreite: mindestens so breit wie die längste Grenzbeschriftung (große Zahlen überlappen sonst)
   const segW = (n: number, min: number) => Math.round(Math.max(min, ...cm.breaks.slice(0, Math.max(0, n - 1)).map(b => measureW(fmtBreak(b), 'text', small) + small * 0.8)));
-  const scale = (n: number, sw: number, gap: number, yy: number) => cm.breaks.forEach((b, k) => { if (k < n - 1) T((k + 1) * (sw + gap) - gap / 2, yy, fmtBreak(b), 'text', small, soft, 'middle'); });
+  const scale = (n: number, sw: number, gap: number, yy: number) => cm.breaks.forEach((b, k) => { if (k < n - 1) T((k + 1) * (sw + gap) - gap / 2, yy, fmtBreak(b) + unit, 'text', small, soft, 'middle'); });
   const rows = M.rows.filter(e => !e.hidden), more = M.more.filter(e => !e.hidden);
   const orient = doc.legend.orientation;
   /** Anordnung (untereinander/nebeneinander/Raster) für eine Reihe gleich hoher Einträge; misst und zeichnet jeden Eintrag über measure/draw. */
@@ -208,18 +209,18 @@ export function legendPrims(doc: Doc, P: { x: number; y: number; w?: number } = 
     const { min, max, hue } = cm.continuous, N = CONT_STEPS, bw = Math.round(base * 11), sh = Math.round(base * 1.0), w1 = bw / N;
     for (let s2 = 0; s2 < N; s2++) R(s2 * w1, y, w1 + 0.3, sh, contColor(hue, s2 / (N - 1)));
     const f = (x: number) => fmtNum(x, Math.abs(max - min) < 10 ? 1 : 0);
-    T(0, y + sh + small * 1.25, f(min) + cm.unit, 'text', small, soft, 'start');
+    T(0, y + sh + small * 1.25, f(min) + unit, 'text', small, soft, 'start');
     T(bw / 2, y + sh + small * 1.25, f((min + max) / 2), 'text', small, soft, 'middle');
-    T(bw, y + sh + small * 1.25, f(max) + cm.unit, 'text', small, soft, 'end');
+    T(bw, y + sh + small * 1.25, f(max) + unit, 'text', small, soft, 'end');
     y += sh + small * 0.9;
   } else if (cm.continuous) {
     // „Neben“/„Raster“ gewählt: für eine stetige Skala nicht sinnvoll getrennt, beides dreht den Verlauf senkrecht (oben = Höchstwert).
     const { min, max, hue } = cm.continuous, N = CONT_STEPS, bh = Math.round(base * 11), sw = Math.round(base * 1.6), h1 = bh / N;
     for (let s2 = 0; s2 < N; s2++) R(0, y + s2 * h1, sw, h1 + 0.3, contColor(hue, 1 - s2 / (N - 1)));
     const f = (x: number) => fmtNum(x, Math.abs(max - min) < 10 ? 1 : 0);
-    T(sw + base * 0.5, y + capOffset('text', small), f(max) + cm.unit, 'text', small, soft, 'start');
+    T(sw + base * 0.5, y + capOffset('text', small), f(max) + unit, 'text', small, soft, 'start');
     T(sw + base * 0.5, y + bh / 2 + capOffset('text', small), f((min + max) / 2), 'text', small, soft, 'start');
-    T(sw + base * 0.5, y + bh + capOffset('text', small), f(min) + cm.unit, 'text', small, soft, 'start');
+    T(sw + base * 0.5, y + bh + capOffset('text', small), f(min) + unit, 'text', small, soft, 'start');
     y += bh;
   } else if (cm.diverging && cm.shown && orient === 'vertical') {
     // Vorgabe „Unter“: wie bisher, eine zusammenhängende Reihe mit Grenzbeschriftung darunter
@@ -243,7 +244,7 @@ export function legendPrims(doc: Doc, P: { x: number; y: number; w?: number } = 
   } else if (c.mode === 'anteil' || c.mode === 'wert') {
     // „Neben“/„Raster“ gewählt: einzelne Klassen mit eigener Bereichsbeschriftung, wie eine gewöhnliche Liste anordenbar
     const n = cm.steps || 5;
-    const clsLbl = (k: number) => n <= 1 ? '' : k === 0 ? `< ${fmtBreak(cm.breaks[0])}${cm.unit}` : k === n - 1 ? `≥ ${fmtBreak(cm.breaks[n - 2])}${cm.unit}` : `${fmtBreak(cm.breaks[k - 1])}–${fmtBreak(cm.breaks[k])}${cm.unit}`;
+    const clsLbl = (k: number) => n <= 1 ? '' : k === 0 ? `< ${fmtBreak(cm.breaks[0])}${unit}` : k === n - 1 ? `≥ ${fmtBreak(cm.breaks[n - 2])}${unit}` : `${fmtBreak(cm.breaks[k - 1])}–${fmtBreak(cm.breaks[k])}${unit}`;
     const items = Array.from({ length: n }, (_, k) => swItem(cm.classColors[k] || '#CCCCCC', clsLbl(k)));
     list(items, Math.round(base * (n > 5 ? 0.85 : 1.05)), small, soft, orient);
   }

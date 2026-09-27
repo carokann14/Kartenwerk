@@ -170,6 +170,7 @@ function LegRow({ doc, e, section }: { doc: Doc; e: LegEntry; section: LegEntry[
 export function LegendProps({ doc }: { doc: Doc }) {
   const M = legendModel(doc), lg = doc.legend, v = activeVariant(doc);
   const isMatrix = M?.main === 'matrix';
+  const hasScale = isMatrix || M?.main === 'bar';   // Klassen-Legende mit Zahlen (Anteil, Wert, Stärke, Veränderung), nicht Sieger/Kategorie
   return (
     <>
       <div className="rp-head"><h2>Eigenschaften</h2></div>
@@ -186,6 +187,8 @@ export function LegendProps({ doc }: { doc: Doc }) {
       {lg.orientation === 'horizontal' && <p className="hint">Bestimmt, wann bei „Neben“ eine neue Zeile beginnt; 0 = automatisch (richtet sich nach der Kartenbreite). Die Höhe folgt immer aus der Anzahl der Zeilen und lässt sich nicht einzeln setzen. Auch per Ziehgriff an der Legende selbst einstellbar, wenn sie ausgewählt ist.</p>}
       <Check checked={lg.counts} onChange={on => update(d => { d.legend.counts = on; })}>Anzahl der Gebiete zeigen</Check>
       <Field label="Größe (px)"><NumInput min={9} max={40} value={lg.size} onChange={n => update(d => { d.legend.size = n; }, { key: 'lg-size' })} ariaLabel="Schriftgröße der Legende" /></Field>
+      {hasScale && <Check checked={lg.unitOn} onChange={on => update(d => { d.legend.unitOn = on; if (on && !d.legend.unit) d.legend.unit = '%'; })}>Zeichen hinter den Werten zeigen (z. B. %)</Check>}
+      {hasScale && lg.unitOn && <Field stack label="Zeichen" htmlFor="p-unit"><input type="text" id="p-unit" value={lg.unit} placeholder="%" maxLength={8} onChange={e => { const val = e.target.value; update(d => { d.legend.unit = val; }, { key: 'lg-unit' }); }} aria-label="Zeichen hinter den Werten, z. B. %, € oder $" /></Field>}
       {!M && <Note>Die Legende erscheint, sobald eine Färbung mit Daten aktiv ist.</Note>}
       {M && M.rows.length > 0 && <Section title={M.main === 'matrix' ? 'Parteien' : 'Einträge'} aside="Farbe · Text · Reihenfolge">
         <div className="leg-list">{M.rows.map(e => <LegRow key={e.key} doc={doc} e={e} section={M.rows} />)}</div>

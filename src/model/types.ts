@@ -154,6 +154,7 @@ export type HatchRule =
 export interface LegendExtra { id: string; label: string; kind: 'fill' | 'hatch' | 'line'; color: string; hatch: string | null }
 export interface LegendSettings {
   visible: boolean; title: string; orientation: 'vertical' | 'horizontal' | 'grid'; cols: number; counts: boolean; size: number;
+  unitOn: boolean; unit: string;      // eigenes Zeichen hinter Werten/Bereichen der Klassen-Legende (z. B. „%“, „€“); unitOn = an/aus, unit = der Text
   simple: boolean;                  // Sieger + Stärke: ein Kasten je Partei statt der Abstufungsmatrix (nur die Legende, die Karte bleibt abgestuft)
   labels: Record<string, string>;   // Eintrag → eigener Text
   hidden: string[];                 // ausgeblendete Einträge

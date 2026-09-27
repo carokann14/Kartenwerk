@@ -79,7 +79,7 @@ export const HATCH_PRESETS: Omit<HatchStyle, 'id'>[] = [
   { name: 'Kreuz', pattern: 'kreuz', color: '#16181B', width: 0.9, spacing: 7, bg: null },
   { name: 'Punkte', pattern: 'punkte', color: '#16181B', width: 1.6, spacing: 6, bg: null },
 ];
-export const defaultLegend = (): LegendSettings => ({ visible: true, title: '', orientation: 'vertical', cols: 2, counts: true, size: 20, simple: false, labels: {}, hidden: [], order: [], extra: [], caption: null });
+export const defaultLegend = (): LegendSettings => ({ visible: true, title: '', orientation: 'vertical', cols: 2, counts: true, size: 20, simple: false, labels: {}, hidden: [], order: [], extra: [], caption: null, unitOn: false, unit: '' });
 
 /** Ältere Projekte auf den aktuellen Stand bringen (fehlende Felder mit Vorgaben füllen). */
 export function normalizeDoc(d: Doc): Doc {
