@@ -8,7 +8,7 @@ import { latestPeriod, periodText } from '../../data/time';
 import { GEO, LAENDER } from '../../geo/geo';
 import { chartModel, defaultChart } from '../../render/chart';
 import { chartTexts, cmpOptions, defaultSource, isOwnTable, numCols, partyGroups, typeFor } from '../../render/chartSource';
-import { Check, Field, Icon, Note, NumInput, Section, Seg } from '../common';
+import { Check, ColorField, Field, Icon, Note, NumInput, Section, Seg } from '../common';
 
 const HUES = ['#2F5D8A', '#1F7A6D', '#8A5A2F', '#6B4C9A', '#A33B4F', '#3C3F45'];
 const PLACEHOLDER = /^(Titel der Grafik|Unterzeile: )/;
@@ -70,7 +70,7 @@ export function PanelDiagramm() {
       {spec.type === 'saeulen' && M.hasCmp && spec.showCmp && <Check checked={spec.keyVisible} onChange={v => setChart(c => ({ ...c, keyVisible: v }))}>Zeichenerklärung ({M.curLabel} · {M.cmpLabel})</Check>}
       {src?.kind === 'partei' && <Field label="Sonstige unter"><div className="row-btns"><NumInput min={0} max={20} step={0.5} value={spec.minShare} onChange={n => setChart(c => ({ ...c, minShare: n }))} ariaLabel="Schwelle für Sonstige in Prozent" /><span className="hint">%</span></div></Field>}
       <Field label="Nachkommastellen"><Seg items={[['0', '0'], ['1', '1'], ['2', '2']]} value={String(spec.decimals) as '1'} onChange={v => setChart(c => ({ ...c, decimals: +v }))} /></Field>
-      {(src?.kind !== 'partei') && <Field label="Farbe"><div className="swatch-grid">{HUES.map(h => <button key={h} className={'swatch-btn' + (spec.color === h ? ' on' : '')} style={{ background: h }} onClick={() => setChart(c => ({ ...c, color: h }))} aria-label={'Farbton ' + h} />)}</div></Field>}
+      {(src?.kind !== 'partei') && <Field label="Farbe"><div className="swatch-grid">{HUES.map(h => <button key={h} className={'swatch-btn' + (spec.color === h ? ' on' : '')} style={{ background: h }} onClick={() => setChart(c => ({ ...c, color: h }))} aria-label={'Farbton ' + h} />)}<ColorField value={spec.color || HUES[0]} onChange={hex => setChart(c => ({ ...c, color: hex }))} ariaLabel="Eigene Farbe" /></div></Field>}
       <p className="hint">Parteien bekommen ihre Farbe aus der Parteifarben-Tabelle (Schritt „Daten“ bzw. „Färbung“ einer Karte). Titel und Unterzeile passen sich an, solange du sie nicht selbst geändert hast.</p>
     </Section>
   </>;
