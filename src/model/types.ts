@@ -1,5 +1,6 @@
 import type { Dataset } from '../data/types';
 import type { Cut } from '../lib/fonts';
+import type { TextMark } from '../lib/richtext';
 
 export type Fokus = { kind: 'de' } | { kind: 'land'; bl: string } | { kind: 'kreis'; kr: string } | { kind: 'area'; id: string } | { kind: 'custom'; ids: string[]; label?: string };   // label: Herkunft, z. B. „Wahlkreis 156 Görlitz“
 export type Umfeld = 'none' | 'neighbors' | 'parent' | 'all';
@@ -51,12 +52,13 @@ export interface Variant {
   ann: Record<string, [number, number]>;   // Versatz je Element: Marker → Beschriftung, Textkasten → Kasten
   guides: Guides;
 }
-export interface TextEl { text: string; visible: boolean; size: number; cut: Cut; color: 'ink' | 'inkSoft'; align: 'start' | 'middle' | 'end' }
+export interface TextEl { text: string; visible: boolean; size: number; cut: Cut; color: 'ink' | 'inkSoft'; align: 'start' | 'middle' | 'end'; marks?: TextMark[] }
 /** Quellenzeile: automatisch aus Daten und Geometrien; `text` gesetzt = von Hand bearbeitet (wird dann nicht mehr angepasst) */
 export interface SourceEl {
   visible: boolean; size: number; cut: Cut; color: 'ink' | 'inkSoft'; align: 'start' | 'middle' | 'end';
   text?: string | null;      // eigene Fassung (null/fehlt = automatisch)
   autoBase?: string;         // automatischer Text beim Beginn der Bearbeitung, um spätere Änderungen zu melden
+  marks?: TextMark[];        // Formatierung einzelner Textstellen (fett/kursiv/Farbe), bezogen auf die eigene Fassung
 }
 /** Grafik einer Mappe (Karte oder Diagramm). Die aktive Grafik steht mit ihren Feldern oben im Doc,
  *  die übrigen liegen in `pageData` (siehe src/model/graphics.ts, GRAPHIC_KEYS). */
@@ -175,6 +177,7 @@ export interface TextBoxEl {
   anchor: 'map' | 'board';
   at: [number, number];          // Karte: Kartenraster · Fläche: Anteil an Breite und Höhe (0…1)
   text: string; size: number; cut: Cut; color: string;   // 'ink', 'inkSoft' oder Hex
+  marks?: TextMark[];            // Formatierung einzelner Textstellen (fett/kursiv/Farbe)
   width: number;                 // Umbruchbreite in px, 0 = nur harte Umbrüche
   align: 'start' | 'middle' | 'end';
   bg: string | null; border: string | null; pad: number;

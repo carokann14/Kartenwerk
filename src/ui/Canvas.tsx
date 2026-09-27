@@ -31,7 +31,10 @@ const useSnapGuides = create<{ x: number | null; y: number | null }>(() => ({ x:
 
 export function textEl(t: TextPrim, key?: React.Key) {
   const halo = t.halo ? { stroke: '#FFFFFF', strokeWidth: +(t.size * 0.24).toFixed(2), strokeLinejoin: 'round' as const, paintOrder: 'stroke' } : {};
-  return <text key={key} x={+t.x.toFixed(1)} y={+t.y.toFixed(1)} fontFamily={CUTS[t.cut].family} fontSize={t.size} fill={t.color} textAnchor={t.anchor} {...halo} style={{ fontKerning: 'normal' }}>{t.text}</text>;
+  const content = t.runs && t.runs.length
+    ? t.runs.map((r, k) => <tspan key={k} fontFamily={CUTS[r.cut].family} fill={r.color} fontStyle={r.italic ? 'italic' : undefined}>{r.text}</tspan>)
+    : t.text;
+  return <text key={key} x={+t.x.toFixed(1)} y={+t.y.toFixed(1)} fontFamily={CUTS[t.cut].family} fontSize={t.size} fill={t.color} textAnchor={t.anchor} {...halo} style={{ fontKerning: 'normal' }}>{content}</text>;
 }
 
 const AreaPaths = memo(function AreaPaths({ g, ids, fills, fill, u, pe, tol }: { g: GeoSet; ids: number[]; fills?: string[]; fill?: string; u?: boolean; pe?: boolean; tol: number }) {

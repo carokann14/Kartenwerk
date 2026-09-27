@@ -98,15 +98,27 @@ function clipLine(pts: number[][], R: BBox) {
   }
   return out;
 }
+// „Kursiv“ hat keine eigene Schrift eingebettet: Läufe mit italic=true werden beim Export als Pfad geschert
+// (Schrägstellung um die Grundlinie, wie eine synthetische Kursivschrift).
+const ITALIC_SLANT = Math.tan(-10 * Math.PI / 180);
+const skewAround = (y: number) => `matrix(1,0,${ITALIC_SLANT.toFixed(4)},1,${(-ITALIC_SLANT * y).toFixed(2)},0)`;
 export function textToPath(t: TextPrim) {
+  const runs = t.runs && t.runs.length ? t.runs : [{ text: t.text, cut: t.cut, color: t.color, italic: false }];
+  const w = runs.reduce((acc, r) => acc + measureW(r.text, r.cut, t.size), 0);
   let x = t.x;
-  const w = measureW(t.text, t.cut, t.size);
   if (t.anchor === 'middle') x -= w / 2; else if (t.anchor === 'end') x -= w;
-  const d = textPathD(t.text, t.cut, x, t.y, t.size);
-  if (!d) return `<text x="${t.x.toFixed(1)}" y="${t.y.toFixed(1)}" font-size="${t.size}" fill="${t.color}">${esc(t.text)}</text>`;
+  let cx = x;
+  const parts: { d: string; fill: string; italic?: boolean }[] = [];
+  for (const r of runs) {
+    const d = textPathD(r.text, r.cut, cx, t.y, t.size);
+    if (d) parts.push({ d, fill: r.color, italic: r.italic });
+    cx += measureW(r.text, r.cut, t.size);
+  }
+  if (!parts.length) return `<text x="${t.x.toFixed(1)}" y="${t.y.toFixed(1)}" font-size="${t.size}" fill="${t.color}">${esc(t.text)}</text>`;
   let s = '';
-  if (t.halo) s += `<path d="${d}" fill="none" stroke="#FFFFFF" stroke-width="${(t.size * 0.24).toFixed(2)}" stroke-linejoin="round"/>`;
-  return s + `<path d="${d}" fill="${t.color}"/>`;
+  if (t.halo) for (const p of parts) s += `<path d="${p.d}" fill="none" stroke="#FFFFFF" stroke-width="${(t.size * 0.24).toFixed(2)}" stroke-linejoin="round"${p.italic ? ` transform="${skewAround(t.y)}"` : ''}/>`;
+  for (const p of parts) s += `<path d="${p.d}" fill="${p.fill}"${p.italic ? ` transform="${skewAround(t.y)}"` : ''}/>`;
+  return s;
 }
 const primsToPaths = (p: Prims) => p.rects.map(r => `<rect x="${r.x.toFixed(1)}" y="${r.y.toFixed(1)}" width="${r.w.toFixed(1)}" height="${r.h.toFixed(1)}" fill="${r.fill}"/>`).join('')
   + (p.paths || []).map(q => `<path d="${q.d}" fill="${q.fill}"${q.stroke ? ` stroke="${q.stroke}" stroke-width="${q.width ?? 1}" stroke-linejoin="round"${q.cap ? ` stroke-linecap="${q.cap}"` : ''}${q.dash ? ` stroke-dasharray="${q.dash}"` : ''}` : ''}/>`).join('') + p.texts.map(textToPath).join('');

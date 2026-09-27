@@ -1,5 +1,6 @@
 // Marker und Textkästen: Formen, Platzierung je Variante, Primitive für Editor und Export
 import { capOffset, measureW, wrapText } from '../lib/fonts';
+import { lineRuns, measureRuns, wrapRich } from '../lib/richtext';
 import { clamp } from '../lib/util';
 import type { AnnEl, ArrowEl, ArrowEnd, Doc, MarkerEl, MarkerShape, TextBoxEl, Variant } from '../model/types';
 import { GEO } from '../geo/geo';
@@ -125,8 +126,12 @@ function textItem(doc: Doc, v: Variant, t: TextBoxEl): AnnItem | null {
   if (t.anchor === 'map') { A = toBoard(v, 'main', t.at); if (!inFrame(v, 'main', A) && !t.leader) { /* Anker außerhalb: Kasten bleibt sichtbar */ } }
   else A = [t.at[0] * v.w, t.at[1] * v.h];
   const off = v.ann[t.id] || (t.anchor === 'map' && t.leader ? [18, -18 - lh] : [0, 0]);
-  const lines = t.width > 0 ? wrapText(t.text, t.cut, size, Math.max(20, t.width - 2 * pad)) : t.text.split('\n');
-  const tw = Math.max(1, ...lines.map(l => measureW(l, t.cut, size)));
+  const marks = t.marks || [];
+  const maxW = Math.max(20, t.width - 2 * pad);
+  const ranges = marks.length ? (t.width > 0 ? wrapRich(t.text, marks, t.cut, size, maxW) : t.text.split('\n').reduce<{ from: number; to: number }[]>((acc, l) => { const from = acc.length ? acc[acc.length - 1].to + 1 : 0; return [...acc, { from, to: from + l.length }]; }, [])) : null;
+  const lines = ranges ? ranges.map(r => t.text.slice(r.from, r.to)) : (t.width > 0 ? wrapText(t.text, t.cut, size, maxW) : t.text.split('\n'));
+  const baseColor = styleColor(doc, t.color);
+  const tw = Math.max(1, ...lines.map((l, k) => ranges ? measureRuns(lineRuns(t.text, ranges[k].from, ranges[k].to, marks, t.cut, baseColor), size) : measureW(l, t.cut, size)));
   const w = (t.width > 0 ? t.width : tw + 2 * pad), h = lines.length * lh + 2 * pad;
   const x = A[0] + off[0], y = A[1] + off[1];
   const rects: RectPrim[] = [], paths: PathPrim[] = [], texts: TextPrim[] = [];
@@ -137,7 +142,7 @@ function textItem(doc: Doc, v: Variant, t: TextBoxEl): AnnItem | null {
   }
   if (t.bg || t.border) paths.push({ d: `M${f1(x)} ${f1(y)}h${f1(w)}v${f1(h)}h${f1(-w)}z`, fill: t.bg || 'none', ...(t.border ? { stroke: t.border, width: 1 } : {}) });
   const tx = t.align === 'middle' ? x + w / 2 : t.align === 'end' ? x + w - pad : x + pad;
-  lines.forEach((l, k) => texts.push({ x: tx, y: y + pad + k * lh + lh / 2 + capOffset(t.cut, size), text: l, cut: t.cut, size, color: styleColor(doc, t.color), anchor: t.align }));
+  lines.forEach((l, k) => texts.push({ x: tx, y: y + pad + k * lh + lh / 2 + capOffset(t.cut, size), text: l, cut: t.cut, size, color: baseColor, anchor: t.align, runs: ranges ? lineRuns(t.text, ranges[k].from, ranges[k].to, marks, t.cut, baseColor) : undefined }));
   return { id: t.id, el: t, frame: t.anchor === 'map' ? 'main' : 'board', paths, rects, texts, body: [x, y, x + w, y + h], label: null, anchor: A };
 }
 // ---------- Pfeile ----------

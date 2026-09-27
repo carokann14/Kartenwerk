@@ -1,6 +1,7 @@
 import React from 'react';
 import { GEO_INDEX, GeoIndexEntry, isLtw, levelRank } from '../geo/geo';
 import { hexToHsv, hsvToHex, normalizeHex } from '../lib/color';
+import { TextMark, colorAtRange, isRangeBold, isRangeItalic, setMarkField, shiftMarksOnEdit } from '../lib/richtext';
 import { clamp } from '../lib/util';
 
 const S = (d: React.ReactNode) => (p: { size?: number }) => (
@@ -130,6 +131,38 @@ export function ColorField({ value, onChange, ariaLabel, title }: { value: strin
     <div className="color-anchor" ref={ref}>
       <button type="button" className="color-swatch" style={{ background: value }} onClick={() => setOpen(o => !o)} aria-label={ariaLabel} title={title} aria-haspopup="dialog" aria-expanded={open} />
       {open && <ColorPopover value={value} onChange={onChange} />}
+    </div>
+  );
+}
+
+/** Textfeld mit Canva-artiger Formatierung: eine Auswahl im Text lässt sich fett, kursiv oder farbig setzen,
+ *  ohne den Rest des Texts zu ändern. `baseBold`: gilt der Grundschnitt des Felds schon als fett? */
+export function RichTextArea({ id, rows, value, marks, baseBold, onChange, placeholder, ariaLabel }: {
+  id?: string; rows: number; value: string; marks: TextMark[] | undefined; baseBold: boolean;
+  onChange: (text: string, marks: TextMark[]) => void; placeholder?: string; ariaLabel?: string;
+}) {
+  const ref = React.useRef<HTMLTextAreaElement>(null);
+  const [sel, setSel] = React.useState<[number, number]>([0, 0]);
+  const readSel = () => { const el = ref.current; if (el) setSel([el.selectionStart, el.selectionEnd]); };
+  const [s0, s1] = sel, hasSel = s1 > s0;
+  const restore = (a: number, b: number) => requestAnimationFrame(() => { const el = ref.current; if (el) { el.focus(); el.setSelectionRange(a, b); } });
+  const apply = (field: 'b' | 'i', val: boolean) => { onChange(value, setMarkField(value, marks, s0, s1, field, val)); restore(s0, s1); };
+  const bold = hasSel && isRangeBold(value, marks, s0, s1, baseBold);
+  const italic = hasSel && isRangeItalic(value, marks, s0, s1);
+  const color = colorAtRange(value, marks, s0, s1, '#16181B');
+  return (
+    <div className="rtext">
+      <div className="rtext-tb">
+        <button type="button" className={'btn icon small' + (bold ? ' on' : '')} disabled={!hasSel} aria-pressed={bold} onMouseDown={e => e.preventDefault()} onClick={() => apply('b', !bold)} title="Fett"><b>F</b></button>
+        <button type="button" className={'btn icon small' + (italic ? ' on' : '')} disabled={!hasSel} aria-pressed={italic} onMouseDown={e => e.preventDefault()} onClick={() => apply('i', !italic)} title="Kursiv"><i>K</i></button>
+        <span className={hasSel ? undefined : 'rtext-color-off'} onMouseDown={e => e.preventDefault()}>
+          <ColorField value={color} onChange={hex => { onChange(value, setMarkField(value, marks, s0, s1, 'color', hex)); restore(s0, s1); }} ariaLabel="Farbe der Auswahl" title="Farbe der Auswahl" />
+        </span>
+        {!hasSel && <p className="hint rtext-hint">Textstelle auswählen, um nur sie zu formatieren</p>}
+      </div>
+      <textarea id={id} ref={ref} rows={rows} value={value} placeholder={placeholder} aria-label={ariaLabel}
+        onChange={e => { const val = e.target.value; onChange(val, shiftMarksOnEdit(value, val, marks)); }}
+        onSelect={readSel} onKeyUp={readSel} onMouseUp={readSel} onFocus={readSel} />
     </div>
   );
 }

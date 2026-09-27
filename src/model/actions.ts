@@ -18,6 +18,7 @@ import { fokusLabel, laenderSetFor } from '../render/scene';
 import { activeVariant, autoSourceText, textBlock } from '../render/elements';
 import { saveLocal } from './persist';
 import { withDefaultLogo } from './logo';
+import type { TextMark } from '../lib/richtext';
 
 /** Gebietsbezeichnung im Singular, z. B. für „Stärkste Partei je Wahlkreis“ */
 const SING_: Record<string, string> = { 'btw-wk': 'Wahlkreis', lan: 'Land', rbz: 'Regierungsbezirk', krs: 'Kreis', vwg: 'Gemeindeverband', gem: 'Gemeinde', custom: 'Region', 'be-wk': 'Wahlkreis', 'be-bez': 'Bezirk', 'be-bwb': 'Briefwahlbezirk', 'be-wbz': 'Wahlbezirk', 'ltw-by': 'Stimmkreis', 'ltw-by-wkr': 'Wahlkreis', 'ltw-hb': 'Wahlbereich' };
@@ -355,18 +356,19 @@ export function keepSourceBottom(before: Doc, d: Draft<Doc>) {
   });
 }
 /** Quellenzeile von Hand ändern: ab dann gilt die eigene Fassung */
-export function setSourceText(text: string) {
+export function setSourceText(text: string, marks?: TextMark[]) {
   const before = getDoc(), auto = autoSourceText(before);
   update(d => {
     const s = d.texts.source;
     if (s.text == null) s.autoBase = auto;
     s.text = text;
+    if (marks !== undefined) s.marks = marks;
     keepSourceBottom(before, d);
   }, { key: 'src-text' });
 }
 /** Zurück zum automatischen Quellenvermerk */
 export function resetSourceText() {
   const before = getDoc();
-  update(d => { d.texts.source.text = null; delete d.texts.source.autoBase; keepSourceBottom(before, d); });
+  update(d => { d.texts.source.text = null; delete d.texts.source.autoBase; delete d.texts.source.marks; keepSourceBottom(before, d); });
   toast('Quellenzeile wieder automatisch');
 }

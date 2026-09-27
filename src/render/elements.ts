@@ -1,6 +1,7 @@
 // Texte, Legende und Beschriftungen als Primitive (Editor: <text>, Export: Pfade)
 import { CONT_STEPS, STEP_T, contColor, fmtBreak, mixWhite, signed } from '../lib/color';
 import { Cut, ascentRatio, capOffset, measureW, wrapText } from '../lib/fonts';
+import { RunPrim, lineRuns, wrapRich } from '../lib/richtext';
 import { clamp, fmt1, fmtNum } from '../lib/util';
 import { areaRowIndex, groupMetrics } from '../data/derive';
 import { periodOf } from '../data/time';
@@ -17,7 +18,7 @@ import { bubbleLegendValues, bubbleSet, circleD } from './bubbles';
 import { FrameId, frameSets, geoOf, jointOf, laenderCtx } from './scene';
 import { logoRect } from '../model/logo';
 
-export interface TextPrim { x: number; y: number; text: string; cut: Cut; size: number; color: string; anchor: 'start' | 'middle' | 'end'; halo?: boolean }
+export interface TextPrim { x: number; y: number; text: string; cut: Cut; size: number; color: string; anchor: 'start' | 'middle' | 'end'; halo?: boolean; runs?: RunPrim[] }
 export interface RectPrim { x: number; y: number; w: number; h: number; fill: string }
 export interface PathPrim { d: string; fill: string; stroke?: string; width?: number; dash?: string; cap?: 'round' | 'butt' }
 export interface Prims { texts: TextPrim[]; rects: RectPrim[]; paths?: PathPrim[]; box: { x: number; y: number; w: number; h: number } }
@@ -73,11 +74,18 @@ export function missingMarks(doc: Doc, text = sourceText(doc)): string[] {
   return [...new Set(need)].filter(h => !t.includes(norm(h)));
 }
 export const textOf = (doc: Doc, kind: 'title' | 'subtitle' | 'source') => kind === 'source' ? sourceText(doc) : doc.texts[kind].text;
+/** Marken gelten nur gegen die Fassung, die sie tragen: bei der Quellenzeile nur, solange sie von Hand steht
+ *  (sonst würden Bereiche beim automatischen Nachziehen des Texts nicht mehr passen). */
+const marksOf = (doc: Doc, kind: 'title' | 'subtitle' | 'source') => (kind === 'source' && !sourceIsManual(doc) ? [] : doc.texts[kind].marks || []);
 export function textBlock(doc: Doc, kind: 'title' | 'subtitle' | 'source', w: number, ts: number) {
-  const t = doc.texts[kind], size = +(t.size * ts).toFixed(2);
-  const lines = wrapText(textOf(doc, kind), t.cut, size, w);
+  const t = doc.texts[kind], size = +(t.size * ts).toFixed(2), full = textOf(doc, kind), marks = marksOf(doc, kind);
   const lh = size * LH[kind];
-  return { lines, lh, height: lines.length * lh, size, cut: t.cut };
+  if (marks.length) {
+    const ranges = wrapRich(full, marks, t.cut, size, w), lines = ranges.map(r => full.slice(r.from, r.to));
+    return { lines, ranges, text: full, marks, lh, height: lines.length * lh, size, cut: t.cut };
+  }
+  const lines = wrapText(full, t.cut, size, w);
+  return { lines, ranges: null as { from: number; to: number }[] | null, text: full, marks, lh, height: lines.length * lh, size, cut: t.cut };
 }
 export function textPrims(doc: Doc, kind: 'title' | 'subtitle' | 'source', v: Variant = activeVariant(doc)): Prims | null {
   const t = doc.texts[kind], L = v.L[kind];
@@ -86,7 +94,12 @@ export function textPrims(doc: Doc, kind: 'title' | 'subtitle' | 'source', v: Va
   const asc = ascentRatio(t.cut);
   const align = t.align || 'start';
   const ax = align === 'middle' ? L.x + L.w / 2 : align === 'end' ? L.x + L.w : L.x;
-  const texts = b.lines.map((line, k) => ({ x: ax, y: L.y + k * b.lh + (b.lh - b.size) / 2 + asc * b.size * 0.94, text: line, cut: t.cut, size: b.size, color: styleColor(doc, t.color), anchor: align }));
+  const baseColor = styleColor(doc, t.color);
+  const texts = b.lines.map((line, k) => {
+    const y = L.y + k * b.lh + (b.lh - b.size) / 2 + asc * b.size * 0.94;
+    const runs = b.ranges ? lineRuns(b.text, b.ranges[k].from, b.ranges[k].to, b.marks, t.cut, baseColor) : undefined;
+    return { x: ax, y, text: line, cut: t.cut, size: b.size, color: baseColor, anchor: align, runs };
+  });
   return { texts, rects: [], box: { x: L.x, y: L.y, w: L.w, h: b.height } };
 }
 

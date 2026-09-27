@@ -11,7 +11,7 @@ import { getDoc, setUI, toast, update, useStore } from '../model/store';
 import type { ArrowEl, ArrowEnd, Doc, MarkerEl, MarkerShape, TextBoxEl } from '../model/types';
 import { SHAPE_LABEL, annItems, elName, markerD, parseSymbol } from '../render/annotations';
 import { activeVariant } from '../render/elements';
-import { Check, ColorField, Field, Icon, Note, NumInput, Section, Seg } from './common';
+import { Check, ColorField, Field, Icon, Note, NumInput, RichTextArea, Section, Seg } from './common';
 
 const SHAPES: MarkerShape[] = ['kreis', 'quadrat', 'dreieck', 'raute', 'stern', 'pin', 'eigen'];
 export function MarkerIcon({ m, s = 18 }: { m: Pick<MarkerEl, 'shape' | 'symbol' | 'fill' | 'stroke' | 'strokeW'>; s?: number }) {
@@ -162,7 +162,7 @@ function TextBoxProps({ doc, t, moved, common }: { doc: Doc; t: TextBoxEl; moved
     <div className="rp-head"><h2>Eigenschaften</h2></div>
     <h3 className="props-title">Textkasten</h3>
     <p className="props-sub">{t.anchor === 'map' ? 'hängt an einem Kartenpunkt' : 'frei auf der Fläche'}</p>
-    <Field stack label="Text" htmlFor="p-tb"><textarea id="p-tb" rows={3} value={t.text} onChange={e => updateEl(t.id, { text: e.target.value }, 'text')} /></Field>
+    <Field stack label="Text" htmlFor="p-tb"><RichTextArea id="p-tb" rows={3} value={t.text} marks={t.marks} baseBold={t.cut === 'bold'} onChange={(val, mk) => updateEl(t.id, { text: val, marks: mk }, 'text')} /></Field>
     <Field label="Größe · Schnitt"><div className="row-btns nowrap"><NumInput min={6} max={120} value={t.size} onChange={x => updateEl(t.id, { size: x }, 'size')} ariaLabel="Schriftgröße" />
       <select value={t.cut} onChange={e => updateEl(t.id, { cut: e.target.value as Cut })} aria-label="Schriftschnitt">{(['text', 'bold', 'display', 'label'] as Cut[]).map(c => <option key={c} value={c}>{CUTS[c].label}</option>)}</select></div></Field>
     <Field label="Farbe"><div className="row-btns nowrap"><Seg items={[['ink', 'Dunkel'], ['inkSoft', 'Grau'], ['x', 'Eigene']]} value={custom ? 'x' : t.color as 'ink'} onChange={c => updateEl(t.id, { color: c === 'x' ? '#9E5B0B' : c })} />{custom && <ColorField value={t.color} onChange={c => updateEl(t.id, { color: c }, 'color')} ariaLabel="Textfarbe" />}</div></Field>

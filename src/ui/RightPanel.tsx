@@ -13,7 +13,7 @@ import { ColorModel, colorModel, legendTitleAuto, partyColor } from '../render/c
 import { activeVariant, autoSourceText, layoutLabels, missingMarks, sourceIsManual } from '../render/elements';
 import { isChart } from '../model/graphicKeys';
 import { INSET_DEFS, fokusLabel, geoOf, insetLabel, isRegional, krLinesLabel, laenderSetFor, overlayName } from '../render/scene';
-import { Check, ColorField, Field, Icon, Note, NumInput, Section, Seg } from './common';
+import { Check, ColorField, Field, Icon, Note, NumInput, RichTextArea, Section, Seg } from './common';
 import { AreaHatch, HatchList, HatchProps, LegendProps } from './annotationsUI';
 import { AnnProps, ArrowIcon, MarkerIcon } from './elementsUI';
 import { BubbleSection } from './panels/Blasen';
@@ -133,7 +133,7 @@ function TextProps({ doc, id }: { doc: Doc; id: 'title' | 'subtitle' }) {
   const t = doc.texts[id], v = activeVariant(doc);
   return <>
     <Head t={id === 'title' ? 'Titel' : 'Unterzeile'} sub="Zeilenumbruch mit Eingabetaste" />
-    <Field stack label="Text" htmlFor="p-text"><textarea id="p-text" rows={id === 'title' ? 2 : 4} value={t.text} onChange={e => { const val = e.target.value; update(d => { d.texts[id].text = val; }, { key: 'txt-' + id }); }} /></Field>
+    <Field stack label="Text" htmlFor="p-text"><RichTextArea id="p-text" rows={id === 'title' ? 2 : 4} value={t.text} marks={t.marks} baseBold={t.cut === 'bold'} onChange={(val, mk) => update(d => { d.texts[id].text = val; d.texts[id].marks = mk; }, { key: 'txt-' + id })} /></Field>
     <Field label="Größe (px)"><NumInput min={8} max={200} value={t.size} onChange={n => update(d => { d.texts[id].size = n; }, { key: 'size-' + id })} ariaLabel="Schriftgröße" /></Field>
     <Field label="Schnitt"><select value={t.cut} onChange={e => { const c = e.target.value as Cut; update(d => { d.texts[id].cut = c; }); }} aria-label="Schriftschnitt">{(['display', 'bold', 'text'] as Cut[]).map(c => <option key={c} value={c}>Merriweather · {CUTS[c].label}</option>)}</select></Field>
     <Field label="Farbe"><Seg items={[['ink', 'Dunkel'], ['inkSoft', 'Grau']]} value={t.color} onChange={c => update(d => { d.texts[id].color = c; })} /></Field>
@@ -149,7 +149,7 @@ function SourceProps({ doc }: { doc: Doc }) {
   const text = manual ? t.text! : auto, missing = missingMarks(doc, text), changed = manual && t.autoBase != null && t.autoBase !== auto;
   return <>
     <Head t="Quellenzeile" sub={manual ? 'eigene Fassung' : 'automatisch aus Daten und Geometrien'} />
-    <Field stack label="Text" htmlFor="p-text"><textarea id="p-text" rows={5} value={text} onChange={e => setSourceText(e.target.value)} /></Field>
+    <Field stack label="Text" htmlFor="p-text"><RichTextArea id="p-text" rows={5} value={text} marks={manual ? t.marks : undefined} baseBold={t.cut === 'bold'} onChange={(val, mk) => setSourceText(val, mk)} /></Field>
     {manual
       ? <div className="row-btns"><button className="btn small" onClick={resetSourceText} title="Eigene Fassung verwerfen, Text wieder aus Daten und Geometrien erzeugen"><Icon.refresh /> Automatisch erzeugen</button></div>
       : <p className="hint">Wenn du den Text änderst, gilt deine Fassung. Sie wird dann bei neuen Daten nicht mehr angepasst; „Automatisch erzeugen“ holt den Vermerk zurück.</p>}
