@@ -5,7 +5,7 @@ import { update, useStore } from '../../model/store';
 import type { Bubbles, Doc } from '../../model/types';
 import { colorModel } from '../../render/colorModel';
 import { geoOf } from '../../render/scene';
-import { Check, Field, Note, NumInput, Section, Seg } from '../common';
+import { Check, ColorField, Field, Note, NumInput, Section, Seg } from '../common';
 
 const PREF = /^(Wählende|Gültige|Wahlberechtigte|Einwohner|Bevölkerung)/i;
 export function defaultBubbles(doc: Doc): Bubbles | null {
@@ -39,9 +39,9 @@ export function BubbleSection({ inPanel = false }: { inPanel?: boolean }) {
       <Field label="Größe nach"><select value={b.column} onChange={e => setB({ column: e.target.value })} aria-label="Spalte für die Größe">{nums.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></Field>
       <Field label="Größter Kreis (px)"><NumInput min={2} max={120} value={b.maxR} onChange={n => setB({ maxR: n }, 'bmax')} ariaLabel="Radius des größten Kreises" /></Field>
       <Field label="Bezugswert"><div className="row-btns"><NumInput min={0} max={1e12} value={b.ref ?? 0} onChange={n => setB({ ref: n > 0 ? n : null }, 'bref')} ariaLabel="Wert für den größten Kreis" />{b.ref != null ? <button className="btn small ghost" onClick={() => setB({ ref: null })}>größter Wert</button> : <span className="hint">größter Wert</span>}</div></Field>
-      <Field label="Farbe"><div className="row-btns"><Seg items={[['regel', 'Wie Färbung'], ['fest', 'Eigene']]} value={b.color === 'regel' ? 'regel' : 'fest'} onChange={v => setB({ color: v === 'regel' ? 'regel' : '#16181B' })} />{b.color !== 'regel' && <input type="color" value={b.color} onChange={e => setB({ color: e.target.value.toUpperCase() }, 'bcol')} aria-label="Farbe der Blasen" />}</div></Field>
+      <Field label="Farbe"><div className="row-btns"><Seg items={[['regel', 'Wie Färbung'], ['fest', 'Eigene']]} value={b.color === 'regel' ? 'regel' : 'fest'} onChange={v => setB({ color: v === 'regel' ? 'regel' : '#16181B' })} />{b.color !== 'regel' && <ColorField value={b.color} onChange={c => setB({ color: c }, 'bcol')} ariaLabel="Farbe der Blasen" />}</div></Field>
       <Field label="Deckkraft"><div className="row-btns"><input type="range" min={0.3} max={1} step={0.05} value={b.opacity ?? 1} onChange={e => setB({ opacity: +e.target.value }, 'bop')} aria-label="Deckkraft der Blasen" /><span className="hint num">{Math.round((b.opacity ?? 1) * 100)} %</span></div></Field>
-      <Field label="Rand"><div className="row-btns"><input type="color" value={b.stroke} onChange={e => setB({ stroke: e.target.value.toUpperCase() }, 'bstr')} aria-label="Randfarbe" /><NumInput min={0} max={4} step={0.1} value={b.strokeW} onChange={n => setB({ strokeW: n }, 'bsw')} ariaLabel="Randstärke" /></div></Field>
+      <Field label="Rand"><div className="row-btns"><ColorField value={b.stroke} onChange={c => setB({ stroke: c }, 'bstr')} ariaLabel="Randfarbe" /><NumInput min={0} max={4} step={0.1} value={b.strokeW} onChange={n => setB({ strokeW: n }, 'bsw')} ariaLabel="Randstärke" /></div></Field>
       <Check checked={b.legend} onChange={v => setB({ legend: v })}>In der Legende zeigen</Check>
       {b.legend && <Field label="Titel" stack><input type="text" value={b.title} placeholder={nums.find(c => c.id === b.column)?.label || ''} onChange={e => setB({ title: e.target.value }, 'btitle')} /></Field>}
       <Check checked={!doc.layers.wkFill} onChange={v => update(d => { d.layers.wkFill = !v; })}>Flächen neutral (reine Blasenkarte)</Check>

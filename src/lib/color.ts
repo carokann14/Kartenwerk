@@ -1,7 +1,28 @@
 import { clamp } from './util';
 
-const hexToRgb = (h: string) => { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
-const rgbToHex = ([r, g, b]: number[]) => '#' + [r, g, b].map(v => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('').toUpperCase();
+export const hexToRgb = (h: string) => { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+export const rgbToHex = ([r, g, b]: number[]) => '#' + [r, g, b].map(v => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('').toUpperCase();
+/** Text aus dem Hex-Feld: „a1b2c3“, „#a1b2c3“ oder „abc“ → „#A1B2C3“, sonst null (ungültig) */
+export function normalizeHex(input: string): string | null {
+  const h = input.trim().replace(/^#/, '');
+  if (/^[0-9a-fA-F]{3}$/.test(h)) return rgbToHex(hexToRgb(h));
+  if (/^[0-9a-fA-F]{6}$/.test(h)) return '#' + h.toUpperCase();
+  return null;
+}
+/** Hex → Farbton (0–360), Sättigung und Hellwert (0–100), für den Farbwähler */
+export function hexToHsv(hex: string): [number, number, number] {
+  const [r, g, b] = hexToRgb(hex).map(v => v / 255);
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+  let h = 0;
+  if (d > 0) { if (max === r) h = ((g - b) / d) % 6; else if (max === g) h = (b - r) / d + 2; else h = (r - g) / d + 4; h *= 60; if (h < 0) h += 360; }
+  return [h, max === 0 ? 0 : (d / max) * 100, max * 100];
+}
+export function hsvToHex(h: number, s: number, v: number): string {
+  s /= 100; v /= 100;
+  const c = v * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = v - c;
+  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return rgbToHex([(r + m) * 255, (g + m) * 255, (b + m) * 255]);
+}
 const s2l = (c: number) => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
 const l2s = (c: number) => 255 * (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
 function toOklab(hex: string) {

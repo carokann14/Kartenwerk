@@ -13,7 +13,7 @@ import { activeVariant } from '../render/elements';
 import { PATTERN_LABEL, hatchMap, hatchPathD, rectRing } from '../render/hatch';
 import { LegEntry, entryColorSetter, legendModel } from '../render/legend';
 import { geoOf } from '../render/scene';
-import { Check, Field, Icon, Note, NumInput, Section, Seg } from './common';
+import { Check, ColorField, Field, Icon, Note, NumInput, Section, Seg } from './common';
 
 // ---------- Vorschau ----------
 export function HatchSwatch({ h, w = 30, hgt = 18, base = '#FFFFFF' }: { h: HatchStyle; w?: number; hgt?: number; base?: string }) {
@@ -67,11 +67,11 @@ export function HatchProps({ doc, id }: { doc: Doc; id: string }) {
         <button key={p} className={'pattern-btn' + (h.pattern === p ? ' on' : '')} onClick={() => updateHatch(h.id, { pattern: p })} aria-pressed={h.pattern === p} title={PATTERN_LABEL[p]}>
           <HatchSwatch h={{ ...h, pattern: p, bg: null }} w={34} hgt={22} /><span>{PATTERN_LABEL[p]}</span>
         </button>))}</div>
-      <Field label="Farbe"><input type="color" value={h.color} onChange={e => updateHatch(h.id, { color: e.target.value.toUpperCase() }, 'color')} aria-label="Farbe der Schraffur" /></Field>
+      <Field label="Farbe"><ColorField value={h.color} onChange={c => updateHatch(h.id, { color: c }, 'color')} ariaLabel="Farbe der Schraffur" /></Field>
       <Field label={h.pattern === 'punkte' ? 'Punktgröße' : 'Strichstärke'}><NumInput min={0.2} max={8} step={0.1} value={h.width} onChange={v => updateHatch(h.id, { width: v }, 'w')} ariaLabel="Stärke in px" /></Field>
       <Field label="Abstand (px)"><NumInput min={2} max={40} step={0.5} value={h.spacing} onChange={v => updateHatch(h.id, { spacing: v }, 's')} ariaLabel="Abstand in px" /></Field>
       <Field label="Untergrund"><Seg items={[['over', 'Datenfarbe'], ['own', 'Eigene Fläche']]} value={h.bg ? 'own' : 'over'} onChange={v => updateHatch(h.id, { bg: v === 'own' ? '#FFFFFF' : null })} /></Field>
-      {h.bg && <Field label="Flächenfarbe"><input type="color" value={h.bg} onChange={e => updateHatch(h.id, { bg: e.target.value.toUpperCase() }, 'bg')} aria-label="Farbe der Grundfläche" /></Field>}
+      {h.bg && <Field label="Flächenfarbe"><ColorField value={h.bg} onChange={c => updateHatch(h.id, { bg: c }, 'bg')} ariaLabel="Farbe der Grundfläche" /></Field>}
       <Section title="Zuweisung">
         <Check checked={nd?.hatch === h.id} onChange={on => setNoDataHatch(on ? h.id : null)}>Alle Gebiete ohne Daten</Check>
         {rules.map(r => <RuleEditor key={r.id} doc={doc} r={r} />)}
@@ -150,7 +150,7 @@ function LegRow({ doc, e, section }: { doc: Doc; e: LegEntry; section: LegEntry[
   return (
     <div className={'leg-row' + (e.hidden ? ' off' : '')}>
       {e.kind === 'hatch' && e.hatch ? <button className="leg-sw" onClick={() => setUI({ sel: { kind: 'hatch', id: e.hatch!.id } })} title="Schraffur bearbeiten"><HatchSwatch h={e.hatch} w={22} hgt={16} /></button>
-        : setColor ? <input type="color" value={e.color} onChange={ev => { const v = ev.target.value.toUpperCase(); update(d => setColor(d, v), { key: 'lgc-' + e.key }); }} aria-label={'Farbe ' + e.label} title={e.target?.type === 'party' ? 'Parteifarbe (gilt im ganzen Projekt)' : 'Farbe'} />
+        : setColor ? <ColorField value={e.color} onChange={v => update(d => setColor(d, v), { key: 'lgc-' + e.key })} ariaLabel={'Farbe ' + e.label} title={e.target?.type === 'party' ? 'Parteifarbe (gilt im ganzen Projekt)' : 'Farbe'} />
         : <span className="leg-sw" />}
       <input type="text" value={x ? x.label : doc.legend.labels[e.key] ?? ''} placeholder={e.auto} onChange={ev => setEntryLabel(e.key, ev.target.value, x ? '' : e.auto)} aria-label={'Text für ' + e.auto} />
       <span className="leg-btns">

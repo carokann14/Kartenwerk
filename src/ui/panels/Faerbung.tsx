@@ -10,7 +10,7 @@ import type { Dataset } from '../../data/types';
 import type { ColorRule, VeraenderungRule } from '../../model/types';
 import { CHANGE_NEG, CHANGE_POS_WERT, colorModel, fillOf, partyColor } from '../../render/colorModel';
 import { geoOf } from '../../render/scene';
-import { Check, Field, Icon, Note, NumInput, Section, Seg } from '../common';
+import { Check, ColorField, Field, Icon, Note, NumInput, Section, Seg } from '../common';
 import { BubbleSection } from './Blasen';
 
 const HUES = ['#2F5D8A', '#1F7A6D', '#8A5A2F', '#6B4C9A', '#A33B4F', '#3C3F45'];
@@ -119,7 +119,7 @@ export function PanelFaerbung() {
       <Section title="Parteifarben" aside="gilt im Projekt">
         <div className="ptable">{PARTY_DEFS.map(p => (
           <div key={p.key} className="prow">
-            <input type="color" value={partyColor(doc, p.key)} onChange={e => { const v = e.target.value.toUpperCase(); update(d => { d.partyColors[p.key] = v; }, { key: 'pc-' + p.key }); }} aria-label={'Farbe ' + p.label} />
+            <ColorField value={partyColor(doc, p.key)} onChange={v => update(d => { d.partyColors[p.key] = v; }, { key: 'pc-' + p.key })} ariaLabel={'Farbe ' + p.label} />
             <span><span className="pname">{p.label}</span><span className="pvar">{[...new Set(p.variants.map(v => v[0]))].slice(0, 4).join(' · ')}</span></span>
             <span className="count">{cm.counts[p.key] ? cm.counts[p.key] + ' Geb.' : '–'}</span>
           </div>))}</div>

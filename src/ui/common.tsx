@@ -1,5 +1,7 @@
 import React from 'react';
 import { GEO_INDEX, GeoIndexEntry, isLtw, levelRank } from '../geo/geo';
+import { hexToHsv, hsvToHex, normalizeHex } from '../lib/color';
+import { clamp } from '../lib/util';
 
 const S = (d: React.ReactNode) => (p: { size?: number }) => (
   <svg viewBox="0 0 24 24" width={p.size || 15} height={p.size || 15} fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>
@@ -49,6 +51,7 @@ export const Icon = {
   folder: S(<path d="M3.5 7a1.5 1.5 0 0 1 1.5-1.5h4l2 2h8a1.5 1.5 0 0 1 1.5 1.5v8.5A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5z" />),
   trash: S(<path d="M5 7h14M10 7V5h4v2M7 7l1 12.5h8L17 7" />),
   refresh: S(<><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" /><path d="M19.5 4.5v4h-4" /></>),
+  pipette: S(<><path d="m14 6 4 4-8.5 8.5H5.5V14z" /><path d="m12.5 7.5 4 4" /><path d="m16.5 4 3.5 3.5-1.8 1.8-3.5-3.5z" /></>),
 };
 
 export function Seg<T extends string>({ items, value, onChange, full }: { items: [T, string][]; value: T; onChange: (v: T) => void; full?: boolean }) {
@@ -77,6 +80,59 @@ export function NumInput({ value, onChange, min, max, step, id, ariaLabel }: { v
   return <input id={id} aria-label={ariaLabel} type="number" value={txt} min={min} max={max} step={step} onChange={e => { setTxt(e.target.value); commit(e.target.value); }} />;
 }
 export const ratioIcon = (w: number, h: number) => { const s = 14 / Math.max(w, h); return <span className="ratio-ico"><i style={{ width: (w * s).toFixed(1) + 'px', height: (h * s).toFixed(1) + 'px' }} /></span>; };
+
+/** Farbwähler: Sättigung/Hellwert-Fläche, Farbton-Regler, Hex-Feld mit Pipette. Ersetzt <input type="color"> überall im Editor. */
+function ColorPopover({ value, onChange }: { value: string; onChange: (hex: string) => void }) {
+  const [hsv, setHsv] = React.useState(() => hexToHsv(value));
+  const [hex, setHex] = React.useState(value);
+  const lastOut = React.useRef(value);
+  React.useEffect(() => { if (value !== lastOut.current) { setHsv(hexToHsv(value)); setHex(value); } }, [value]);
+  const sq = React.useRef<HTMLDivElement>(null), hue = React.useRef<HTMLDivElement>(null);
+  const set = (h: number, s: number, v: number) => { setHsv([h, s, v]); const hx = hsvToHex(h, s, v); setHex(hx); lastOut.current = hx; onChange(hx); };
+  const dragSq = (down: React.PointerEvent) => {
+    const el = sq.current!; el.setPointerCapture(down.pointerId);
+    const move = (e: PointerEvent) => { const r = el.getBoundingClientRect(); set(hsv[0], clamp((e.clientX - r.left) / r.width, 0, 1) * 100, 100 - clamp((e.clientY - r.top) / r.height, 0, 1) * 100); };
+    move(down.nativeEvent); el.addEventListener('pointermove', move); el.addEventListener('pointerup', () => el.removeEventListener('pointermove', move), { once: true });
+  };
+  const dragHue = (down: React.PointerEvent) => {
+    const el = hue.current!; el.setPointerCapture(down.pointerId);
+    const move = (e: PointerEvent) => { const r = el.getBoundingClientRect(); set(clamp((e.clientX - r.left) / r.width, 0, 1) * 360, hsv[1], hsv[2]); };
+    move(down.nativeEvent); el.addEventListener('pointermove', move); el.addEventListener('pointerup', () => el.removeEventListener('pointermove', move), { once: true });
+  };
+  const commitHex = (s: string) => { const n = normalizeHex(s); if (n) { setHsv(hexToHsv(n)); setHex(n); lastOut.current = n; onChange(n); } };
+  const canPick = typeof window !== 'undefined' && 'EyeDropper' in window;
+  const pick = async () => { try { const r = await new (window as unknown as { EyeDropper: new () => { open(): Promise<{ sRGBHex: string }> } }).EyeDropper().open(); commitHex(r.sRGBHex); } catch { /* abgebrochen */ } };
+  return (
+    <div className="color-pop" role="dialog" aria-label="Farbe wählen" onPointerDown={e => e.stopPropagation()}>
+      <div className="color-sq" ref={sq} onPointerDown={dragSq} style={{ backgroundImage: `linear-gradient(to top, #000, rgba(0,0,0,0)), linear-gradient(to right, #fff, ${hsvToHex(hsv[0], 100, 100)})` }}>
+        <span className="color-thumb" style={{ left: hsv[1] + '%', top: (100 - hsv[2]) + '%', background: hex }} />
+      </div>
+      <div className="color-hue" ref={hue} onPointerDown={dragHue}><span className="color-thumb" style={{ left: (hsv[0] / 360 * 100) + '%', background: hsvToHex(hsv[0], 100, 100) }} /></div>
+      <div className="color-hex-row">
+        <span className="color-preview" style={{ background: hex }} />
+        <input className="color-hex" type="text" value={hex} spellCheck={false} onChange={e => { setHex(e.target.value); commitHex(e.target.value); }} onBlur={() => setHex(lastOut.current)} aria-label="Farbe als Hex-Code" />
+        {canPick && <button type="button" className="btn icon ghost small" onClick={pick} aria-label="Farbe von Bildschirm übernehmen" title="Farbe von Bildschirm übernehmen"><Icon.pipette size={14} /></button>}
+      </div>
+    </div>
+  );
+}
+export function ColorField({ value, onChange, ariaLabel, title }: { value: string; onChange: (hex: string) => void; ariaLabel?: string; title?: string }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const h = (e: PointerEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('pointerdown', h); document.addEventListener('keydown', k);
+    return () => { document.removeEventListener('pointerdown', h); document.removeEventListener('keydown', k); };
+  }, [open]);
+  return (
+    <div className="color-anchor" ref={ref}>
+      <button type="button" className="color-swatch" style={{ background: value }} onClick={() => setOpen(o => !o)} aria-label={ariaLabel} title={title} aria-haspopup="dialog" aria-expanded={open} />
+      {open && <ColorPopover value={value} onChange={onChange} />}
+    </div>
+  );
+}
 
 /** Auswahl eines Gebietsstands in zwei Teilen: Ebene (Wahlkreise, Länder … Gemeinden) und Stand bzw. Wahljahr */
 export interface CustomGeo { id: string; label: string; base: string; sub: string; kind?: 'region' | 'import' }

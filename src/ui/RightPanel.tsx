@@ -13,7 +13,7 @@ import { ColorModel, colorModel, legendTitleAuto, partyColor } from '../render/c
 import { activeVariant, autoSourceText, layoutLabels, missingMarks, sourceIsManual } from '../render/elements';
 import { isChart } from '../model/graphicKeys';
 import { INSET_DEFS, fokusLabel, geoOf, insetLabel, isRegional, krLinesLabel, laenderSetFor, overlayName } from '../render/scene';
-import { Check, Field, Icon, Note, NumInput, Section, Seg } from './common';
+import { Check, ColorField, Field, Icon, Note, NumInput, Section, Seg } from './common';
 import { AreaHatch, HatchList, HatchProps, LegendProps } from './annotationsUI';
 import { AnnProps, ArrowIcon, MarkerIcon } from './elementsUI';
 import { BubbleSection } from './panels/Blasen';
@@ -80,7 +80,7 @@ function OverrideUI({ doc, ids }: { doc: Doc; ids: string[] }) {
     <Section title="Manuell einfärben" aside="überschreibt die Datenregel">
       <div className="swatch-grid">
         {pal.map(c => <button key={c} className={'swatch-btn' + (cur === c ? ' on' : '')} style={{ background: c }} onClick={() => setOverride(ids, c)} aria-label={'Farbe ' + c} />)}
-        <input type="color" value={cur || '#888888'} onChange={e => setOverride(ids, e.target.value.toUpperCase())} aria-label="Eigene Farbe" />
+        <ColorField value={cur || '#888888'} onChange={c => setOverride(ids, c)} ariaLabel="Eigene Farbe" />
       </div>
       {ov.length ? <div className="override-note"><span className="chip warn">{ov.length} überschrieben</span><button className="btn small" onClick={() => setOverride(ids, null)}>Zurücksetzen</button></div>
         : <p className="hint">Bleibt beim Ersetzen der Daten erhalten, weil sie an Kennung und Gebietsstand hängt.</p>}
@@ -186,7 +186,7 @@ function FrameProps({ doc, id }: { doc: Doc; id: 'main' | 'inset' }) {
 function LayerProps({ doc, id }: { doc: Doc; id: 'wk' | 'labels' | 'kr' | 'land' | 'water' | 'neighbors' | 'hatches' | 'laender' }) {
   const v = activeVariant(doc), st = doc.style, g = geoOf(doc);
   const colW = (c: string, w: number, ck: 'wkLine' | 'krLine' | 'landLine' | 'laenderLine', wk: 'wkLineW' | 'krLineW' | 'landLineW' | 'laenderLineW', max: number, min = 0.1) => (
-    <div className="row-btns"><input type="color" value={c} onChange={e => { const val = e.target.value.toUpperCase(); update(d => { d.style[ck] = val; }, { key: ck }); }} aria-label="Linienfarbe" /><NumInput min={min} max={max} step={0.1} value={w} onChange={n => update(d => { d.style[wk] = n; }, { key: wk })} ariaLabel="Linienstärke in Pixeln" /></div>
+    <div className="row-btns"><ColorField value={c} onChange={val => update(d => { d.style[ck] = val; }, { key: ck })} ariaLabel="Linienfarbe" /><NumInput min={min} max={max} step={0.1} value={w} onChange={n => update(d => { d.style[wk] = n; }, { key: wk })} ariaLabel="Linienstärke in Pixeln" /></div>
   );
   if (id === 'wk' || id === 'labels') {
     const lb = doc.labels;
@@ -195,7 +195,7 @@ function LayerProps({ doc, id }: { doc: Doc; id: 'wk' | 'labels' | 'kr' | 'land'
     return <>
       <Head t={g.meta.label} sub={`${g.meta.count.toLocaleString('de-DE')} Gebiete · ${g.meta.attribution.split(';')[0]}`} />
       <Section title="Fläche"><Check checked={doc.layers.wkFill} onChange={on => update(d => { d.layers.wkFill = on; })}>Nach Daten einfärben</Check>
-        <Field label="Keine Daten"><input type="color" value={st.noData} onChange={e => { const val = e.target.value.toUpperCase(); update(d => { d.style.noData = val; }, { key: 'nd' }); }} aria-label="Farbe für Gebiete ohne Daten" /></Field></Section>
+        <Field label="Keine Daten"><ColorField value={st.noData} onChange={val => update(d => { d.style.noData = val; }, { key: 'nd' })} ariaLabel="Farbe für Gebiete ohne Daten" /></Field></Section>
       <Section title="Grenze"><Check checked={doc.layers.wkLines} onChange={on => update(d => { d.layers.wkLines = on; })}>Gebietsgrenzen</Check>
         <Field label="Farbe · Stärke">{colW(st.wkLine, st.wkLineW, 'wkLine', 'wkLineW', 6)}</Field></Section>
       <Section title="Beschriftung"><Check checked={doc.layers.wkLabels} onChange={on => update(d => { d.layers.wkLabels = on; })}>Beschriften</Check>
@@ -228,7 +228,7 @@ function LayerProps({ doc, id }: { doc: Doc; id: 'wk' | 'labels' | 'kr' | 'land'
     return <>
       <Head t="Nachbarländer" sub={`Kontextebene · ${lg ? `Länder aus den Verwaltungsgrenzen, Stand ${lg.meta.stand || lg.meta.year}` : 'Länder aus den Verwaltungsgrenzen'}`} />
       <Check checked={doc.layers.laender} onChange={on => update(d => { d.layers.laender = on; })}>Anzeigen</Check>
-      <Field label="Fläche"><div className="row-btns"><input type="color" value={st.laender} onChange={e => { const val = e.target.value.toUpperCase(); update(d => { d.style.laender = val; }, { key: 'lae' }); }} aria-label="Flächenfarbe der Nachbarländer" />
+      <Field label="Fläche"><div className="row-btns"><ColorField value={st.laender} onChange={val => update(d => { d.style.laender = val; }, { key: 'lae' })} ariaLabel="Flächenfarbe der Nachbarländer" />
         {st.laender !== st.umfeld && <button className="btn small" onClick={() => update(d => { d.style.laender = d.style.umfeld; })}>wie Umfeld</button>}</div></Field>
       <Field label="Grenze · Stärke">{colW(st.laenderLine, st.laenderLineW, 'laenderLine', 'laenderLineW', 8, 0)}</Field>
       <p className="hint">Die Karte deckt nur einen Teil Deutschlands ab. Die übrigen Länder erscheinen dahinter als Umfeld, ohne Daten und ohne Legendeneintrag. Stärke 0 zeichnet keine Grenzen. Die Quellenzeile nennt dann auch das BKG.</p>
@@ -238,8 +238,8 @@ function LayerProps({ doc, id }: { doc: Doc; id: 'wk' | 'labels' | 'kr' | 'land'
   return <>
     <Head t={w ? 'Gewässer' : 'Nachbarstaaten'} sub="Kontextebene · Natural Earth, gemeinfrei" />
     <Check checked={doc.layers[w ? 'lakes' : 'neighbors']} onChange={on => update(d => { d.layers[w ? 'lakes' : 'neighbors'] = on; })}>Anzeigen</Check>
-    <Field label="Fläche"><input type="color" value={w ? st.water : st.neighbor} onChange={e => { const val = e.target.value.toUpperCase(); update(d => { if (w) d.style.water = val; else d.style.neighbor = val; }, { key: 'ctx-' + id }); }} aria-label="Flächenfarbe" /></Field>
-    {!w && <Field label="Grenze"><input type="color" value={st.neighborLine} onChange={e => { const val = e.target.value.toUpperCase(); update(d => { d.style.neighborLine = val; }, { key: 'nbl' }); }} aria-label="Grenzfarbe" /></Field>}
+    <Field label="Fläche"><ColorField value={w ? st.water : st.neighbor} onChange={val => update(d => { if (w) d.style.water = val; else d.style.neighbor = val; }, { key: 'ctx-' + id })} ariaLabel="Flächenfarbe" /></Field>
+    {!w && <Field label="Grenze"><ColorField value={st.neighborLine} onChange={val => update(d => { d.style.neighborLine = val; }, { key: 'nbl' })} ariaLabel="Grenzfarbe" /></Field>}
   </>;
 }
 
@@ -249,7 +249,7 @@ function OverlayProps({ doc, id }: { doc: Doc; id: string }) {
   return <>
     <Head t={overlayName(o.geoSet, true)} sub={`${og?.meta.label || o.geoSet} · über der Karte`} />
     <Check checked={o.visible} onChange={on => updateOverlay(o.id, { visible: on })}>Anzeigen</Check>
-    <Field label="Farbe · Stärke"><div className="row-btns"><input type="color" value={o.color} onChange={e => updateOverlay(o.id, { color: e.target.value.toUpperCase() }, 'ovc-' + o.id)} aria-label="Linienfarbe" /><NumInput min={0.2} max={8} step={0.1} value={o.width} onChange={n => updateOverlay(o.id, { width: n }, 'ovw-' + o.id)} ariaLabel="Linienstärke in Pixeln" /></div></Field>
+    <Field label="Farbe · Stärke"><div className="row-btns"><ColorField value={o.color} onChange={c => updateOverlay(o.id, { color: c }, 'ovc-' + o.id)} ariaLabel="Linienfarbe" /><NumInput min={0.2} max={8} step={0.1} value={o.width} onChange={n => updateOverlay(o.id, { width: n }, 'ovw-' + o.id)} ariaLabel="Linienstärke in Pixeln" /></div></Field>
     <Field label="Linie"><Seg items={[['solid', 'Durchgezogen'], ['dash', 'Gestrichelt']]} value={o.dash ? 'dash' : 'solid'} onChange={v => updateOverlay(o.id, { dash: v === 'dash' })} /></Field>
     <Check checked={o.legend} onChange={on => updateOverlay(o.id, { legend: on })}>In der Legende zeigen</Check>
     {og && og.meta.level === 'btw-wk' && geoOf(doc).meta.level === 'gem' ? <p className="hint">Die Wahlkreisgrenzen folgen den Gemeindegrenzen (Wahlkreise bestehen aus Gemeinden). Nur in Städten mit mehreren Wahlkreisen stammen sie aus der Wahlkreiskarte.</p>

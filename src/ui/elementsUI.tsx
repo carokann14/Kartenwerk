@@ -11,7 +11,7 @@ import { getDoc, setUI, toast, update, useStore } from '../model/store';
 import type { ArrowEl, ArrowEnd, Doc, MarkerEl, MarkerShape, TextBoxEl } from '../model/types';
 import { SHAPE_LABEL, annItems, elName, markerD, parseSymbol } from '../render/annotations';
 import { activeVariant } from '../render/elements';
-import { Check, Field, Icon, Note, NumInput, Section, Seg } from './common';
+import { Check, ColorField, Field, Icon, Note, NumInput, Section, Seg } from './common';
 
 const SHAPES: MarkerShape[] = ['kreis', 'quadrat', 'dreieck', 'raute', 'stern', 'pin', 'eigen'];
 export function MarkerIcon({ m, s = 18 }: { m: Pick<MarkerEl, 'shape' | 'symbol' | 'fill' | 'stroke' | 'strokeW'>; s?: number }) {
@@ -134,8 +134,8 @@ function MarkerProps({ doc, m, moved, common }: { doc: Doc; m: MarkerEl; moved: 
       <input ref={fileRef} type="file" accept=".svg,image/svg+xml" hidden onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (!f) return; try { const sym = parseSymbol(await f.text(), f.name.replace(/\.svg$/i, '')); updateEl(m.id, { shape: 'eigen', symbol: sym }); } catch (err) { toast((err as Error).message); } }} />
       {m.shape === 'eigen' && <div className="row-btns"><span className="hint">{m.symbol?.name}</span><button className="btn small ghost" onClick={() => fileRef.current?.click()}>Anderes Symbol …</button></div>}
       <Field label="Größe (px)"><NumInput min={3} max={120} value={m.size} onChange={x => updateEl(m.id, { size: x }, 'size')} ariaLabel="Größe des Markers" /></Field>
-      <Field label="Füllung"><input type="color" value={m.fill} onChange={e => updateEl(m.id, { fill: e.target.value.toUpperCase() }, 'fill')} aria-label="Füllfarbe" /></Field>
-      <Field label="Rand · Stärke"><div className="row-btns nowrap"><input type="color" value={m.stroke} onChange={e => updateEl(m.id, { stroke: e.target.value.toUpperCase() }, 'stroke')} aria-label="Randfarbe" /><NumInput min={0} max={8} step={0.5} value={m.strokeW} onChange={x => updateEl(m.id, { strokeW: x }, 'sw')} ariaLabel="Randstärke" /></div></Field>
+      <Field label="Füllung"><ColorField value={m.fill} onChange={c => updateEl(m.id, { fill: c }, 'fill')} ariaLabel="Füllfarbe" /></Field>
+      <Field label="Rand · Stärke"><div className="row-btns nowrap"><ColorField value={m.stroke} onChange={c => updateEl(m.id, { stroke: c }, 'stroke')} ariaLabel="Randfarbe" /><NumInput min={0} max={8} step={0.5} value={m.strokeW} onChange={x => updateEl(m.id, { strokeW: x }, 'sw')} ariaLabel="Randstärke" /></div></Field>
     </Section>
     <Section title="Beschriftung">
       <textarea rows={2} value={m.label} onChange={e => updateEl(m.id, { label: e.target.value }, 'label')} placeholder="leer = keine Beschriftung" aria-label="Beschriftung" />
@@ -165,13 +165,13 @@ function TextBoxProps({ doc, t, moved, common }: { doc: Doc; t: TextBoxEl; moved
     <Field stack label="Text" htmlFor="p-tb"><textarea id="p-tb" rows={3} value={t.text} onChange={e => updateEl(t.id, { text: e.target.value }, 'text')} /></Field>
     <Field label="Größe · Schnitt"><div className="row-btns nowrap"><NumInput min={6} max={120} value={t.size} onChange={x => updateEl(t.id, { size: x }, 'size')} ariaLabel="Schriftgröße" />
       <select value={t.cut} onChange={e => updateEl(t.id, { cut: e.target.value as Cut })} aria-label="Schriftschnitt">{(['text', 'bold', 'display', 'label'] as Cut[]).map(c => <option key={c} value={c}>{CUTS[c].label}</option>)}</select></div></Field>
-    <Field label="Farbe"><div className="row-btns nowrap"><Seg items={[['ink', 'Dunkel'], ['inkSoft', 'Grau'], ['x', 'Eigene']]} value={custom ? 'x' : t.color as 'ink'} onChange={c => updateEl(t.id, { color: c === 'x' ? '#9E5B0B' : c })} />{custom && <input type="color" value={t.color} onChange={e => updateEl(t.id, { color: e.target.value.toUpperCase() }, 'color')} aria-label="Textfarbe" />}</div></Field>
+    <Field label="Farbe"><div className="row-btns nowrap"><Seg items={[['ink', 'Dunkel'], ['inkSoft', 'Grau'], ['x', 'Eigene']]} value={custom ? 'x' : t.color as 'ink'} onChange={c => updateEl(t.id, { color: c === 'x' ? '#9E5B0B' : c })} />{custom && <ColorField value={t.color} onChange={c => updateEl(t.id, { color: c }, 'color')} ariaLabel="Textfarbe" />}</div></Field>
     <Field label="Ausrichtung"><Seg items={[['start', 'Links'], ['middle', 'Mitte'], ['end', 'Rechts']]} value={t.align} onChange={a => updateEl(t.id, { align: a })} /></Field>
     <Field label="Breite (px)"><NumInput min={0} max={2000} value={t.width} onChange={x => updateEl(t.id, { width: x }, 'w')} ariaLabel="Umbruchbreite, 0 = automatisch" /></Field>
     {pos && <Field label="Position (px)"><span className="mono">{Math.round(pos.body[0])}, {Math.round(pos.body[1])}</span></Field>}
     <p className="hint">Breite 0: nur Zeilenumbrüche aus dem Text. Mit Breite bricht der Text automatisch um.</p>
-    <Field label="Hintergrund"><div className="row-btns nowrap"><Check checked={!!t.bg} onChange={on => updateEl(t.id, { bg: on ? '#FFFFFF' : null, pad: on && !t.pad ? 6 : t.pad })}>Fläche</Check>{t.bg && <input type="color" value={t.bg} onChange={e => updateEl(t.id, { bg: e.target.value.toUpperCase() }, 'bg')} aria-label="Hintergrundfarbe" />}</div></Field>
-    <Field label="Rahmen"><div className="row-btns nowrap"><Check checked={!!t.border} onChange={on => updateEl(t.id, { border: on ? '#16181B' : null, pad: on && !t.pad ? 6 : t.pad })}>Linie</Check>{t.border && <input type="color" value={t.border} onChange={e => updateEl(t.id, { border: e.target.value.toUpperCase() }, 'border')} aria-label="Rahmenfarbe" />}</div></Field>
+    <Field label="Hintergrund"><div className="row-btns nowrap"><Check checked={!!t.bg} onChange={on => updateEl(t.id, { bg: on ? '#FFFFFF' : null, pad: on && !t.pad ? 6 : t.pad })}>Fläche</Check>{t.bg && <ColorField value={t.bg} onChange={c => updateEl(t.id, { bg: c }, 'bg')} ariaLabel="Hintergrundfarbe" />}</div></Field>
+    <Field label="Rahmen"><div className="row-btns nowrap"><Check checked={!!t.border} onChange={on => updateEl(t.id, { border: on ? '#16181B' : null, pad: on && !t.pad ? 6 : t.pad })}>Linie</Check>{t.border && <ColorField value={t.border} onChange={c => updateEl(t.id, { border: c }, 'border')} ariaLabel="Rahmenfarbe" />}</div></Field>
     {(t.bg || t.border) && <Field label="Innenabstand"><NumInput min={0} max={60} value={t.pad} onChange={x => updateEl(t.id, { pad: x }, 'pad')} ariaLabel="Innenabstand" /></Field>}
     <Field label="Verankerung"><Seg items={[['map', 'An der Karte'], ['board', 'Auf der Fläche']]} value={t.anchor} onChange={a => convertAnchor(t, a)} /></Field>
     {t.anchor === 'map' && <Check checked={t.leader} onChange={on => updateEl(t.id, { leader: on })}>Führungslinie zum Punkt</Check>}
@@ -221,7 +221,7 @@ function ArrowProps({ doc, a, common }: { doc: Doc; a: ArrowEl; common: React.Re
       {a.bend !== 0 && <Field label="Biegung"><input type="range" min={-100} max={100} value={Math.round(a.bend * 100)} onChange={e => updateEl(a.id, { bend: +e.target.value / 100 || 0.01 }, 'bend')} aria-label="Biegung" /></Field>}
       <Field label="Spitze"><Seg items={[['end', 'Ziel'], ['start', 'Start'], ['both', 'Beide'], ['none', 'Keine']]} value={a.head} onChange={h => updateEl(a.id, { head: h })} /></Field>
       {a.head !== 'none' && <Field label="Spitzengröße"><NumInput min={0.4} max={4} step={0.1} value={a.headSize} onChange={x => updateEl(a.id, { headSize: x }, 'hs')} ariaLabel="Größe der Spitze (Faktor)" /></Field>}
-      <Field label="Farbe · Stärke"><div className="row-btns nowrap"><input type="color" value={a.color} onChange={e => updateEl(a.id, { color: e.target.value.toUpperCase() }, 'color')} aria-label="Farbe" /><NumInput min={0.5} max={20} step={0.5} value={a.width} onChange={x => updateEl(a.id, { width: x }, 'w')} ariaLabel="Strichstärke" /></div></Field>
+      <Field label="Farbe · Stärke"><div className="row-btns nowrap"><ColorField value={a.color} onChange={c => updateEl(a.id, { color: c }, 'color')} ariaLabel="Farbe" /><NumInput min={0.5} max={20} step={0.5} value={a.width} onChange={x => updateEl(a.id, { width: x }, 'w')} ariaLabel="Strichstärke" /></div></Field>
       <Check checked={a.dash} onChange={on => updateEl(a.id, { dash: on })}>Gestrichelt</Check>
       <Field label="Abstand (px)"><NumInput min={0} max={40} value={a.gap} onChange={x => updateEl(a.id, { gap: x }, 'gap')} ariaLabel="Abstand zu verbundenen Elementen" /></Field>
     </Section>
