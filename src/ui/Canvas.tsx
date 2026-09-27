@@ -142,11 +142,14 @@ function LabelG({ it, doc }: { it: LabelItem; doc: Doc }) {
     </g>
   );
 }
-/** Diagramm der aktiven Grafik (M7) */
+/** Diagramm der aktiven Grafik (M7). Liegt wie die Karte im Hauptrahmen (`v.L.main`) und nutzt dasselbe `g.frame`/`frame-hit`-Muster
+ *  wie `MapFrame`, damit es sich genauso mit der Maus verschieben und an den Ecken/Kanten in der Größe ändern lässt (m4-2r). */
 function ChartView() {
   const doc = useStore(s => s.doc!);
+  const F = activeVariant(doc).L.main;
   const p = chartPrims(doc, activeVariant(doc));
-  return <g id="chart">
+  return <g className="frame" data-frame="main">
+    <rect className="frame-hit" data-frame-hit="main" x={F.x} y={F.y} width={F.w} height={F.h} fill="#FFFFFF" fillOpacity={0} />
     {p.rects.map((r, k) => <rect key={'r' + k} x={+r.x.toFixed(1)} y={+r.y.toFixed(1)} width={+r.w.toFixed(1)} height={+r.h.toFixed(1)} fill={r.fill} />)}
     {(p.paths || []).map((q, k) => <path key={'p' + k} d={q.d} fill={q.fill} stroke={q.stroke} strokeWidth={q.width} />)}
     {p.texts.map((tx, k) => textEl(tx, 't' + k))}

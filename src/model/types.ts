@@ -80,6 +80,7 @@ export interface ChartSpec {
   decimals: number;          // Nachkommastellen der Werte
   color: string;             // Farbe für Werte ohne Partei
   keyVisible: boolean;       // kleine Zeichenerklärung (etwa „2025 · 2021“)
+  barColors?: Record<string, string>;   // Farbe je einzelnem Balken, überschreibt `color` (bzw. die Parteifarbe) für den Balken mit diesem Schlüssel (Bar.key)
 }
 export interface GraphicMeta { id: string; name: string; kind: GraphicKind }
 export interface Doc {

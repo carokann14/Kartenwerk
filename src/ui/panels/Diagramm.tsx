@@ -28,6 +28,14 @@ function setChart(fn: (c: ChartSpec) => ChartSpec) {
   }, { key: 'chart' });
 }
 const setSource = (src: ChartSource | null) => setChart(c => ({ ...c, source: src, type: typeFor(src, c.type) }));
+/** Farbe eines einzelnen Balkens setzen bzw. (hex null) auf die allgemeine Farbe zurücksetzen. */
+function setBarColor(key: string, hex: string | null) {
+  setChart(c => {
+    const bc = { ...c.barColors };
+    if (hex) bc[key] = hex; else delete bc[key];
+    return { ...c, barColors: Object.keys(bc).length ? bc : undefined };
+  });
+}
 
 export function PanelDiagramm() {
   const doc = useStore(s => s.doc!);
@@ -71,6 +79,15 @@ export function PanelDiagramm() {
       {src?.kind === 'partei' && <Field label="Sonstige unter"><div className="row-btns"><NumInput min={0} max={20} step={0.5} value={spec.minShare} onChange={n => setChart(c => ({ ...c, minShare: n }))} ariaLabel="Schwelle für Sonstige in Prozent" /><span className="hint">%</span></div></Field>}
       <Field label="Nachkommastellen"><Seg items={[['0', '0'], ['1', '1'], ['2', '2']]} value={String(spec.decimals) as '1'} onChange={v => setChart(c => ({ ...c, decimals: +v }))} /></Field>
       {(src?.kind !== 'partei') && <Field label="Farbe"><div className="swatch-grid">{HUES.map(h => <button key={h} className={'swatch-btn' + (spec.color === h ? ' on' : '')} style={{ background: h }} onClick={() => setChart(c => ({ ...c, color: h }))} aria-label={'Farbton ' + h} />)}<ColorField value={spec.color || HUES[0]} onChange={hex => setChart(c => ({ ...c, color: hex }))} ariaLabel="Eigene Farbe" /></div></Field>}
+      {(src?.kind !== 'partei') && M.bars.length > 1 && <Field label="Farbe je Balken">
+        <div className="ptable">{M.bars.map(b => (
+          <div key={b.key} className="prow">
+            <ColorField value={b.color} onChange={hex => setBarColor(b.key, hex)} ariaLabel={'Farbe ' + b.label} />
+            <span className="pname">{b.label}</span>
+            {spec.barColors?.[b.key] && <button className="btn icon ghost small" onClick={() => setBarColor(b.key, null)} aria-label={'Eigene Farbe für „' + b.label + '“ zurücksetzen'} title="Auf die allgemeine Farbe zurücksetzen"><Icon.x size={13} /></button>}
+          </div>
+        ))}</div>
+      </Field>}
       <p className="hint">Parteien bekommen ihre Farbe aus der Parteifarben-Tabelle (Schritt „Daten“ bzw. „Färbung“ einer Karte). Titel und Unterzeile passen sich an, solange du sie nicht selbst geändert hast.</p>
     </Section>
   </>;

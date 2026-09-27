@@ -60,7 +60,14 @@ export const scopeLabel = (ds: Dataset, s: ChartScope) => {
   return '';
 };
 
+/** Wie `chartModelRaw`, hängt aber am Ende von Hand gesetzte Balkenfarben ein (`ChartSpec.barColors`, je Bar-Schlüssel) –
+ *  ein einziger Punkt statt an jeder der mehreren Rückgaben unten, siehe m4-2r. */
 export function chartModel(doc: Doc): ChartModel {
+  const m = chartModelRaw(doc), bc = doc.chart?.barColors;
+  if (!bc || !m.bars.length) return m;
+  return { ...m, bars: m.bars.map(b => (bc[b.key] ? { ...b, color: bc[b.key] } : b)) };
+}
+function chartModelRaw(doc: Doc): ChartModel {
   const spec = doc.chart, base: ChartModel = { type: spec?.type || 'saeulen', bars: [], unit: '', curLabel: '', cmpLabel: '', hasCmp: false, empty: null, dataset: null };
   const src = spec?.source;
   if (!spec || !src) return { ...base, empty: 'Daten wählen: Schritt „Diagramm“' };
