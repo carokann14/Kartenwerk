@@ -293,8 +293,8 @@ table.dtable { width: 100%; border-collapse: collapse; font-size: 12px; }
 }
 .canvas-hud .zoomval { min-width: 48px; text-align: center; font: 500 12px var(--mono); color: var(--ink-2); }
 .canvas-tip {
-  position: absolute; left: 14px; top: 12px; z-index: 5; display: flex; gap: 10px; flex-wrap: wrap;
-  font-size: 11.5px; color: var(--muted); pointer-events: none; max-width: calc(100% - 28px);
+  position: absolute; left: 14px; bottom: 12px; z-index: 5; display: flex; gap: 10px; flex-wrap: wrap;
+  font-size: 11.5px; color: var(--muted); pointer-events: none; max-width: calc(50% - 150px); flex-direction: column; align-items: flex-start;
 }
 .canvas-tip span { background: color-mix(in srgb, var(--panel) 88%, transparent); padding: 3px 7px; border-radius: 5px; border: 1px solid var(--line-2); }
 .canvaswrap.mapmode .canvas-tip { display: none; }
@@ -711,3 +711,23 @@ button.start-card:hover { border-color: var(--accent); }
 .fname-row input[type="text"] { flex: 1; min-width: 0; font-family: var(--mono); font-size: 12px; }
 .fname-ext { font: 500 12px var(--mono); color: var(--muted); flex: none; }
 .fname .hint { margin: 0; }
+
+/* ============================================================
+   M7: Mappe – Grafiken über der Arbeitsfläche
+   ============================================================ */
+.gfxbar { position: absolute; left: 12px; top: 8px; right: 12px; z-index: 7; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; pointer-events: none; }
+.gfxbar > * { pointer-events: auto; }
+.gfx { position: relative; display: flex; align-items: center; height: 30px; border: 1px solid var(--line-2); border-radius: 7px; background: color-mix(in srgb, var(--panel) 92%, transparent); box-shadow: 0 1px 2px rgb(0 0 0 / .04); }
+.gfx.on { border-color: var(--accent); background: var(--panel); box-shadow: 0 0 0 1px var(--accent); }
+.gfx-btn { display: flex; align-items: center; gap: 6px; height: 100%; padding: 0 4px 0 9px; border: 0; background: none; font: inherit; font-size: 12.5px; color: var(--ink); cursor: pointer; max-width: 220px; }
+.gfx-btn span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gfx:not(.on) .gfx-btn { color: var(--muted); }
+.gfx-more { height: 100%; width: 24px; border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: 0 6px 6px 0; display: grid; place-items: center; }
+.gfx-more:hover, .gfx-btn:hover { color: var(--ink); }
+.gfx-name-edit { height: 26px; margin: 0 2px 0 4px; width: 160px; font: inherit; font-size: 12.5px; }
+.gfx-add-wrap { position: relative; }
+.gfx-add { height: 30px; }
+.gfx-menu { top: calc(100% + 4px); left: 0; min-width: 210px; }
+.canvaswrap.mapmode .gfxbar { display: none; }
+.menu-item.danger { color: var(--err, #B3261E); }
+.menu-item:disabled { opacity: .5; cursor: default; background: none; }

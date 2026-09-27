@@ -2,6 +2,7 @@ import { DEFAULT_PARTY_COLORS } from '../data/parties';
 import type { Doc, HatchStyle, LegendSettings } from './types';
 import { uid } from '../lib/util';
 import { defaultLogo, defaultLogoBox, logoRatio } from './logo';
+import { GRAPHIC_KEYS } from './graphicKeys';
 
 export const PRESETS: Record<string, { w: number; h: number; label: string }> = {
   '4:5': { w: 1080, h: 1350, label: 'Instagram 4:5' },
@@ -30,7 +31,8 @@ export const LH = { title: 1.12, subtitle: 1.36, source: 1.4 };
 
 export function defaultDoc(geoSet = 'btw-wk-2025'): Doc {
   return {
-    app: 'kartenwerk', version: 1,
+    app: 'kartenwerk', version: 2,
+    graphics: [{ id: uid('g'), name: 'Karte', kind: 'map' }], page: 0, pageData: {},
     id: uid('p'),
     name: 'Neues Projekt',
     geoSet,
@@ -99,6 +101,17 @@ export function normalizeDoc(d: Doc): Doc {
   x.logo = { ...defaultLogo(), ...(x.logo || {}) };
   x.texts.title.align ||= 'start'; x.texts.subtitle.align ||= 'start'; x.texts.source.align ||= 'start';
   delete (x.texts.source as unknown as Record<string, unknown>).extra;   // „Eigener Zusatz“ entfallen (Text lässt sich direkt bearbeiten)
+  // Mappe (seit M7): ein altes Projekt ist eine Mappe mit einer Grafik
+  if (!Array.isArray(x.graphics) || !x.graphics.length) { x.graphics = [{ id: uid('g'), name: 'Karte', kind: 'map' }]; x.page = 0; x.pageData = {}; }
+  x.pageData ||= {};
+  x.page = Math.max(0, Math.min(x.page || 0, x.graphics.length - 1));
+  x.version = 2;
+  // übrige Grafiken wie die aktive auf den aktuellen Stand bringen
+  for (const g of x.graphics) {
+    const snap = x.pageData[g.id]; if (!snap || g === x.graphics[x.page]) continue;
+    const flat = normalizeDoc({ ...x, ...snap, graphics: [g], page: 0, pageData: {} } as Doc) as unknown as Record<string, unknown>;
+    x.pageData[g.id] = Object.fromEntries(GRAPHIC_KEYS.map(k => [k, flat[k]])) as Partial<Doc>;
+  }
   for (const v of x.variants) {
     v.ann ||= {}; v.guides ||= { x: [], y: [], visible: true }; v.guides.visible ??= true;
     v.L.logo ||= defaultLogoBox(v.L, v.w, v.h, logoRatio(x.logo.asset));

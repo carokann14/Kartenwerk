@@ -227,6 +227,11 @@ export function removeDataset(id: string) {
     const cur = d.color as ColorRule & { dataset?: string };
     if (cur.dataset === id) { const plain = current(d) as Doc, u = usableDatasets(plain); d.color = u.length ? autoRule(u[0]) : plain.datasets.length ? autoRule(plain.datasets[0]) : { mode: 'none' }; }
     if (d.bubbles?.dataset === id) d.bubbles = null;
+    // übrige Grafiken der Mappe: Farbregel und Blasen, die den Datensatz nutzen
+    for (const g of Object.values(d.pageData)) {
+      if ((g.color as { dataset?: string } | undefined)?.dataset === id) g.color = { mode: 'none' };
+      if (g.bubbles?.dataset === id) g.bubbles = null;
+    }
   });
 }
 export function addVariant(preset: string) {

@@ -245,6 +245,7 @@ export function setLogoAsset(asset: LogoAsset, opacity?: number) {
   const old = getDoc().logo.asset, r = logoRatio(asset), r0 = logoRatio(old);
   update(d => {
     d.logo.asset = asset; d.logo.visible = true;
+    for (const g of Object.values(d.pageData)) if (g.logo) g.logo.asset = asset;   // die Logo-Datei gilt für alle Grafiken der Mappe
     if (opacity != null) d.logo.opacity = opacity;
     for (const v of d.variants) {
       const b = v.L.logo;

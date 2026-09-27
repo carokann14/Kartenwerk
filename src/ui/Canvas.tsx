@@ -18,6 +18,7 @@ import { bubbleSet } from '../render/bubbles';
 import { groupMetrics, areaRowIndex } from '../data/derive';
 import { LAENDER } from '../geo/geo';
 import { Icon } from './common';
+import { GraphicsBar } from './GraphicsBar';
 import { MapZoom } from './MapZoom';
 import { logoRatio, logoRect } from '../model/logo';
 
@@ -639,6 +640,7 @@ export function Canvas() {
         <Overlay />
         <Guides />
       </div>
+      <GraphicsBar />
       <div className="canvas-tip"><span>Klick: auswählen</span><span>Doppelklick auf Karte: Kartenmodus</span><span>Leertaste + Ziehen: Ansicht verschieben</span></div>
       {cm.mismatch && <div className="canvas-banner" role="status"><Icon.warn /> Die Farbregel nutzt Daten für „{GEO[cm.mismatch]?.meta.label}“, die Karte zeigt „{GEO[doc.geoSet].meta.label}“. Daten passen nur zu ihrem Gebietsstand.
         <button className="btn small" onClick={() => setGeoSet(cm.mismatch!)}>Karte auf „{GEO[cm.mismatch]?.meta.label}“ umstellen</button></div>}

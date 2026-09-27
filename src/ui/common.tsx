@@ -29,6 +29,8 @@ export const Icon = {
   frame: S(<><rect x="3.5" y="5.5" width="17" height="13" rx="1" /><path d="m3.5 15 5-4.5 4 3.5 3-2.5 5 4" /></>),
   layer: S(<><path d="m12 4 8.5 4.5L12 13 3.5 8.5z" /><path d="m3.5 12.5 8.5 4.5 8.5-4.5" /></>),
   text: S(<path d="M5 6.5V5h14v1.5M12 5v14M9 19h6" />),
+  chart: S(<><path d="M4 20h16" /><rect x="5.5" y="11" width="3.2" height="9" rx=".5" /><rect x="10.4" y="6" width="3.2" height="14" rx=".5" /><rect x="15.3" y="13.5" width="3.2" height="6.5" rx=".5" /></>),
+  more: S(<><circle cx="6" cy="12" r="1.2" /><circle cx="12" cy="12" r="1.2" /><circle cx="18" cy="12" r="1.2" /></>),
   legend: S(<><rect x="4" y="5" width="4" height="4" rx=".6" /><rect x="4" y="10.5" width="4" height="4" rx=".6" /><rect x="4" y="16" width="4" height="4" rx=".6" /><path d="M11 7h9M11 12.5h9M11 18h6" /></>),
   graphic: S(<><rect x="4.5" y="3.5" width="15" height="17" rx="1.2" /><path d="M8 8h8M8 12h5" /></>),
   panel: S(<><rect x="3.5" y="4.5" width="17" height="15" rx="1.5" /><path d="M9 4.5v15" /></>),

@@ -58,8 +58,15 @@ export interface SourceEl {
   text?: string | null;      // eigene Fassung (null/fehlt = automatisch)
   autoBase?: string;         // automatischer Text beim Beginn der Bearbeitung, um spätere Änderungen zu melden
 }
+/** Grafik einer Mappe (Karte oder Diagramm). Die aktive Grafik steht mit ihren Feldern oben im Doc,
+ *  die übrigen liegen in `pageData` (siehe src/model/graphics.ts, GRAPHIC_KEYS). */
+export type GraphicKind = 'map' | 'chart';
+export interface GraphicMeta { id: string; name: string; kind: GraphicKind }
 export interface Doc {
-  app: 'kartenwerk'; version: 1;
+  app: 'kartenwerk'; version: 1 | 2;
+  graphics: GraphicMeta[];                  // Grafiken der Mappe in Reihenfolge
+  page: number;                             // Index der aktiven Grafik
+  pageData: Record<string, Partial<Doc>>;   // gespeicherter Zustand der übrigen Grafiken (Felder aus GRAPHIC_KEYS)
   id: string;
   name: string;
   geoSet: string;
