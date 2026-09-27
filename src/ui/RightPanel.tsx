@@ -8,7 +8,8 @@ import { removeOverlay, updateOverlay } from '../model/overlays';
 import { LABEL_PRESETS, PRESETS } from '../model/defaults';
 import { addGuide, clearGuides, refitAfterInset, refitFrame, setFokus, relayoutActive, removeGuide, removeVariant, resizeVariant, resetSourceText, setGuide, setGuidesVisible, setOverride, setSourceText, setTextScale } from '../model/actions';
 import { getUI, setUI, update, useStore } from '../model/store';
-import type { Doc, Sel } from '../model/types';
+import type { ChartSpec, Doc, Sel } from '../model/types';
+import { defaultChart } from '../render/chart';
 import { ColorModel, colorModel, legendTitleAuto, partyColor } from '../render/colorModel';
 import { activeVariant, autoSourceText, layoutLabels, missingMarks, sourceIsManual } from '../render/elements';
 import { isChart } from '../model/graphicKeys';
@@ -307,6 +308,28 @@ function GraphicProps({ doc }: { doc: Doc }) {
   </>;
 }
 
+/** Eigenschaften des Diagramm-Rahmens: Feinschliff der Darstellung (m7-5), unabhängig vom Schritt „Diagramm“
+ *  (Art, Daten, Farben je Balken). Alle Felder bleiben ungesetzt, bis sie von Hand geändert werden – bestehende
+ *  wie neue Diagramme sehen dadurch unverändert aus, solange niemand daran dreht. */
+function ChartFrameProps({ doc }: { doc: Doc }) {
+  const spec = doc.chart || defaultChart();
+  const isBalken = spec.type === 'balken';
+  const setC = (patch: Partial<ChartSpec>, key?: string) => update(d => { if (!d.chart) d.chart = defaultChart() as never; Object.assign(d.chart, patch); }, key ? { key } : undefined);
+  return <>
+    <Head t="Diagramm" sub={CHART_LABEL[spec.type]} />
+    <Section title="Darstellung">
+      <Field label="Schriftgröße Werte (px)"><NumInput min={10} max={60} value={spec.valueSize ?? 28} onChange={n => setC({ valueSize: n }, 'chart-valsize')} ariaLabel="Schriftgröße der Wertbeschriftung" /></Field>
+      <Field label="Abstand zwischen Balken (%)"><NumInput min={0} max={80} step={5} value={Math.round((spec.gap ?? 0) * 100)} onChange={n => setC({ gap: n / 100 }, 'chart-gap')} ariaLabel="Abstand zwischen den Balken bzw. Säulen" /></Field>
+      {isBalken && <>
+        <Check checked={spec.gridOn ?? true} onChange={on => setC({ gridOn: on })}>Rasterlinien anzeigen</Check>
+        <Field label="Schriftgröße Achse (px)"><NumInput min={8} max={40} value={spec.axisSize ?? 16} onChange={n => setC({ axisSize: n }, 'chart-axsize')} ariaLabel="Schriftgröße der Achsenbeschriftung" /></Field>
+        <Field label="Abstand Achse (px)"><NumInput min={0} max={60} value={spec.axisGap ?? 20} onChange={n => setC({ axisGap: n }, 'chart-axgap')} ariaLabel="Abstand der Achsenbeschriftung zu den Balken" /></Field>
+      </>}
+    </Section>
+    <p className="hint">Art, Daten und Farben je Balken stehen im Schritt „Diagramm“.</p>
+  </>;
+}
+
 function Props() {
   const doc = useStore(s => s.doc!);
   const s = useStore(s => s.ui.sel);
@@ -319,7 +342,7 @@ function Props() {
   else if (s.kind === 'el' && s.id === 'logo') body = <LogoProps doc={doc} />;
   else if (s.kind === 'hatch') body = <HatchProps doc={doc} id={s.id} />;
   else if (s.kind === 'ann') body = <AnnProps doc={doc} id={s.id} />;
-  else if (s.kind === 'frame' && isChart(doc)) body = <><Head t="Diagramm" sub={CHART_LABEL[doc.chart?.type || 'saeulen']} /><p className="hint">Art, Daten und Darstellung stehen im Schritt „Diagramm“.</p><div className="row-btns"><button className="btn small primary" onClick={() => setUI({ step: 'diagramm', panelOpen: true })}><Icon.diagramm /> Zum Schritt Diagramm</button></div></>;
+  else if (s.kind === 'frame' && isChart(doc)) body = <ChartFrameProps doc={doc} />;
   else if (s.kind === 'frame') body = <FrameProps doc={doc} id={s.id} />;
   else if (s.kind === 'layer') body = <LayerProps doc={doc} id={s.id} />;
   else if (s.kind === 'overlay') body = <OverlayProps doc={doc} id={s.id} />;

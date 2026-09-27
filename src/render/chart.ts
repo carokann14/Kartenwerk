@@ -160,7 +160,8 @@ export function chartPrims(doc: Doc, v: Variant): Prims {
     return { texts, rects, paths, box };
   }
   const dec = spec.decimals, n = M.bars.length;
-  const valSize = Math.round(28 * ts), nameSize = Math.round(24 * ts), smallSize = Math.round(18 * ts);
+  const valSize = Math.round((spec.valueSize ?? 28) * ts), nameSize = Math.round(24 * ts), smallSize = Math.round(18 * ts);
+  const gapMul = Math.max(0.15, 1 - (spec.gap ?? 0));
   // Zeichenerklärung (etwa „2025 · 2021“), nur bei Vergleich
   let top = F.y;
   const showCmp = M.type === 'saeulen' && spec.showCmp && M.hasCmp;
@@ -178,16 +179,16 @@ export function chartPrims(doc: Doc, v: Variant): Prims {
     // waagerecht: Namen links, Balken, Wert am Ende; helle Hilfslinien
     const nameW = Math.min(F.w * 0.42, Math.max(...M.bars.map(b => measureW(b.label, 'text', nameSize))) + 12);
     const x0 = F.x + nameW, valW = Math.max(...M.bars.map(b => measureW(fmt(b.value, dec) + M.unit, 'bold', valSize))) + 10;
-    const width = F.w - nameW - valW, tickH = Math.round(20 * ts);
-    const rowH = Math.min((F.y + F.h - top - tickH) / n, 96 * ts), bh = Math.min(rowH * 0.62, 52 * ts);
+    const width = F.w - nameW - valW, tickH = Math.round((spec.axisGap ?? 20) * ts), axisSize = Math.round((spec.axisSize ?? 16) * ts);
+    const rowH = Math.min((F.y + F.h - top - tickH) / n, 96 * ts), bh = Math.min(rowH * 0.62 * gapMul, 52 * ts);
     const max = Math.max(...M.bars.map(b => b.value), 0), min = Math.min(...M.bars.map(b => b.value), 0), span = max - min || 1;
     const X = (val: number) => x0 + (val - min) / span * width;
     // Hilfslinien mit runden Schritten
-    const step = niceStep(span / 4);
+    const step = niceStep(span / 4), gridOn = spec.gridOn !== false;
     for (let t = Math.ceil(min / step) * step; t <= max + 1e-9; t += step) {
       const x = X(t);
-      paths.push({ d: `M${x.toFixed(1)} ${top.toFixed(1)}V${(top + rowH * n).toFixed(1)}`, fill: 'none', stroke: t === 0 ? '#9A968E' : '#E4E0D8', width: t === 0 ? 1.2 : 1 });
-      texts.push({ x, y: top + rowH * n + tickH * 0.9, text: fmt(t, step < 1 ? 1 : 0), cut: 'text', size: Math.round(16 * ts), color: soft, anchor: 'middle' });
+      if (gridOn) paths.push({ d: `M${x.toFixed(1)} ${top.toFixed(1)}V${(top + rowH * n).toFixed(1)}`, fill: 'none', stroke: t === 0 ? '#9A968E' : '#E4E0D8', width: t === 0 ? 1.2 : 1 });
+      texts.push({ x, y: top + rowH * n + tickH * 0.9, text: fmt(t, step < 1 ? 1 : 0), cut: 'text', size: axisSize, color: soft, anchor: 'middle' });
     }
     M.bars.forEach((b, k) => {
       const y = top + k * rowH + (rowH - bh) / 2, cy = y + bh / 2;
@@ -201,7 +202,7 @@ export function chartPrims(doc: Doc, v: Variant): Prims {
   // Säulen bzw. Gewinne/Verluste
   const nameH = Math.round(nameSize * 1.6), valH = Math.round(valSize * 1.5);
   const groupW = F.w / n;
-  const bw = showCmp ? Math.min(groupW * 0.5, 110 * ts) : Math.min(groupW * 0.64, 140 * ts), cw = showCmp ? Math.max(4, bw * 0.42) : 0, gap = showCmp ? 3 : 0;
+  const bw = (showCmp ? Math.min(groupW * 0.5, 110 * ts) : Math.min(groupW * 0.64, 140 * ts)) * gapMul, cw = showCmp ? Math.max(4, bw * 0.42) : 0, gap = showCmp ? 3 : 0;
   const pos = Math.max(0, ...M.bars.map(b => Math.max(b.value, showCmp ? b.cmp ?? 0 : 0)));
   const neg = Math.max(0, ...M.bars.map(b => -Math.min(b.value, 0)));
   const plotTop = top + valH + (showCmp ? Math.round(smallSize * 1.1) : 0), plotBot = F.y + F.h - nameH - (neg > 0 ? valH : 0);
