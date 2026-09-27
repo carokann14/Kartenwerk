@@ -81,6 +81,7 @@ export interface ChartSpec {
   color: string;             // Farbe für Werte ohne Partei
   keyVisible: boolean;       // kleine Zeichenerklärung (etwa „2025 · 2021“)
   barColors?: Record<string, string>;   // Farbe je einzelnem Balken, überschreibt `color` (bzw. die Parteifarbe) für den Balken mit diesem Schlüssel (Bar.key)
+  barLabels?: Record<string, string>;   // Name je einzelnem Balken, überschreibt die automatische Beschriftung (Gebiets-/Spaltenname) für den Balken mit diesem Schlüssel
 }
 export interface GraphicMeta { id: string; name: string; kind: GraphicKind }
 export interface Doc {

@@ -10,7 +10,7 @@ import type { ChartScope, ChartSpec, Doc, Variant } from '../model/types';
 import { partyColor, partyLabel, unionLabelOf } from './colorModel';
 import type { PathPrim, Prims, RectPrim, TextPrim } from './elements';
 
-export interface Bar { key: string; label: string; value: number; cmp: number | null; color: string; party: string | null; other?: boolean }
+export interface Bar { key: string; label: string; value: number; cmp: number | null; color: string; party: string | null; other?: boolean; auto?: string }
 export interface ChartModel { type: ChartSpec['type']; bars: Bar[]; unit: string; curLabel: string; cmpLabel: string; hasCmp: boolean; empty: string | null; dataset: Dataset | null }
 
 export const defaultChart = (type: ChartSpec['type'] = 'saeulen'): ChartSpec => ({ type, source: null, showCmp: true, minShare: 3, decimals: 1, color: '#2F5D8A', keyVisible: true });
@@ -60,12 +60,14 @@ export const scopeLabel = (ds: Dataset, s: ChartScope) => {
   return '';
 };
 
-/** Wie `chartModelRaw`, hängt aber am Ende von Hand gesetzte Balkenfarben ein (`ChartSpec.barColors`, je Bar-Schlüssel) –
- *  ein einziger Punkt statt an jeder der mehreren Rückgaben unten, siehe m4-2r. */
+/** Wie `chartModelRaw`, hängt aber am Ende von Hand gesetzte Balkenfarben und -namen ein (`ChartSpec.barColors`/`barLabels`,
+ *  je Bar-Schlüssel) – ein einziger Punkt statt an jeder der mehreren Rückgaben unten, siehe m4-2r/m7-4. `Bar.auto` trägt
+ *  dabei immer den automatisch ermittelten Namen (auch ohne eigene Überschreibung), damit die Bedienung ihn als Platzhalter
+ *  zeigen kann, während `Bar.label` (Anzeige/Export) die eigene Fassung übernimmt, sobald eine gesetzt ist. */
 export function chartModel(doc: Doc): ChartModel {
-  const m = chartModelRaw(doc), bc = doc.chart?.barColors;
-  if (!bc || !m.bars.length) return m;
-  return { ...m, bars: m.bars.map(b => (bc[b.key] ? { ...b, color: bc[b.key] } : b)) };
+  const m = chartModelRaw(doc), bc = doc.chart?.barColors, bl = doc.chart?.barLabels;
+  if (!m.bars.length) return m;
+  return { ...m, bars: m.bars.map(b => ({ ...b, auto: b.label, color: bc?.[b.key] ?? b.color, label: bl?.[b.key] ?? b.label })) };
 }
 function chartModelRaw(doc: Doc): ChartModel {
   const spec = doc.chart, base: ChartModel = { type: spec?.type || 'saeulen', bars: [], unit: '', curLabel: '', cmpLabel: '', hasCmp: false, empty: null, dataset: null };
