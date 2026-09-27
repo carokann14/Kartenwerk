@@ -19,6 +19,8 @@ import { groupMetrics, areaRowIndex } from '../data/derive';
 import { LAENDER } from '../geo/geo';
 import { Icon } from './common';
 import { GraphicsBar } from './GraphicsBar';
+import { isChart } from '../model/graphicKeys';
+import { chartPrims } from '../render/chart';
 import { MapZoom } from './MapZoom';
 import { logoRatio, logoRect } from '../model/logo';
 
@@ -136,6 +138,16 @@ function LabelG({ it, doc }: { it: LabelItem; doc: Doc }) {
       {labelPrims(doc, it).map((t, k) => textEl(t, k))}
     </g>
   );
+}
+/** Diagramm der aktiven Grafik (M7) */
+function ChartView() {
+  const doc = useStore(s => s.doc!);
+  const p = chartPrims(doc, activeVariant(doc));
+  return <g id="chart">
+    {p.rects.map((r, k) => <rect key={'r' + k} x={+r.x.toFixed(1)} y={+r.y.toFixed(1)} width={+r.w.toFixed(1)} height={+r.h.toFixed(1)} fill={r.fill} />)}
+    {(p.paths || []).map((q, k) => <path key={'p' + k} d={q.d} fill={q.fill} stroke={q.stroke} strokeWidth={q.width} />)}
+    {p.texts.map((tx, k) => textEl(tx, 't' + k))}
+  </g>;
 }
 function Elements() {
   const doc = useStore(s => s.doc!);
@@ -367,10 +379,11 @@ export function Canvas() {
   const space = useRef(false);
   const v = activeVariant(doc);
   const cm = colorModel(doc);
+  const chart = isChart(doc);
   const [noDataHint, setNoDataHint] = useState(true);
   useEffect(() => { if (cm.dataset) setNoDataHint(true); }, [!!cm.dataset]);
 
-  useLayoutEffect(() => { fitViewToCanvas(); }, [doc.active, v.w, v.h, panelOpen]);
+  useLayoutEffect(() => { fitViewToCanvas(); }, [doc.active, doc.page, v.w, v.h, panelOpen]);
   useEffect(() => { const r = () => fitViewToCanvas(); window.addEventListener('resize', r); return () => window.removeEventListener('resize', r); }, []);
   useEffect(() => {
     const kd = (e: KeyboardEvent) => { const t = e.target as HTMLElement; if (e.key === ' ' && !/INPUT|TEXTAREA|SELECT/.test(t.tagName)) { space.current = true; wrap.current?.classList.add('panning'); e.preventDefault(); } };
@@ -621,6 +634,7 @@ export function Canvas() {
       setTimeout(() => { const ta = document.getElementById('p-text') as HTMLTextAreaElement | null; if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }, 30);
       return;
     }
+    if (isChart(d)) return;
     for (const id of ['inset', 'main'] as FrameId[]) if (inFrame(d, id, a) && !t.closest('[data-el]')) { setUI({ mapMode: id, sel: { kind: 'frame', id } }); toast('Kartenmodus – Esc beendet'); return; }
   };
 
@@ -632,8 +646,10 @@ export function Canvas() {
         <div className={'artboard-shadow' + (doc.background === 'transparent' ? ' checker' : '')} style={{ width: v.w, height: v.h }} />
         <svg id="artboard" width={v.w} height={v.h} viewBox={`0 0 ${v.w} ${v.h}`} xmlns="http://www.w3.org/2000/svg">
           <rect id="bg" width={v.w} height={v.h} fill="#FFFFFF" fillOpacity={doc.background === 'transparent' ? 0 : 1} />
-          <MapFrame id="main" />
-          {doc.inset.visible && <MapFrame id="inset" />}
+          {chart ? <ChartView /> : <>
+            <MapFrame id="main" />
+            {doc.inset.visible && <MapFrame id="inset" />}
+          </>}
           <Elements />
           <Annotations />
         </svg>
@@ -642,9 +658,9 @@ export function Canvas() {
       </div>
       <GraphicsBar />
       <div className="canvas-tip"><span>Klick: auswählen</span><span>Doppelklick auf Karte: Kartenmodus</span><span>Leertaste + Ziehen: Ansicht verschieben</span></div>
-      {cm.mismatch && <div className="canvas-banner" role="status"><Icon.warn /> Die Farbregel nutzt Daten für „{GEO[cm.mismatch]?.meta.label}“, die Karte zeigt „{GEO[doc.geoSet].meta.label}“. Daten passen nur zu ihrem Gebietsstand.
+      {!chart && cm.mismatch && <div className="canvas-banner" role="status"><Icon.warn /> Die Farbregel nutzt Daten für „{GEO[cm.mismatch]?.meta.label}“, die Karte zeigt „{GEO[doc.geoSet].meta.label}“. Daten passen nur zu ihrem Gebietsstand.
         <button className="btn small" onClick={() => setGeoSet(cm.mismatch!)}>Karte auf „{GEO[cm.mismatch]?.meta.label}“ umstellen</button></div>}
-      {!cm.dataset && doc.color.mode === 'none' && noDataHint && <div className="canvas-banner soft"><Icon.info /> Noch keine Daten. Importiere eine CSV- oder Excel-Datei im Schritt „Daten“.
+      {!chart && !cm.dataset && doc.color.mode === 'none' && noDataHint && <div className="canvas-banner soft"><Icon.info /> Noch keine Daten. Importiere eine CSV- oder Excel-Datei im Schritt „Daten“.
         <button className="btn small primary" onClick={() => setUI({ wizard: { mode: 'new' } })}><Icon.upload /> Daten importieren</button>
         <button className="btn icon ghost small" onClick={() => setNoDataHint(false)} aria-label="Hinweis schließen" title="Hinweis schließen"><Icon.x size={13} /></button></div>}
       {tool && <div className="mapmode-bar tool-bar"><b>{tool === 'marker' ? 'Marker setzen' : tool === 'arrow' ? 'Pfeil zeichnen' : 'Textkasten setzen'}</b><span style={{ opacity: .75 }}>{tool === 'marker' ? 'Klick in die Karte setzt den Marker' : tool === 'arrow' ? 'Vom Start zum Ziel ziehen; über Markern, Textkästen und Gebietsmitten rastet das Ende ein' : 'Klick in die Karte hängt ihn an diesen Punkt, Klick daneben an die Fläche'}</span><button className="btn small" onClick={() => setUI({ tool: null })}>Abbrechen <span className="kbd kbd-inv">Esc</span></button></div>}

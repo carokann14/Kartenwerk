@@ -4,6 +4,8 @@ import { Cut, ascentRatio, capOffset, measureW, wrapText } from '../lib/fonts';
 import { clamp, fmt1, fmtNum } from '../lib/util';
 import { areaRowIndex, groupMetrics } from '../data/derive';
 import { periodOf } from '../data/time';
+import { isChart } from '../model/graphicKeys';
+import { chartModel } from './chart';
 import { GEO, LAENDER } from '../geo/geo';
 import { LH } from '../model/defaults';
 import type { Doc, Variant } from '../model/types';
@@ -31,6 +33,11 @@ export function autoSourceText(doc: Doc): string {
   const g = GEO[doc.geoSet];
   const parts: string[] = [];
   const cm = colorModel(doc);
+  if (isChart(doc)) {
+    // Diagramm: nur die Quelle der Daten (keine Geometrie)
+    const ds = chartModel(doc).dataset;
+    return ds ? `Daten: ${[ds.settings.attribution, ds.settings.sourceTitle].filter(Boolean).join(', ') || ds.fileName}.` : '';
+  }
   const used = cm.dataset ? [cm.dataset] : [];
   for (const ds of used) {
     const s = ds.settings;
@@ -85,7 +92,7 @@ export function textPrims(doc: Doc, kind: 'title' | 'subtitle' | 'source', v: Va
 
 // ---------- Legende ----------
 export function legendPrims(doc: Doc, P: { x: number; y: number; w?: number } = activeVariant(doc).L.legend, mainW = activeVariant(doc).L.main.w, ts = activeVariant(doc).ts): Prims | null {
-  if (!doc.legend.visible) return null;
+  if (!doc.legend.visible || isChart(doc)) return null;   // Diagramme: Zeichenerklärung im Diagramm selbst
   const M = legendModel(doc); if (!M) return null;
   const cm = colorModel(doc), c = doc.color;
   const base = +(doc.legend.size * ts).toFixed(2), small = Math.round(base * 0.74), ink = doc.style.ink, soft = doc.style.inkSoft;

@@ -7,7 +7,7 @@ import { syncUserGeo } from '../geo/userGeo';
 /** Abgeleitete Gebietsstände bereitstellen: erst importierte Geodaten, dann Regionen (die auf ihnen aufbauen können) */
 const syncDoc = (d: Doc | null | undefined) => { syncUserGeo(d); syncRegions(d); };
 
-export type Step = 'gebiete' | 'daten' | 'faerbung' | 'elemente' | 'export';
+export type Step = 'gebiete' | 'daten' | 'faerbung' | 'diagramm' | 'elemente' | 'export';
 export interface UI {
   step: Step; panelOpen: boolean; sel: Sel; mapMode: 'main' | 'inset' | null;
   view: { x: number; y: number; z: number }; hover: number | null; menu: string | null;
@@ -21,6 +21,10 @@ export interface UI {
   busy: string | null;       // längerer Ladevorgang (z. B. Gemeindegrenzen)
   regionEdit: string | null; // Einteilung, deren Regionen gerade bearbeitet werden
   geoWizard: boolean;        // Geodaten-Import offen
+  tableEdit: string | null | 'new';   // eigene Tabelle bearbeiten (Datensatz-ID) bzw. neu
+  suggest: string | null;    // Vorschläge für diesen Datensatz zeigen
+  suggestFresh: boolean;   // Vorschläge direkt nach „Mit Daten starten“: der erste ersetzt die leere Grafik
+  afterImport: 'suggest' | null;   // „Mit Daten starten“: nach dem Import Vorschläge zeigen
 }
 interface State {
   doc: Doc | null; ui: UI; past: Doc[]; future: Doc[]; lastKey: string; lastAt: number;
@@ -30,7 +34,7 @@ export const useStore = create<State>(() => ({
   ui: {
     step: 'gebiete', panelOpen: true, sel: { kind: 'graphic' }, mapMode: null, view: { x: 0, y: 0, z: 0.5 }, hover: null, menu: null,
     expanded: {}, search: '', tableSort: { k: 'nr', dir: 1 }, tableDataset: null, exportProfile: 'png', pngWidth: null, svgMerge: false,
-    wizard: null, start: true, toast: null, saveState: 'idle', tool: null, busy: null, regionEdit: null, geoWizard: false,
+    wizard: null, start: true, toast: null, saveState: 'idle', tool: null, busy: null, regionEdit: null, geoWizard: false, tableEdit: null, suggest: null, suggestFresh: false, afterImport: null,
   },
   past: [], future: [], lastKey: '', lastAt: 0,
 }));

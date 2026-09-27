@@ -1,3 +1,4 @@
+import { isChart } from '../model/graphicKeys';
 import React, { useEffect, useRef, useState } from 'react';
 import type { Cut } from '../lib/fonts';
 import { CUTS } from '../lib/fonts';
@@ -49,16 +50,17 @@ export function ElementsSection({ doc }: { doc: Doc }) {
   const markers = doc.els.filter((e): e is MarkerEl => e.type === 'marker');
   const texts = doc.els.filter((e): e is TextBoxEl => e.type === 'text');
   const arrows = doc.els.filter((e): e is ArrowEl => e.type === 'arrow');
+  const chart = isChart(doc);
   return (
     <>
-      <Section title="Ortsmarker" aside={markers.length ? `${markers.length} gesetzt` : undefined}>
+      {!chart && <Section title="Ortsmarker" aside={markers.length ? `${markers.length} gesetzt` : undefined}>
         <PlaceSearch onPick={o => addMarker([o.x, o.y], placeOf(o), o.short)} />
         <div className="row-btns">
           <button className={'btn small' + (tool === 'marker' ? ' on' : '')} onClick={() => setUI({ tool: tool === 'marker' ? null : 'marker', mapMode: null })}><Icon.target /> In die Karte klicken</button>
         </div>
         <p className="hint">Ortssuche über das Gemeindeverzeichnis (10.749 Gemeinden, Mittelpunktkoordinaten). Marker hängen an der Karte und wandern beim Zoomen und in jeder Variante mit.</p>
         {markers.length > 0 && <ElList doc={doc} list={markers} />}
-      </Section>
+      </Section>}
       <Section title="Pfeile" aside={arrows.length ? `${arrows.length}` : undefined}>
         <div className="row-btns">
           <button className={'btn small' + (tool === 'arrow' ? ' on' : '')} onClick={() => setUI({ tool: tool === 'arrow' ? null : 'arrow', mapMode: null })}><ArrowIcon /> Pfeil zeichnen</button>
@@ -68,10 +70,10 @@ export function ElementsSection({ doc }: { doc: Doc }) {
       </Section>
       <Section title="Textkästen" aside={texts.length ? `${texts.length}` : undefined}>
         <div className="row-btns">
-          <button className={'btn small' + (tool === 'text' ? ' on' : '')} onClick={() => setUI({ tool: tool === 'text' ? null : 'text', mapMode: null })}><Icon.target /> An einen Kartenpunkt</button>
+          {!chart && <button className={'btn small' + (tool === 'text' ? ' on' : '')} onClick={() => setUI({ tool: tool === 'text' ? null : 'text', mapMode: null })}><Icon.target /> An einen Kartenpunkt</button>}
           <button className="btn small" onClick={() => { const v = activeVariant(getDoc()), L = v.L; addTextBox('board', [L.m.left / v.w, Math.max(0.05, (L.source.y - 26 * v.ts * 2.2) / v.h)]); }}><Icon.text /> Frei auf der Fläche</button>
         </div>
-        <p className="hint">An der Karte: Der Kasten hängt an einem Ort, mit Führungslinie. Auf der Fläche: Er bleibt an seiner Stelle der Grafik, unabhängig vom Kartenausschnitt.</p>
+        {chart ? <p className="hint">Der Kasten bleibt an seiner Stelle der Grafik, etwa für eine Anmerkung zu einer Säule.</p> : <p className="hint">An der Karte: Der Kasten hängt an einem Ort, mit Führungslinie. Auf der Fläche: Er bleibt an seiner Stelle der Grafik, unabhängig vom Kartenausschnitt.</p>}
         {texts.length > 0 && <ElList doc={doc} list={texts} />}
       </Section>
     </>

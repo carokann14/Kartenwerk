@@ -10,6 +10,8 @@ import { annItems, elName } from '../render/annotations';
 import { bubbleSet } from '../render/bubbles';
 import { activeVariant, labelPrims, layoutLabels, legendPrims, Prims, TextPrim, textPrims } from '../render/elements';
 import { logoExportSvg } from '../model/logo';
+import { isChart } from '../model/graphicKeys';
+import { chartPrims } from '../render/chart';
 import { FrameId, activeOverlays, frameMeshes, frameSets, insetIdx, insetLabel, krLinesLabel, laenderCtx, overlayParts } from '../render/scene';
 
 const q1 = (v: number) => Math.round(v * 10);
@@ -230,8 +232,11 @@ export function buildExportSvg(doc: Doc, opts: Partial<ExportOpts> = {}, transpa
   const v = activeVariant(doc), W = v.w, H = v.h;
   let s = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
   if (!transparent) s += `<rect id="Hintergrund" x="0" y="0" width="${W}" height="${H}" fill="#FFFFFF"/>`;
-  s += exportFrame(doc, 'main', o);
-  if (doc.inset.visible) s += exportFrame(doc, 'inset', o);
+  if (isChart(doc)) s += `<g id="Diagramm">${primsToPaths(chartPrims(doc, v))}</g>`;
+  else {
+    s += exportFrame(doc, 'main', o);
+    if (doc.inset.visible) s += exportFrame(doc, 'inset', o);
+  }
   const lp = legendPrims(doc); if (lp) s += `<g id="Legende">${primsToPaths(lp)}</g>`;
   for (const [kind, name] of [['title', 'Titel'], ['subtitle', 'Unterzeile'], ['source', 'Quelle']] as const) { const p = textPrims(doc, kind); if (p) s += `<g id="${name}">${primsToPaths(p)}</g>`; }
   s += logoExportSvg(doc, v);   // SVG-Logo als Vektor, Rasterlogo als Bild

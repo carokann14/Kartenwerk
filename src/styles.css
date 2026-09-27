@@ -731,3 +731,37 @@ button.start-card:hover { border-color: var(--accent); }
 .canvaswrap.mapmode .gfxbar { display: none; }
 .menu-item.danger { color: var(--err, #B3261E); }
 .menu-item:disabled { opacity: .5; cursor: default; background: none; }
+
+/* M7 · eigene Tabelle */
+.te-wrap { overflow: auto; border: 1px solid var(--line); border-radius: 8px; max-height: 420px; }
+.te { border-collapse: collapse; font-size: 12.5px; min-width: 100%; }
+.te th, .te td { border-bottom: 1px solid var(--line-2); border-right: 1px solid var(--line-2); padding: 0; }
+.te th { background: var(--panel-2); position: sticky; top: 0; z-index: 1; white-space: nowrap; }
+.te th > input { font-weight: 600; }
+.te th:last-child, .te td:last-child { border-right: 0; padding: 0 4px; width: 1%; white-space: nowrap; }
+.te input { width: 100%; min-width: 90px; border: 0; background: transparent; padding: 6px 8px; font: inherit; color: inherit; border-radius: 0; }
+.te th > input { width: calc(100% - 26px); }
+.te td.r input { text-align: right; font-variant-numeric: tabular-nums; }
+.te input:focus { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--panel); }
+.modal.te-modal { width: min(820px, 100%); }
+
+/* M7 · Vorschläge und Startdialog */
+.modal.suggest { width: min(640px, 100%); height: auto; }
+.sug-list { display: flex; flex-direction: column; gap: 8px; }
+.sug { display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer; background: var(--panel); text-align: left; }
+.sug:hover { border-color: var(--accent); }
+.sug.on { border-color: var(--accent); background: var(--accent-soft); }
+.sug input { margin-top: 3px; accent-color: var(--accent); }
+.sug > svg { color: var(--accent); flex: none; margin-top: 1px; }
+.sug b { display: block; font-size: 13px; margin-bottom: 2px; }
+.sug .sug-title { display: block; font-size: 12px; color: var(--muted); margin-top: 3px; font-style: italic; }
+.build-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.build { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--panel); text-align: left; min-height: 78px; }
+button.build:hover:not(:disabled) { border-color: var(--accent); }
+.build > svg { color: var(--accent); }
+.build b { font-size: 13px; }
+.build .hint { font-size: 11.5px; line-height: 1.35; }
+.build:disabled { opacity: .55; cursor: default; }
+.build:disabled > svg { color: var(--muted); }
+@media (max-width: 560px) { .build-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.build.on { border-color: var(--accent); background: var(--accent-soft); }

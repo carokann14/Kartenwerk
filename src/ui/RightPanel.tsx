@@ -11,6 +11,7 @@ import { setUI, update, useStore } from '../model/store';
 import type { Doc, Sel } from '../model/types';
 import { ColorModel, colorModel, legendTitleAuto, partyColor } from '../render/colorModel';
 import { activeVariant, autoSourceText, layoutLabels, missingMarks, sourceIsManual } from '../render/elements';
+import { isChart } from '../model/graphicKeys';
 import { INSET_DEFS, fokusLabel, geoOf, insetLabel, isRegional, krLinesLabel, laenderSetFor, overlayName } from '../render/scene';
 import { Check, Field, Icon, Note, NumInput, Section, Seg } from './common';
 import { AreaHatch, HatchList, HatchProps, LegendProps } from './annotationsUI';
@@ -22,10 +23,11 @@ import { MapZoom } from './MapZoom';
 import { setLogoVisible } from '../model/logo';
 
 // ---------- Ebenen ----------
+const CHART_LABEL = { saeulen: 'Säulen', gewinne: 'Gewinne und Verluste', balken: 'Balken' } as const;
 function Layers() {
   const doc = useStore(s => s.doc!);
   const sel = useStore(s => s.ui.sel);
-  const v = activeVariant(doc), L = doc.layers, T = doc.texts, g = geoOf(doc);
+  const v = activeVariant(doc), L = doc.layers, T = doc.texts, g = geoOf(doc), chart = isChart(doc);
   const is = (s: Sel) => JSON.stringify(s) === JSON.stringify(sel) || (s.kind === 'layer' && s.id === 'wk' && sel.kind === 'layer' && sel.id === 'labels');
   const pick = (s: Sel) => () => setUI({ sel: s, mapMode: null });
   const eye = (on: boolean, set: (v: boolean) => void, label: string) => (
@@ -46,6 +48,7 @@ function Layers() {
       <Row lvl={1} s={{ kind: 'el', id: 'title' }} icon={<Icon.text />} name="Titel" hidden={!T.title.visible} extra={eye(T.title.visible, on => update(d => { d.texts.title.visible = on; }), 'Titel')} />
       <Row lvl={1} s={{ kind: 'el', id: 'subtitle' }} icon={<Icon.text />} name="Unterzeile" hidden={!T.subtitle.visible} extra={eye(T.subtitle.visible, on => update(d => { d.texts.subtitle.visible = on; }), 'Unterzeile')} />
       <Row lvl={1} s={{ kind: 'el', id: 'source' }} icon={<Icon.text />} name="Quellenzeile" hidden={!T.source.visible} extra={<>{T.source.text != null && <small className="dim" title="Quellenzeile von Hand bearbeitet">eigen</small>}{eye(T.source.visible, on => update(d => { d.texts.source.visible = on; }), 'Quellenzeile')}</>} />
+      {chart ? <Row lvl={1} s={{ kind: 'frame', id: 'main' }} icon={<Icon.chart />} name={<>Diagramm <small>{CHART_LABEL[doc.chart?.type || 'saeulen']}</small></>} /> : <>
       <Row lvl={1} s={{ kind: 'frame', id: 'main' }} icon={<Icon.frame />} name={<>Hauptkarte <small>{fokusLabel(doc)}</small></>} extra={v.locked.main ? <span className="lock" title="Ausschnitt gesperrt"><Icon.lock /></span> : null} />
       <Row lvl={2} s={{ kind: 'layer', id: 'wk' }} icon={<Icon.layer />} name={g.meta.levelLabel || g.meta.label} extra={<>{tog(L.wkFill, on => update(d => { d.layers.wkFill = on; }), 'F', 'Fläche')}{tog(L.wkLines, on => update(d => { d.layers.wkLines = on; }), 'G', 'Grenze')}{tog(L.wkLabels, on => update(d => { d.layers.wkLabels = on; }), 'B', 'Beschriftung')}</>} />
       <Row lvl={2} s={{ kind: 'layer', id: 'hatches' }} icon={<Icon.layer />} name={<>Schraffuren <small>{doc.hatches.length}</small></>} hidden={!L.hatches} extra={eye(L.hatches, on => update(d => { d.layers.hatches = on; }), 'Schraffuren')} />
@@ -58,6 +61,7 @@ function Layers() {
       <Row lvl={2} s={{ kind: 'layer', id: 'neighbors' }} icon={<Icon.layer />} name={<>Nachbarstaaten <small>Kontext</small></>} hidden={!L.neighbors} extra={eye(L.neighbors, on => update(d => { d.layers.neighbors = on; }), 'Nachbarstaaten')} />
       <Row lvl={1} s={{ kind: 'frame', id: 'inset' }} icon={<Icon.frame />} name={<>Inset „{insetLabel(doc)}“</>} hidden={!doc.inset.visible} extra={eye(doc.inset.visible, on => { update(d => { d.inset.visible = on; d.inset.autoHidden = false; }); refitAfterInset(); }, 'Inset')} />
       <Row lvl={1} s={{ kind: 'el', id: 'legend' }} icon={<Icon.legend />} name="Legende" hidden={!doc.legend.visible} extra={eye(doc.legend.visible, on => update(d => { d.legend.visible = on; }), 'Legende')} />
+      </>}
       <Row lvl={1} s={{ kind: 'el', id: 'logo' }} icon={<Icon.image />} name={<>Logo{!doc.logo.asset && <small>keines geladen</small>}</>} hidden={!doc.logo.visible || !doc.logo.asset} extra={doc.logo.asset ? eye(doc.logo.visible, setLogoVisible, 'Logo') : null} />
       {doc.els.map(el => <Row key={el.id} lvl={1} s={{ kind: 'ann', id: el.id }} icon={el.type === 'marker' ? <MarkerIcon m={el} s={14} /> : el.type === 'arrow' ? <ArrowIcon /> : <Icon.text />} name={elName(el)} hidden={!!el.hidden} extra={eye(!el.hidden, on => update(d => { const x = d.els.find(q => q.id === el.id); if (x) x.hidden = !on; }), elName(el))} />)}
     </div>
@@ -315,6 +319,7 @@ function Props() {
   else if (s.kind === 'el' && s.id === 'logo') body = <LogoProps doc={doc} />;
   else if (s.kind === 'hatch') body = <HatchProps doc={doc} id={s.id} />;
   else if (s.kind === 'ann') body = <AnnProps doc={doc} id={s.id} />;
+  else if (s.kind === 'frame' && isChart(doc)) body = <><Head t="Diagramm" sub={CHART_LABEL[doc.chart?.type || 'saeulen']} /><p className="hint">Art, Daten und Darstellung stehen im Schritt „Diagramm“.</p><div className="row-btns"><button className="btn small primary" onClick={() => setUI({ step: 'diagramm', panelOpen: true })}><Icon.diagramm /> Zum Schritt Diagramm</button></div></>;
   else if (s.kind === 'frame') body = <FrameProps doc={doc} id={s.id} />;
   else if (s.kind === 'layer') body = <LayerProps doc={doc} id={s.id} />;
   else if (s.kind === 'overlay') body = <OverlayProps doc={doc} id={s.id} />;

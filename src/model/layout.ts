@@ -6,6 +6,7 @@ import { legendPrims, textBlock } from '../render/elements';
 import { fokusBBox, insetBBox } from '../render/scene';
 import { PRESET_GUIDES, PRESETS } from './defaults';
 import { PRESET_LOGO_BOX, defaultLogoBox, logoRatio } from './logo';
+import { isChart } from './graphicKeys';
 import type { Doc, FrameBox, Guides, Layout, Margin, Variant, View } from './types';
 
 export const defaultTS = (W: number, H: number) => Math.round(clamp(Math.sqrt(W * H) / 1207, 0.7, 1.25) * 100) / 100;
@@ -76,7 +77,15 @@ export function makeLayout(doc: Doc, W: number, H: number, ts: number, guides?: 
     }
   }
   const bottom = srcTop - Math.round(16 * s);
-  if (tall) {
+  if (isChart(doc)) {
+    // Diagramm: Titel und Unterzeile über die volle Breite, darunter die ganze Fläche für das Diagramm
+    const tw = W - mL - mR;
+    L.title = { x: mL, y: mT, w: tw };
+    let y = mT + titleH(tw); L.subtitle = { x: mL, y, w: tw }; y += subH(tw) + Math.round(34 * s);
+    L.main = { ...blank, x: mL, y, w: tw, h: Math.max(200, bottom - y) };
+    L.inset = { ...blank, x: W - mR - 100, y, w: 100, h: 100 };
+    L.legend = { x: mL, y, w: 0 };
+  } else if (tall) {
     const tw = W - mL - mR;
     L.title = { x: mL, y: mT, w: tw };
     let y = mT + titleH(tw); L.subtitle = { x: mL, y, w: tw }; y += subH(tw) + Math.round(26 * s);
@@ -107,7 +116,7 @@ export function makeLayout(doc: Doc, W: number, H: number, ts: number, guides?: 
     L.inset = { ...blank, x: L.main.x + L.main.w - colW, y: L.main.y + Math.round(4 * s), w: colW, h: Math.round(colW * 1.08) };
   }
   const lp = legendPrims(doc, { x: 0, y: 0 }, L.main.w, ts);
-  if (lp && !land && !tall) {
+  if (lp && !land && !tall && !isChart(doc)) {
     L.legend.x = Math.min(L.legend.x, L.main.x + L.main.w - lp.box.w);
     L.legend.y = Math.min(L.legend.y, L.main.y + L.main.h - lp.box.h - Math.round(8 * s));
     // Breite Gebiete (Berlin, Bayern …) füllen die Breite besser, wenn die Legende unten rechts steht statt in der Spalte rechts

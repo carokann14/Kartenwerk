@@ -4,14 +4,14 @@ import { fmtInt, norm } from '../lib/util';
 import { readFile } from '../data/parse';
 import { EXAMPLES, exampleAvailable } from '../data/examples';
 import { ltwPreset } from '../data/ltw';
-import { PRESET_LABELS, beTitle, wbzTitle, buildDataset, buildTable, defaultSettings, genesisLevel, issueLabel, shortTitle, suggestGeoSetAsync } from '../data/pipeline';
+import { PRESET_LABELS, beTitle, wbzTitle, buildDataset, buildTable, defaultSettings, genesisDeDataset, genesisLevel, issueLabel, shortTitle, suggestGeoSetAsync } from '../data/pipeline';
 import { LEVEL_LABEL, parseGenesis } from '../data/genesis';
 import { periodText } from '../data/time';
 import { GEO_INDEX } from '../geo/geo';
 import type { Cell, Dataset, ImportSettings, PresetId, RawInput, Role } from '../data/types';
 import { GEO, areaContext, areaTitle } from '../geo/geo';
 import { addDataset, loadGeoSets, replaceDataset } from '../model/actions';
-import { getDoc, setUI, useStore } from '../model/store';
+import { getDoc, getUI, setUI, useStore } from '../model/store';
 import { Check, Field, GeoPicker, Icon, Note, NumInput, Seg } from './common';
 import { customOptions } from '../model/regionActions';
 import { BE_EBENEN } from '../data/berlin';
@@ -32,7 +32,7 @@ export function ImportWizard() {
   const [err, setErr] = useState('');
   const [geoReason, setGeoReason] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
-  const close = () => setUI({ wizard: null });
+  const close = () => setUI({ wizard: null, afterImport: null });
 
   const table = useMemo(() => (raw && st ? buildTable(raw, st) : null), [raw, st]);
   const ds = useMemo(() => (raw && st && table && st.geoSet && GEO[st.geoSet] ? buildDataset(raw, st, table, name || raw.fileName, base?.id) : null), [raw, st, table, name, base]);
@@ -76,9 +76,14 @@ export function ImportWizard() {
           const s2 = { ...st, geoSet: lan, rules: {} }, t2 = buildTable(raw, s2);
           addDataset(buildDataset(raw, s2, t2, `${ds.name} · Länder`), false);
         }
+        // Deutschland-Werte (M7): ohne Gebiet, für Diagramme
+        const de = lvl !== 'de' ? genesisDeDataset(raw, st, ds, `${ds.name} · Deutschland`) : null;
+        if (de) addDataset(de, false);
       }
     }
+    const wantSuggest = getUI().afterImport === 'suggest' && !base;
     close();
+    if (wantSuggest) setUI({ suggest: ds.id, suggestFresh: true });
   };
 
   const canNext = step === 1 ? !!raw : step === 4 ? !!st?.geoSet : true;
@@ -312,6 +317,6 @@ function GenesisCard({ raw, st, set }: { raw: RawInput; st: ImportSettings; set:
   return <div className="card muted stack-8">
     <p className="hint"><b>Tabelle {G.code}</b>{G.title ? ` · ${G.title}` : ''} · {G.columns.length} Spalten · {G.periods.length} {G.timeLabel === 'Stichtag' ? 'Stichtage' : 'Jahre'} ({periodText(G.periods[0])} bis {periodText(G.periods[G.periods.length - 1])})</p>
     <p className="hint">Ebenen in der Datei: {levels}. Übernommen wird die Ebene der gewählten Karte ({LEVEL_LABEL[lvl]}); frühere Kreise werden auf den heutigen Stand zusammengelegt.</p>
-    {lvl !== 'lan' && !!G.levels.lan?.size && <Check checked={!!st.genesis?.laender} onChange={v => set({ genesis: { laender: v } })}>Länder zusätzlich als eigenen Datensatz übernehmen (amtliche Landeswerte, auch für Quoten)</Check>}
+    {((lvl !== 'lan' && !!G.levels.lan?.size) || !!G.levels.de?.size) && <Check checked={!!st.genesis?.laender} onChange={v => set({ genesis: { laender: v } })}>{lvl !== 'lan' && G.levels.lan?.size ? 'Länder und Deutschland' : 'Deutschland'} zusätzlich als eigene Datensätze übernehmen (amtliche Werte, auch für Quoten und Diagramme)</Check>}
   </div>;
 }

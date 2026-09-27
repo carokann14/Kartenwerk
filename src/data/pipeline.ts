@@ -711,3 +711,30 @@ export function shortTitle(title: string, fallback = 'Daten'): string {
   if (ag) return `Abgeordnetenhauswahl Berlin ${ag[1]}, ${ag[2]}stimmen${ag[3] ? ', Stand ' + ag[3] : ''}`;
   return t.length > 70 ? t.slice(0, 67).replace(/\s+\S*$/, '') + ' …' : t;
 }
+
+// ---------- Regionaldatenbank: Deutschland als eigener Datensatz (ohne Gebiet, für Diagramme) ----------
+/** Zeile „DG Deutschland“ je Periode; gleiche Spalten und Gruppen wie der Hauptdatensatz. null, wenn die Datei keine Deutschland-Werte hat. */
+export function genesisDeDataset(raw: RawInput, st: ImportSettings, base: Dataset, name: string): Dataset | null {
+  const G = parseGenesis(raw.sheets[st.sheet].cells, raw.fileName);
+  if (!G.levels.de?.size) return null;
+  const all = G.periods.map(p => ({ p, r: genesisRows(G, 'de', p)[0] })).filter(x => x.r);
+  const german = detectGerman(all.slice(-5).flatMap(x => x.r.vals));
+  const num = (v: Cell): Cell => { const c = classify(v, german); return c.t === 'number' ? c.v : c.t === 'dash' ? (st.dashIsZero ? 0 : null) : null; };
+  const time: TimeAxis = { label: G.timeLabel, periods: [], byPeriod: {}, merged: {}, estimated: {} };
+  for (const { p, r } of all) {
+    const vals = r.vals.map(num); if (!vals.some(v => v != null)) continue;
+    const row: Cell[] = base.columns.map(() => null);
+    row[0] = 'DG'; row[1] = r.name || 'Deutschland';
+    vals.forEach((v, k) => { if (k + 2 < row.length) row[k + 2] = v; });
+    time.periods.push(p); time.byPeriod[p] = { rows: [row], rowKey: ['id:DG'], rowArea: [null] };
+  }
+  if (!time.periods.length) return null;
+  const latest = time.byPeriod[time.periods[time.periods.length - 1]];
+  const rep: MatchReport = { ...base.report, total: 1, exact: 0, byName: 0, ambiguous: 0, unknown: 0, duplicate: 0, summary: 0, ignored: 0, ruled: 0, missing: [], nameMismatch: [], issues: [] };
+  return {
+    id: uid('ds'), name, fileName: raw.fileName, importedAt: new Date().toISOString(), geoSet: '', preset: st.preset,
+    settings: { ...base.settings, geoSet: '', rules: {} },
+    columns: base.columns, groups: base.groups, rows: latest.rows, rowKey: latest.rowKey, rowArea: latest.rowArea, report: rep,
+    time: time.periods.length > 1 ? time : undefined,
+  };
+}

@@ -21,7 +21,7 @@ export function PanelFaerbung() {
   const rule = doc.color;
   const ds = cm.dataset || doc.datasets[0] || null;
   const set = (r: ColorRule) => update(d => { d.color = r; });
-  if (!doc.datasets.length) return <Section title="Färbung"><Note>Importiere zuerst Daten im Schritt „Daten“. Danach wählst du hier, wie die Gebiete eingefärbt werden.</Note></Section>;
+  if (!doc.datasets.some(d => d.geoSet)) return <Section title="Färbung"><Note>Importiere zuerst Daten im Schritt „Daten“. Danach wählst du hier, wie die Gebiete eingefärbt werden.</Note></Section>;
   const groups = ds?.groups || [];
   const partyGroups = groups.filter(g => g.parties);
   const numCols = ds?.columns.filter(c => c.kind === 'number' && c.role === 'value') || [];
@@ -67,7 +67,7 @@ export function PanelFaerbung() {
     <>
       <Section title="Datensatz">
         <select value={ds?.id} onChange={e => void showDataset(e.target.value)} aria-label="Datensatz für die Färbung">
-          {doc.datasets.map(d => { const u = datasetFor(doc, d.id)!; return <option key={d.id} value={d.id}>{dsLabel(doc, d)}{u.derived ? ' · summiert' : u.geoSet !== doc.geoSet ? ' · andere Ebene' : ''}</option>; })}
+          {doc.datasets.filter(d => d.geoSet).map(d => { const u = datasetFor(doc, d.id)!; return <option key={d.id} value={d.id}>{dsLabel(doc, d)}{u.derived ? ' · summiert' : u.geoSet !== doc.geoSet ? ' · andere Ebene' : ''}</option>; })}
         </select>
         {rawDs?.time && rule.mode !== 'veraenderung' && <PeriodField ds={rawDs} value={selectedPeriod(doc.periodSel, rawDs)!} onChange={p => setPeriod(rawDs.id, p)} />}
         {rawDs?.time && rule.mode !== 'veraenderung' && <TimeNote ds={rawDs} periods={[selectedPeriod(doc.periodSel, rawDs)!]} />}

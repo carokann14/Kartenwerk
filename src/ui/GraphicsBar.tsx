@@ -44,7 +44,10 @@ export function GraphicsBar() {
         {menu === 'gfx-add' && <div className="menu gfx-menu" role="menu">
           <h6>Neue Grafik in dieser Mappe</h6>
           <button className="menu-item" role="menuitem" onClick={() => { setUI({ menu: null }); addGraphic('map'); requestAnimationFrame(fitViewToCanvas); }}><Icon.gebiete /> Karte</button>
-          <button className="menu-item" role="menuitem" disabled title="kommt mit M7 · Etappe 3"><Icon.chart /> Diagramm <span className="dim">bald</span></button>
+          <button className="menu-item" role="menuitem" onClick={() => { setUI({ menu: null }); addGraphic('chart', 'saeulen'); }}><Icon.saeulen /> Säulen: Ergebnis</button>
+          <button className="menu-item" role="menuitem" onClick={() => { setUI({ menu: null }); addGraphic('chart', 'gewinne'); }}><Icon.gewinne /> Gewinne und Verluste</button>
+          <button className="menu-item" role="menuitem" onClick={() => { setUI({ menu: null }); addGraphic('chart', 'balken'); }}><Icon.balken /> Balken</button>
+          <button className="menu-item" role="menuitem" disabled title="kommt mit M8"><Icon.linie /> Linie <span className="dim">bald</span></button>
           <p className="hint menu-hint">Alle Grafiken teilen sich Daten, Parteifarben und Logo. Texte, Farbregel, Jahr und Formate gelten je Grafik.</p>
         </div>}
       </div>

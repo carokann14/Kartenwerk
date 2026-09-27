@@ -7,12 +7,13 @@ import { Check, Field, Icon, Note, Section } from '../common';
 import { HatchList } from '../annotationsUI';
 import { ElementsSection } from '../elementsUI';
 import { LogoRow } from '../LogoUI';
+import { isChart } from '../../model/graphicKeys';
 
 type ElId = 'title' | 'subtitle' | 'source' | 'legend';
 
 export function PanelElemente() {
   const doc = useStore(s => s.doc!);
-  const t = doc.texts, g = geoOf(doc);
+  const t = doc.texts, g = geoOf(doc), chart = isChart(doc);
   const row = (id: ElId, label: string, on: boolean, toggle: (v: boolean) => void, extra?: React.ReactNode) => (
     <div className="lrow flat" key={id}>
       <input type="checkbox" checked={on} onChange={e => toggle(e.target.checked)} aria-label={label + ' anzeigen'} />
@@ -26,10 +27,11 @@ export function PanelElemente() {
         {row('title', 'Titel', t.title.visible, v => update(d => { d.texts.title.visible = v; }))}
         {row('subtitle', 'Unterzeile', t.subtitle.visible, v => update(d => { d.texts.subtitle.visible = v; }))}
         {row('source', 'Quellenzeile', t.source.visible, v => update(d => { d.texts.source.visible = v; }), <small className="dim"> Pflicht</small>)}
-        {row('legend', 'Legende', doc.legend.visible, v => update(d => { d.legend.visible = v; }))}
+        {!chart && row('legend', 'Legende', doc.legend.visible, v => update(d => { d.legend.visible = v; }))}
         <LogoRow doc={doc} />
         {!t.source.visible && <Note kind="warn">Ohne Quellenzeile fehlt der lizenzrechtlich nötige Quellenvermerk. Kopiere ihn dann im Schritt „Export“ in die Bildunterschrift.</Note>}
       </Section>
+      {!chart && <>
       <Section title="Detail-Lupe (Inset)">
         <Check checked={doc.inset.visible} onChange={v => { update(d => { d.inset.visible = v; d.inset.autoHidden = false; }); refitAfterInset(); }}>Inset anzeigen</Check>
         <Field label="Gebiet"><select value={doc.inset.preset} onChange={e => { const v = e.target.value; update(d => { d.inset.preset = v; }); refitAfterInset(); }} aria-label="Gebiet der Detail-Lupe">
@@ -49,6 +51,7 @@ export function PanelElemente() {
         <HatchList doc={doc} />
         <p className="hint">Eine Schraffur liegt über der Datenfarbe oder auf eigener Fläche. Zuweisen: aus Daten (in der Schraffur), für „keine Daten“ oder von Hand (Gebiete auswählen).</p>
       </Section>
+      </>}
       <ElementsSection doc={doc} />
 
     </>

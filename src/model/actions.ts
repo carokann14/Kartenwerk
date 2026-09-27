@@ -3,7 +3,9 @@ import { current, Draft } from 'immer';
 import { getDoc, getUI, setDoc, setUI, toast, update } from './store';
 import { defaultDoc, normalizeDoc } from './defaults';
 import { fitInset, fitMain, makeVariant, relayout } from './layout';
-import type { ColorRule, Doc, Fokus, Variant, View } from './types';
+import type { ChartSource, ColorRule, Doc, Fokus, Variant, View } from './types';
+import { isChart } from './graphicKeys';
+import { chartTexts, defaultSource, typeFor } from '../render/chartSource';
 import { clamp } from '../lib/util';
 import type { Dataset } from '../data/types';
 import { GEO, ensureGeo, geoLabel } from '../geo/geo';
@@ -139,7 +141,7 @@ function swapDatasetTexts(d: Draft<Doc>, prev: Dataset, ds: Dataset, oldRule: Co
 /** Die Karte mit einem anderen Datensatz des Projekts färben. Passt er weder zur Karte noch lässt er sich auf sie summieren,
  *  wechselt die Karte auf seinen Gebietsstand. */
 export async function showDataset(id: string) {
-  const d0 = getDoc(), raw = d0.datasets.find(x => x.id === id); if (!raw) return;
+  const d0 = getDoc(), raw = d0.datasets.find(x => x.id === id); if (!raw || !raw.geoSet) return;
   const prev = datasetFor(d0, (d0.color as { dataset?: string }).dataset);
   if (prev?.id === id && d0.color.mode !== 'none') return;
   if (datasetFor(d0, id)!.geoSet !== d0.geoSet) await setGeoSet(raw.geoSet);
@@ -173,6 +175,22 @@ export function setPeriod(dsId: string, p: string) {
 }
 export function addDataset(ds: Dataset, useIt = true) {
   const before = getDoc();
+  // Datensatz ohne Gebiet (eigene Tabelle, Deutschland) oder Diagramm-Grafik: die Karte bleibt, ein leeres Diagramm zeigt ihn
+  if (!ds.geoSet || isChart(before)) {
+    update(d => {
+      d.datasets.push(ds as Draft<Dataset>);
+      if (useIt && isChart(d as unknown as Doc) && d.chart && !d.chart.source) {
+        const plain = current(d) as Doc, src = defaultSource(plain, ds, d.chart.type);
+        if (src) {
+          d.chart.source = src as Draft<ChartSource>; d.chart.type = typeFor(src, d.chart.type);
+          const tx = chartTexts(current(d) as Doc, current(d).chart!);
+          if (tx && /^Titel der Grafik/.test(d.texts.title.text)) { d.texts.title.text = tx.title; d.texts.subtitle.text = tx.subtitle; }
+        }
+      }
+    });
+    toast(`Datensatz „${ds.name}“ übernommen`);
+    return;
+  }
   const prev = datasetFor(before, (before.color as { dataset?: string }).dataset);
   // Färbt schon ein Datensatz die Karte und lassen sich die neuen Daten auf sie summieren (Wahlbezirke → Wahlkreise), bleibt die Karte
   const keepMap = !!prev && datasetFor({ ...before, datasets: [...before.datasets, ds] }, ds.id)!.geoSet === before.geoSet;

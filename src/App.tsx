@@ -8,6 +8,8 @@ import { Canvas, fitViewToCanvas } from './ui/Canvas';
 import { Icon } from './ui/common';
 import { ImportWizard } from './ui/ImportWizard';
 import { GeoImportWizard } from './ui/GeoImportWizard';
+import { TableEditor } from './ui/TableEditor';
+import { SuggestDialog } from './ui/SuggestDialog';
 import { RightPanel } from './ui/RightPanel';
 import { StartDialog } from './ui/StartDialog';
 import { TopBar } from './ui/TopBar';
@@ -19,16 +21,28 @@ import { PanelElemente } from './ui/panels/Elemente';
 import { PanelExport } from './ui/panels/Export';
 import { PanelFaerbung } from './ui/panels/Faerbung';
 import { PanelGebiete } from './ui/panels/Gebiete';
+import { PanelDiagramm } from './ui/panels/Diagramm';
+import { isChart } from './model/graphicKeys';
 
-const STEPS: { id: Step; label: string; C: () => JSX.Element }[] = [
+type StepDef = { id: Step; label: string; C: () => JSX.Element };
+const MAP_STEPS: StepDef[] = [
   { id: 'gebiete', label: 'Gebiete', C: PanelGebiete },
   { id: 'daten', label: 'Daten', C: PanelDaten },
   { id: 'faerbung', label: 'Färbung', C: PanelFaerbung },
   { id: 'elemente', label: 'Elemente', C: PanelElemente },
   { id: 'export', label: 'Export', C: PanelExport },
 ];
+// Diagramm (M7): Daten · Diagramm · Elemente · Export
+const CHART_STEPS: StepDef[] = [
+  { id: 'daten', label: 'Daten', C: PanelDaten },
+  { id: 'diagramm', label: 'Diagramm', C: PanelDiagramm },
+  { id: 'elemente', label: 'Elemente', C: PanelElemente },
+  { id: 'export', label: 'Export', C: PanelExport },
+];
+const useSteps = () => useStore(s => (s.doc && isChart(s.doc) ? CHART_STEPS : MAP_STEPS));
 
 function Rail() {
+  const STEPS = useSteps();
   const step = useStore(s => s.ui.step);
   const open = useStore(s => s.ui.panelOpen);
   return (
@@ -42,14 +56,16 @@ function Rail() {
   );
 }
 function StepPanel() {
+  const STEPS = useSteps();
   const step = useStore(s => s.ui.step);
   const open = useStore(s => s.ui.panelOpen);
   if (!open) return <aside className="steppanel" aria-hidden="true" />;
-  const k = STEPS.findIndex(s => s.id === step), S = STEPS[k];
+  // Schritt gibt es bei dieser Grafik nicht (Karte ↔ Diagramm): Färbung/Gebiete ↔ Diagramm
+  const k0 = STEPS.findIndex(s => s.id === step), k = k0 >= 0 ? k0 : STEPS.findIndex(s => s.id === (step === 'diagramm' ? 'faerbung' : 'diagramm')) >= 0 ? STEPS.findIndex(s => s.id === (step === 'diagramm' ? 'faerbung' : 'diagramm')) : 0, S = STEPS[k];
   return (
     <aside className="steppanel" aria-label={S.label}>
-      <div className="sp-head"><span className="step-no">{k + 1}/5</span><h2>{S.label}</h2>
-        {k < 4 && <button className="btn small ghost" onClick={() => setUI({ step: STEPS[k + 1].id })}>Weiter: {STEPS[k + 1].label} <Icon.chev size={12} /></button>}</div>
+      <div className="sp-head"><span className="step-no">{k + 1}/{STEPS.length}</span><h2>{S.label}</h2>
+        {k < STEPS.length - 1 && <button className="btn small ghost" onClick={() => setUI({ step: STEPS[k + 1].id })}>Weiter: {STEPS[k + 1].label} <Icon.chev size={12} /></button>}</div>
       <div className="sp-body"><S.C /></div>
     </aside>
   );
@@ -118,6 +134,8 @@ export function App() {
   const start = useStore(s => s.ui.start);
   const wizard = useStore(s => s.ui.wizard);
   const geoWizard = useStore(s => s.ui.geoWizard);
+  const tableEdit = useStore(s => s.ui.tableEdit);
+  const suggest = useStore(s => s.ui.suggest);
   const panelOpen = useStore(s => s.ui.panelOpen);
   useShortcuts();
   useAutosave();
@@ -140,6 +158,8 @@ export function App() {
       {(start || !hasDoc) && <StartDialog />}
       {wizard && hasDoc && <ImportWizard />}
       {geoWizard && hasDoc && <GeoImportWizard />}
+      {tableEdit && hasDoc && <TableEditor />}
+      {suggest && hasDoc && <SuggestDialog />}
       <Toast />
       <Busy />
     </div>

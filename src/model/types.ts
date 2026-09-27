@@ -61,12 +61,31 @@ export interface SourceEl {
 /** Grafik einer Mappe (Karte oder Diagramm). Die aktive Grafik steht mit ihren Feldern oben im Doc,
  *  die übrigen liegen in `pageData` (siehe src/model/graphics.ts, GRAPHIC_KEYS). */
 export type GraphicKind = 'map' | 'chart';
+/** Diagramm einer Grafik (M7): Säulen (Parteiergebnis), Balken (waagerecht, sortiert), Gewinne/Verluste */
+export type ChartType = 'saeulen' | 'balken' | 'gewinne';
+export type ChartScope = { kind: 'alle' } | { kind: 'land'; bl: string } | { kind: 'gebiet'; id: string };
+export type ChartSource =
+  | { kind: 'partei'; dataset: string; group: string; scope: ChartScope; period?: string | null;
+      /** Vergleich (Vorwahl bzw. Gewinne/Verluste): Gruppe „… (Vorperiode)“, andere Periode oder anderer Datensatz */
+      cmp: { dataset: string; group: string; period?: string | null } | null }
+  | { kind: 'gebiete'; dataset: string; column: string; period?: string | null; select: 'top' | 'bottom' | 'alle'; n: number; scope: ChartScope }
+  | { kind: 'tabelle'; dataset: string; column: string; cmp: string | null };
+export interface ChartSpec {
+  type: ChartType;
+  source: ChartSource | null;
+  showCmp: boolean;          // Säulen: Vergleichswert als schmale helle Säule daneben
+  minShare: number;          // Parteien unter dieser Schwelle (%) → „Sonstige“
+  decimals: number;          // Nachkommastellen der Werte
+  color: string;             // Farbe für Werte ohne Partei
+  keyVisible: boolean;       // kleine Zeichenerklärung (etwa „2025 · 2021“)
+}
 export interface GraphicMeta { id: string; name: string; kind: GraphicKind }
 export interface Doc {
   app: 'kartenwerk'; version: 1 | 2;
   graphics: GraphicMeta[];                  // Grafiken der Mappe in Reihenfolge
   page: number;                             // Index der aktiven Grafik
   pageData: Record<string, Partial<Doc>>;   // gespeicherter Zustand der übrigen Grafiken (Felder aus GRAPHIC_KEYS)
+  chart?: ChartSpec | null;                 // Diagramm der aktiven Grafik (nur bei kind 'chart')
   id: string;
   name: string;
   geoSet: string;
