@@ -155,8 +155,15 @@ export function RichTextArea({ id, rows, value, marks, baseBold, onChange, place
       <div className="rtext-tb">
         <button type="button" className={'btn icon small' + (bold ? ' on' : '')} disabled={!hasSel} aria-pressed={bold} onMouseDown={e => e.preventDefault()} onClick={() => apply('b', !bold)} title="Fett"><b>F</b></button>
         <button type="button" className={'btn icon small' + (italic ? ' on' : '')} disabled={!hasSel} aria-pressed={italic} onMouseDown={e => e.preventDefault()} onClick={() => apply('i', !italic)} title="Kursiv"><i>K</i></button>
-        <span className={hasSel ? undefined : 'rtext-color-off'} onMouseDown={e => e.preventDefault()}>
-          <ColorField value={color} onChange={hex => { onChange(value, setMarkField(value, marks, s0, s1, 'color', hex)); restore(s0, s1); }} ariaLabel="Farbe der Auswahl" title="Farbe der Auswahl" />
+        {/* preventDefault nur außerhalb des geöffneten Farbwählers, sonst verliert das Hex-Feld (und alles andere darin) den Fokus beim Klicken */}
+        <span className={hasSel ? undefined : 'rtext-color-off'} onMouseDown={e => { if (!(e.target as HTMLElement).closest?.('.color-pop')) e.preventDefault(); }}>
+          <ColorField value={color} onChange={hex => {
+            onChange(value, setMarkField(value, marks, s0, s1, 'color', hex));
+            // Während im Hex-Feld getippt wird, den Fokus dort lassen (nicht bei jedem gültigen Zwischenstand, z. B. einem
+            // dreistelligen Kurz-Hex wie „E63“ mitten im Tippen von „E63946“, zur Auswahl zurückspringen – das riss bisher
+            // den Rest der Eingabe in den Textblock statt ins Hex-Feld).
+            if (!(document.activeElement as HTMLElement | null)?.closest?.('.color-pop')) restore(s0, s1);
+          }} ariaLabel="Farbe der Auswahl" title="Farbe der Auswahl" />
         </span>
         {!hasSel && <p className="hint rtext-hint">Textstelle auswählen, um nur sie zu formatieren</p>}
       </div>

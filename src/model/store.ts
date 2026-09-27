@@ -9,7 +9,7 @@ const syncDoc = (d: Doc | null | undefined) => { syncUserGeo(d); syncRegions(d);
 
 export type Step = 'gebiete' | 'daten' | 'faerbung' | 'diagramm' | 'elemente' | 'export';
 export interface UI {
-  step: Step; panelOpen: boolean; sel: Sel; mapMode: 'main' | 'inset' | null;
+  step: Step; panelOpen: boolean; panelW: number; stepW: number; sel: Sel; mapMode: 'main' | 'inset' | null;   // panelW/stepW: Breite des rechten bzw. linken Panels in px, von Hand gezogen (siehe PanelResize/StepResize)
   view: { x: number; y: number; z: number }; hover: number | null; menu: string | null;
   expanded: Record<string, boolean>; search: string; tableSort: { k: string; dir: number }; tableDataset: string | null;
   exportProfile: 'svg' | 'png'; pngWidth: number | null; svgMerge: boolean;
@@ -32,7 +32,7 @@ interface State {
 export const useStore = create<State>(() => ({
   doc: null,
   ui: {
-    step: 'gebiete', panelOpen: true, sel: { kind: 'graphic' }, mapMode: null, view: { x: 0, y: 0, z: 0.5 }, hover: null, menu: null,
+    step: 'gebiete', panelOpen: true, panelW: 312, stepW: 296, sel: { kind: 'graphic' }, mapMode: null, view: { x: 0, y: 0, z: 0.5 }, hover: null, menu: null,
     expanded: {}, search: '', tableSort: { k: 'nr', dir: 1 }, tableDataset: null, exportProfile: 'png', pngWidth: null, svgMerge: false,
     wizard: null, start: true, toast: null, saveState: 'idle', tool: null, busy: null, regionEdit: null, geoWizard: false, tableEdit: null, suggest: null, suggestFresh: false, afterImport: null,
   },

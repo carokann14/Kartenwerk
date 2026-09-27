@@ -123,7 +123,7 @@ button { cursor: pointer; }
 /* ---------- Main grid ---------- */
 .main {
   display: grid; min-height: 0;
-  grid-template-columns: 52px var(--stepw, 296px) minmax(0, 1fr) 312px;
+  grid-template-columns: 52px var(--stepw, 296px) minmax(0, 1fr) var(--panelw, 312px);
 }
 .main.panel-closed { --stepw: 0px; }
 .rail {
@@ -141,10 +141,16 @@ button { cursor: pointer; }
 .rail-spacer { flex: 1; }
 
 .steppanel {
-  background: var(--panel); border-right: 1px solid var(--line); overflow: hidden;
+  position: relative;
+  background: var(--panel); border-right: 1px solid var(--line);
+  /* kein overflow:hidden mehr: sonst schneidet dieser Rahmen einen offenen Farbwähler (der über den Rand hinausragen kann)
+     optisch ab, obwohl daneben noch reichlich Platz ist; das Scrollen selbst übernimmt .sp-body für sich. */
   display: flex; flex-direction: column; min-width: 0;
 }
 .main.panel-closed .steppanel { border-right: 0; }
+.step-resize { position: absolute; right: -4px; top: 0; bottom: 0; width: 7px; cursor: ew-resize; z-index: 3; touch-action: none; }
+.step-resize::after { content: ''; position: absolute; right: 3px; top: 0; bottom: 0; width: 1px; background: transparent; }
+.step-resize:hover::after, .step-resize.active::after { background: var(--accent); }
 .sp-head {
   display: flex; align-items: center; gap: 8px; padding: 12px 14px 10px; border-bottom: 1px solid var(--line-2);
 }
@@ -346,7 +352,10 @@ table.dtable { width: 100%; border-collapse: collapse; font-size: 12px; }
 .tooltip .tt-r i { width: 9px; height: 9px; border-radius: 2px; display: block; }
 
 /* Right panel */
-.rightpanel { background: var(--panel); border-left: 1px solid var(--line); display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+.rightpanel { position: relative; background: var(--panel); border-left: 1px solid var(--line); display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+.rp-resize { position: absolute; left: -4px; top: 0; bottom: 0; width: 7px; cursor: ew-resize; z-index: 3; touch-action: none; }
+.rp-resize::after { content: ''; position: absolute; left: 3px; top: 0; bottom: 0; width: 1px; background: transparent; }
+.rp-resize:hover::after, .rp-resize.active::after { background: var(--accent); }
 .layers { border-bottom: 1px solid var(--line); max-height: 44vh; overflow-y: auto; }
 .rp-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px 6px; position: sticky; top: 0; background: var(--panel); z-index: 1; }
 .rp-head h2 { margin: 0; font-size: 10.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }

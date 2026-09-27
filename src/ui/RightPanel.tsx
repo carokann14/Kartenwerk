@@ -7,7 +7,7 @@ import { GEO, areaContext, areaTitle } from '../geo/geo';
 import { removeOverlay, updateOverlay } from '../model/overlays';
 import { LABEL_PRESETS, PRESETS } from '../model/defaults';
 import { addGuide, clearGuides, refitAfterInset, refitFrame, setFokus, relayoutActive, removeGuide, removeVariant, resizeVariant, resetSourceText, setGuide, setGuidesVisible, setOverride, setSourceText, setTextScale } from '../model/actions';
-import { setUI, update, useStore } from '../model/store';
+import { getUI, setUI, update, useStore } from '../model/store';
 import type { Doc, Sel } from '../model/types';
 import { ColorModel, colorModel, legendTitleAuto, partyColor } from '../render/colorModel';
 import { activeVariant, autoSourceText, layoutLabels, missingMarks, sourceIsManual } from '../render/elements';
@@ -330,6 +330,17 @@ function Props() {
   return <div className="props" key={selKey}>{body}</div>;
 }
 
+/** Ziehgriff am linken Rand: Panel breiter/schmaler ziehen (z. B. damit ein Farbwähler nicht am Fensterrand abgeschnitten wird). */
+function PanelResize() {
+  const onDown = (e: React.PointerEvent) => {
+    const el = e.currentTarget as HTMLElement; el.setPointerCapture(e.pointerId); el.classList.add('active');
+    const startX = e.clientX, startW = getUI().panelW;
+    const move = (ev: PointerEvent) => setUI({ panelW: clamp(startW - (ev.clientX - startX), 312, 640) });
+    const up = () => { el.classList.remove('active'); el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); };
+    el.addEventListener('pointermove', move); el.addEventListener('pointerup', up, { once: true });
+  };
+  return <div className="rp-resize" onPointerDown={onDown} role="separator" aria-orientation="vertical" aria-label="Panel-Breite ziehen" />;
+}
 export function RightPanel() {
-  return <aside className="rightpanel" aria-label="Ebenen und Eigenschaften"><Layers /><Props /></aside>;
+  return <aside className="rightpanel" aria-label="Ebenen und Eigenschaften"><PanelResize /><Layers /><Props /></aside>;
 }

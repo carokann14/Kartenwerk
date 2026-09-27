@@ -3,6 +3,7 @@ import { loadGeo } from './geo/geo';
 import { loadFonts } from './lib/fonts';
 import { scheduleAutosave, setOverride, toggleGuidesVisible } from './model/actions';
 import { Step, getDoc, getUI, redo, setUI, toast, undo, update, useStore } from './model/store';
+import { clamp } from './lib/util';
 import { setLogoVisible } from './model/logo';
 import { Canvas, fitViewToCanvas } from './ui/Canvas';
 import { Icon } from './ui/common';
@@ -64,11 +65,23 @@ function StepPanel() {
   const k0 = STEPS.findIndex(s => s.id === step), k = k0 >= 0 ? k0 : STEPS.findIndex(s => s.id === (step === 'diagramm' ? 'faerbung' : 'diagramm')) >= 0 ? STEPS.findIndex(s => s.id === (step === 'diagramm' ? 'faerbung' : 'diagramm')) : 0, S = STEPS[k];
   return (
     <aside className="steppanel" aria-label={S.label}>
+      <StepResize />
       <div className="sp-head"><span className="step-no">{k + 1}/{STEPS.length}</span><h2>{S.label}</h2>
         {k < STEPS.length - 1 && <button className="btn small ghost" onClick={() => setUI({ step: STEPS[k + 1].id })}>Weiter: {STEPS[k + 1].label} <Icon.chev size={12} /></button>}</div>
       <div className="sp-body"><S.C /></div>
     </aside>
   );
+}
+/** Ziehgriff am rechten Rand: Arbeitsschritt-Panel breiter/schmaler ziehen (z. B. wenn ein Farbwähler darin sonst am Rand abgeschnitten wäre). */
+function StepResize() {
+  const onDown = (e: React.PointerEvent) => {
+    const el = e.currentTarget as HTMLElement; el.setPointerCapture(e.pointerId); el.classList.add('active');
+    const startX = e.clientX, startW = getUI().stepW;
+    const move = (ev: PointerEvent) => setUI({ stepW: clamp(startW + (ev.clientX - startX), 296, 640) });
+    const up = () => { el.classList.remove('active'); el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); };
+    el.addEventListener('pointermove', move); el.addEventListener('pointerup', up, { once: true });
+  };
+  return <div className="step-resize" onPointerDown={onDown} role="separator" aria-orientation="vertical" aria-label="Panel-Breite ziehen" />;
 }
 function Toast() {
   const t = useStore(s => s.ui.toast);
@@ -137,6 +150,8 @@ export function App() {
   const tableEdit = useStore(s => s.ui.tableEdit);
   const suggest = useStore(s => s.ui.suggest);
   const panelOpen = useStore(s => s.ui.panelOpen);
+  const panelW = useStore(s => s.ui.panelW);
+  const stepW = useStore(s => s.ui.stepW);
   useShortcuts();
   useAutosave();
   useEffect(() => {
@@ -148,7 +163,7 @@ export function App() {
     <div id="app">
       {hasDoc ? <>
         <TopBar />
-        <div className={'main' + (panelOpen ? '' : ' panel-closed')}>
+        <div className={'main' + (panelOpen ? '' : ' panel-closed')} style={{ '--panelw': panelW + 'px', '--stepw': (panelOpen ? stepW : 0) + 'px' } as React.CSSProperties}>
           <Rail />
           <StepPanel />
           <Canvas />
