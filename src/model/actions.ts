@@ -11,6 +11,7 @@ import { translateFokus } from '../geo/relate';
 import { syncRegions } from '../geo/regions';
 import { isVirtualGeo, syncUserGeo } from '../geo/userGeo';
 import { datasetFor, usableDatasets } from '../data/aggregate';
+import { latestPeriod, periodText, periodYear, selectedPeriod } from '../data/time';
 import { fokusLabel, laenderSetFor } from '../render/scene';
 import { activeVariant, autoSourceText, textBlock } from '../render/elements';
 import { saveLocal } from './persist';
@@ -150,6 +151,26 @@ export async function showDataset(id: string) {
   });
   toast(`Karte zeigt „${raw.name}“` + (getDoc().texts.source.text != null ? ' · Quellenzeile ist eigene Fassung und bleibt' : ''));
 }
+/** Titel, Unterzeile und eigener Legendentitel nennen die bisherige Periode („31.12.2025“ bzw. „2025“): mitziehen */
+function swapPeriodTexts(d: Draft<Doc>, a: string, b: string) {
+  const A = periodText(a), B = periodText(b), ya = String(periodYear(a)), yb = String(periodYear(b));
+  const swap = (t: string) => t.includes(A) ? t.split(A).join(B) : ya !== yb ? t.replace(new RegExp(`(^|\\D)${ya}(?!\\d)`, 'g'), (_m, x) => x + yb) : t;
+  d.texts.title.text = swap(d.texts.title.text);
+  d.texts.subtitle.text = swap(d.texts.subtitle.text);
+  if (d.legend.title) d.legend.title = swap(d.legend.title);
+}
+/** Periode (Stichtag, Jahr) eines Datensatzes mit Zeitachse wählen */
+export function setPeriod(dsId: string, p: string) {
+  const before = getDoc(), raw = before.datasets.find(x => x.id === dsId);
+  if (!raw?.time || !raw.time.byPeriod[p]) return;
+  const old = selectedPeriod(before.periodSel, raw)!;
+  if (old === p) return;
+  update(d => {
+    d.periodSel = { ...(d.periodSel || {}), [dsId]: p };
+    swapPeriodTexts(d, old, p);
+    keepSourceBottom(before, d);
+  }, { key: 'period-' + dsId });
+}
 export function addDataset(ds: Dataset, useIt = true) {
   const before = getDoc();
   const prev = datasetFor(before, (before.color as { dataset?: string }).dataset);
@@ -167,7 +188,14 @@ export function addDataset(ds: Dataset, useIt = true) {
         // Gruppe, nach der die Karte gefärbt ist (Bayern: Gesamtstimmen); nur eine Stimmenart (Saarland, Bremen) wird nicht genannt
         const cg = (d.color as { group?: string }).group;
         const grp = ds.groups.find(g => g.id === cg && g.parties) || ds.groups.find(g => g.parties && /Zweit/.test(g.label)) || ds.groups.find(g => g.parties);
-        d.texts.subtitle.text = `${grp && grp.label !== 'Stimmen' && !ds.name.includes(grp.label) ? grp.label + ', ' : ''}${ds.name}. Je kräftiger die Farbe, desto höher der Anteil der stärksten Partei.`;
+        d.texts.subtitle.text = `${grp && grp.label !== 'Stimmen' && !ds.name.includes(grp.label) ? grp.label + ', ' : ''}${ds.name}${ds.time ? ' ' + periodText(latestPeriod(ds)!) : ''}. Je kräftiger die Farbe, desto höher der Anteil der stärksten Partei.`;
+        d.name = d.name === 'Neues Projekt' ? ds.name : d.name;
+      } else if (d.texts.title.text === 'Titel der Grafik' && ds.time) {
+        // Zeitreihe (Regionaldatenbank): Titel = Tabelle, Unterzeile = Spalte, Stichtag bzw. Jahr und Ebene
+        const col = ds.columns.find(c => c.id === (d.color as { column?: string }).column);
+        const p = latestPeriod(ds)!, lvl = GEO[ds.geoSet]?.meta.level || '';
+        d.texts.title.text = ds.name;
+        d.texts.subtitle.text = `${col ? col.label + ', ' : ''}${ds.time.label === 'Jahr' ? '' : ds.time.label + ' '}${periodText(p)}${SING[lvl] ? `, je ${SING[lvl]}` : ''}`;
         d.name = d.name === 'Neues Projekt' ? ds.name : d.name;
       }
       if (!prev || moved) {   // erster Datensatz oder andere Karte: Layout neu; sonst bleibt die Gestaltung

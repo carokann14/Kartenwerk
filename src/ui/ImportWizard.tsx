@@ -4,7 +4,10 @@ import { fmtInt, norm } from '../lib/util';
 import { readFile } from '../data/parse';
 import { EXAMPLES, exampleAvailable } from '../data/examples';
 import { ltwPreset } from '../data/ltw';
-import { PRESET_LABELS, beTitle, wbzTitle, buildDataset, buildTable, defaultSettings, issueLabel, shortTitle, suggestGeoSetAsync } from '../data/pipeline';
+import { PRESET_LABELS, beTitle, wbzTitle, buildDataset, buildTable, defaultSettings, genesisLevel, issueLabel, shortTitle, suggestGeoSetAsync } from '../data/pipeline';
+import { LEVEL_LABEL, parseGenesis } from '../data/genesis';
+import { periodText } from '../data/time';
+import { GEO_INDEX } from '../geo/geo';
 import type { Cell, Dataset, ImportSettings, PresetId, RawInput, Role } from '../data/types';
 import { GEO, areaContext, areaTitle } from '../geo/geo';
 import { addDataset, loadGeoSets, replaceDataset } from '../model/actions';
@@ -58,12 +61,23 @@ export function ImportWizard() {
   const setPreset = async (p: PresetId) => { if (!raw) return; const s = defaultSettings(raw, p, st?.sheet || 0); const t = buildTable(raw, s); if (!s.geoSet) { const sug = await suggestGeoSetAsync(t, s, raw.fileName, customOptions(getDoc()), getDoc().geoSet); s.geoSet = sug.id; setGeoReason(sug.reason); } else setGeoReason(''); if (await loadGeoSets([s.geoSet])) setSt(s); };
   const setGeo = async (id: string) => { if (await loadGeoSets([id])) set({ geoSet: id }); };
 
-  const finish = () => {
+  const finish = async () => {
     if (!ds) return;
     if (base) {
       // Farbregel an neue Spalten-IDs anpassen (Zuordnung über die Bezeichnung)
       replaceDataset(ds);
-    } else addDataset(ds);
+    } else {
+      addDataset(ds);
+      // Regionaldatenbank: Länder als eigener Datensatz (amtliche Werte, auch für Quoten)
+      if (raw && st && st.preset === 'genesis' && st.genesis?.laender) {
+        const G = parseGenesis(raw.sheets[st.sheet].cells, raw.fileName), lvl = genesisLevel(G, st.geoSet);
+        const lan = laenderSetFor(st.geoSet);
+        if (lvl !== 'lan' && G.levels.lan?.size && lan && await loadGeoSets([lan])) {
+          const s2 = { ...st, geoSet: lan, rules: {} }, t2 = buildTable(raw, s2);
+          addDataset(buildDataset(raw, s2, t2, `${ds.name} · Länder`), false);
+        }
+      }
+    }
     close();
   };
 
@@ -144,8 +158,8 @@ function StepStructure({ raw, st, set, setPreset, table }: { raw: RawInput; st: 
       <div className="stack-12">
         <Field label="Vorlage"><select value={st.preset} onChange={e => setPreset(e.target.value as PresetId)}>{(Object.keys(PRESET_LABELS) as PresetId[]).filter(p => p !== 'auto').map(p => <option key={p} value={p}>{PRESET_LABELS[p]}</option>)}</select></Field>
         {raw.sheets.length > 1 && <Field label="Tabellenblatt"><select value={st.sheet} onChange={e => { const s = defaultSettings(raw, 'auto', +e.target.value); set({ ...s, geoSet: st.geoSet }); }}>{raw.sheets.map((s, i) => <option key={i} value={i}>{s.name}</option>)}</select></Field>}
-        <Field label="Kopfzeilen"><div className="row-btns"><span className="hint">ab Zeile</span><NumInput value={st.headerStart + 1} min={1} max={200} onChange={v => set({ headerStart: v - 1 })} ariaLabel="Erste Kopfzeile" /><span className="hint">Anzahl</span><NumInput value={st.headerRows} min={1} max={4} onChange={v => set({ headerRows: v })} ariaLabel="Anzahl Kopfzeilen" /></div></Field>
-        <Field label="Form"><Seg items={[['wide', 'Breitformat'], ['long', 'Langformat']]} value={st.format} onChange={v => set({ format: v, long: v === 'long' ? (L || { key: 0, name: 1, group: 2, sub: null, value: 3, kind: null, filterCol: null, filterValue: '' }) : L })} /></Field>
+        {st.preset !== 'genesis' && <><Field label="Kopfzeilen"><div className="row-btns"><span className="hint">ab Zeile</span><NumInput value={st.headerStart + 1} min={1} max={200} onChange={v => set({ headerStart: v - 1 })} ariaLabel="Erste Kopfzeile" /><span className="hint">Anzahl</span><NumInput value={st.headerRows} min={1} max={4} onChange={v => set({ headerRows: v })} ariaLabel="Anzahl Kopfzeilen" /></div></Field>
+        <Field label="Form"><Seg items={[['wide', 'Breitformat'], ['long', 'Langformat']]} value={st.format} onChange={v => set({ format: v, long: v === 'long' ? (L || { key: 0, name: 1, group: 2, sub: null, value: 3, kind: null, filterCol: null, filterValue: '' }) : L })} /></Field></>}
         {st.preset === 'bwl-wbz' && <div className="card muted stack-8">
           <Field label="Gemeinsame Briefwahl"><Seg items={[['anteilig', 'Anteilig verteilen'], ['gemeinsam', 'Als eine Fläche']]} value={st.wbz?.briefwahl || 'anteilig'} onChange={v => set({ wbz: { briefwahl: v }, sourceTitle: wbzTitle((st.sourceTitle.match(/(\d{4})/) || [''])[0], v) })} /></Field>
           <p className="hint">Viele Ämter, Samt- und Verbandsgemeinden zählen die Briefwahl gemeinsam für mehrere Gemeinden aus. <b>Anteilig</b> verteilt diese Stimmen nach der Zahl der Wahlscheine je Gemeinde; die Werte sind dann teils geschätzt und in der Spalte „Briefwahl“ gekennzeichnet. <b>Als eine Fläche</b> zeigt nur amtliche Summen, die Gemeinden erscheinen dann zusammengefasst.</p>
@@ -154,6 +168,7 @@ function StepStructure({ raw, st, set, setPreset, table }: { raw: RawInput; st: 
           <Field label="Briefwahl"><Seg items={[['anteilig', 'Anteilig verteilen'], ['gemeinsam', 'Briefwahlbezirke']]} value={st.wbz?.briefwahl || 'anteilig'} onChange={v => set({ wbz: { briefwahl: v }, geoSet: v === 'anteilig' ? 'be-wbz-2026' : 'be-bwb-2026', sourceTitle: beTitle(beStimmeOf(st.sourceTitle), beDatumOf(st.sourceTitle), v) })} /></Field>
           <p className="hint">In Berlin zählt je Briefwahlbezirk ein eigener Wahlvorstand, zuständig für mehrere Urnenwahlbezirke. <b>Anteilig</b> verteilt die Briefwahlstimmen nach den Wahlscheinen je Urnenwahlbezirk (geschätzt, feinste Karte). <b>Briefwahlbezirke</b> zeigt amtliche Summen aus Urnen- und Briefwahl, auf der Karte der Briefwahlbezirke.</p>
         </div>}
+        {st.preset === 'genesis' && <GenesisCard raw={raw} st={st} set={set} />}
         {st.preset === 'be-gebiete' && <div className="card muted stack-8">
           <Field label="Gebiete"><Seg items={BE_EBENEN.map(e => [e[0], e[1]] as [string, string])} value={st.be?.ebene || BE_EBENEN[0][0]} onChange={v => set({ be: { ebene: v }, geoSet: BE_EBENEN.find(e => e[0] === v)![2], sourceTitle: beTitle(beStimmeOf(st.sourceTitle), beDatumOf(st.sourceTitle), v) })} /></Field>
           <p className="hint">Die Datei enthält Wahlkreise, Bezirke, Bundestagswahlkreise und Summen für Berlin. Übernommen wird eine Gebietsart.</p>
@@ -248,6 +263,7 @@ function StepMatch({ st, set, ds, base }: { st: ImportSettings; set: (p: Partial
         <div className={'stat' + (r.duplicate ? ' err' : '')}><b>{r.duplicate}</b><span>⧉ doppelt</span></div>
         <div className={'stat' + (r.missing.length ? ' warn' : '')}><b>{r.missing.length}</b><span>Gebiete ohne Daten</span></div>
       </div>
+      {ds.time && <Note kind="ok" icon={<Icon.check />}>Zeitreihe: <b>{ds.time.periods.length}</b> {ds.time.label === 'Stichtag' ? 'Stichtage' : 'Jahre'} von {periodText(ds.time.periods[0])} bis {periodText(ds.time.periods[ds.time.periods.length - 1])}. Der Bericht oben gilt für die neueste Periode.{ds.time.merged ? ` Frühere Kreise zusammengelegt in ${Object.keys(ds.time.merged).length} Perioden.` : ''}{ds.time.estimated ? ` Geteilte Kreise anteilig geschätzt in ${Object.keys(ds.time.estimated).length} Perioden.` : ''}</Note>}
       {!!r.included && <Note kind="ok" icon={<Icon.check />}><b>{r.included}</b> Gemeinden ohne eigenen Wahlbezirk sind im Ergebnis einer Nachbargemeinde enthalten („einschl. …“) und erscheinen mit ihr als eine Fläche.</Note>}
       {diff && <Note kind="ok" icon={<Icon.refresh />}>Gegenüber dem bisherigen Stand: <b>{diff.changed}</b> Gebiete mit geänderten Werten, <b>{diff.added}</b> neu, <b>{diff.removed}</b> nicht mehr enthalten.</Note>}
       <div className="wiz-grid">
@@ -282,4 +298,20 @@ function StepMatch({ st, set, ds, base }: { st: ImportSettings; set: (p: Partial
       </div>
     </div>
   );
+}
+
+/** Länder-Gebietsstand zum gewählten Stand (gleiches Jahr), sonst der neueste */
+function laenderSetFor(geoSet: string): string | null {
+  const y = GEO_INDEX.find(e => e.id === geoSet)?.year;
+  const lan = GEO_INDEX.filter(e => e.level === 'lan').sort((a, b) => b.year - a.year);
+  return (lan.find(e => e.year === y) || lan[0])?.id || null;
+}
+function GenesisCard({ raw, st, set }: { raw: RawInput; st: ImportSettings; set: (p: Partial<ImportSettings>) => void }) {
+  const G = parseGenesis(raw.sheets[st.sheet].cells, raw.fileName), lvl = genesisLevel(G, st.geoSet);
+  const levels = (Object.keys(G.levels) as (keyof typeof G.levels)[]).map(l => `${LEVEL_LABEL[l]} (${G.levels[l]!.size})`).join(' · ');
+  return <div className="card muted stack-8">
+    <p className="hint"><b>Tabelle {G.code}</b>{G.title ? ` · ${G.title}` : ''} · {G.columns.length} Spalten · {G.periods.length} {G.timeLabel === 'Stichtag' ? 'Stichtage' : 'Jahre'} ({periodText(G.periods[0])} bis {periodText(G.periods[G.periods.length - 1])})</p>
+    <p className="hint">Ebenen in der Datei: {levels}. Übernommen wird die Ebene der gewählten Karte ({LEVEL_LABEL[lvl]}); frühere Kreise werden auf den heutigen Stand zusammengelegt.</p>
+    {lvl !== 'lan' && !!G.levels.lan?.size && <Check checked={!!st.genesis?.laender} onChange={v => set({ genesis: { laender: v } })}>Länder zusätzlich als eigenen Datensatz übernehmen (amtliche Landeswerte, auch für Quoten)</Check>}
+  </div>;
 }

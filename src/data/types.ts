@@ -1,6 +1,6 @@
 export type Cell = string | number | null;
 export type Role = 'id' | 'name' | 'value' | 'category' | 'label' | 'ignore';
-export type PresetId = 'auto' | 'bwl-kerg' | 'bwl-kerg2' | 'bwl-umrechnung' | 'bwl-kreis' | 'bwl-wbz' | 'be-wbz' | 'be-gebiete' | `ltw-${string}` | 'allgemein';
+export type PresetId = 'auto' | 'genesis' | 'bwl-kerg' | 'bwl-kerg2' | 'bwl-umrechnung' | 'bwl-kreis' | 'bwl-wbz' | 'be-wbz' | 'be-gebiete' | `ltw-${string}` | 'allgemein';
 
 export interface Column { id: string; label: string; kind: 'number' | 'text'; role: Role; party: string | null; short: string | null }
 export interface Group { id: string; label: string; columns: string[]; total: string | null; parties: boolean }
@@ -29,6 +29,7 @@ export interface ImportSettings {
   attribution: string;
   wbz?: { briefwahl: 'anteilig' | 'gemeinsam' };   // Wahlbezirksstatistik → Gemeinden, Berlin: Urnen- und Briefwahlbezirke
   be?: { ebene: string };                          // Berlin, Export je Gebiet: welche Gebietsart (Wahlkreise, Bezirke …)
+  genesis?: { laender: boolean };                  // Regionaldatenbank: Länder zusätzlich als eigenen Datensatz übernehmen
 }
 
 export type IssueKind = 'byName' | 'ambiguous' | 'unknown' | 'duplicate';
@@ -60,7 +61,19 @@ export interface Dataset {
   joint?: Record<string, string>;   // Gebiete mit gemeinsamem Ergebnis (gleicher Schlüssel = eine Fläche)
   alias?: Record<string, string>;   // Gebiet ohne eigene Zeile → Gebiet, dessen Zeile es enthält (z. B. „einschl. Bergewöhrden“)
   derived?: DerivedInfo;            // nur zur Laufzeit: aus einem feineren Gebietsstand summiert
+  period?: string;                  // nur zur Laufzeit: Fassung für diese Periode (atPeriod)
+  time?: TimeAxis;                  // Zeitreihe: rows/rowKey/rowArea oben = neueste Periode, alle Perioden in time.byPeriod
 }
+/** Zeitachse eines Datensatzes (Regionaldatenbank): dieselben Spalten für jede Periode */
+export interface TimeAxis {
+  label: string;                    // „Stichtag“ oder „Jahr“
+  periods: string[];                // aufsteigend, „2025-12-31“ bzw. „2025“
+  byPeriod: Record<string, PeriodRows>;
+  /** Perioden mit Werten aus alten Kreisschlüsseln: zusammengelegt (exakt) bzw. anteilig verteilt (geschätzt), je Gebiet */
+  merged?: Record<string, string[]>;
+  estimated?: Record<string, string[]>;
+}
+export interface PeriodRows { rows: Cell[][]; rowKey: string[]; rowArea: (string | null)[] }
 export interface DerivedInfo {
   from: string;                     // Gebietsstand der Quelldaten
   sources: number;                  // Quellgebiete mit Daten

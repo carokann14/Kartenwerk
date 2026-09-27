@@ -3,6 +3,7 @@ import { CONT_STEPS, STEP_T, contColor, fmtBreak, mixWhite, signed } from '../li
 import { Cut, ascentRatio, capOffset, measureW, wrapText } from '../lib/fonts';
 import { clamp, fmt1, fmtNum } from '../lib/util';
 import { areaRowIndex, groupMetrics } from '../data/derive';
+import { periodOf } from '../data/time';
 import { GEO, LAENDER } from '../geo/geo';
 import { LH } from '../model/defaults';
 import type { Doc, Variant } from '../model/types';
@@ -35,6 +36,13 @@ export function autoSourceText(doc: Doc): string {
     const s = ds.settings;
     parts.push(`Daten: ${[s.attribution, s.sourceTitle].filter(Boolean).join(', ') || ds.fileName}.`);
     if (ds.derived) parts.push(`Werte aus ${dativ(GEO[ds.derived.from]?.meta.levelLabel || 'kleineren Gebieten')} summiert.`);
+    if (ds.time) {
+      // Zeitreihe: Werte früherer Kreise (Kreisreformen) in den gezeigten Perioden
+      const r = doc.color, ps = r.mode === 'veraenderung' ? [r.a.period, r.b.period].filter((x): x is string => !!x) : [periodOf(ds)!];
+      const est = ps.some(p => ds.time!.estimated?.[p]?.length), mer = ps.some(p => ds.time!.merged?.[p]?.length);
+      if (est) parts.push('Werte für Kreise vor Gebietsreformen teils anteilig nach Einwohnern geschätzt.');
+      else if (mer) parts.push('Werte früherer Kreise auf den heutigen Gebietsstand zusammengefasst.');
+    }
   }
   if (g) parts.push(`Geometrie: ${g.meta.stand ? `Gebietsstand ${g.meta.stand}, ` : ''}${g.meta.attribution}, vereinfacht${g.meta.base ? `; Regionen aus ${dativ(GEO[g.meta.base]?.meta.levelLabel || 'Bausteinen')} zusammengefasst` : ''}.`);
   const lc = laenderCtx(doc);

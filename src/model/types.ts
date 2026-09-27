@@ -13,7 +13,7 @@ export type ColorRule =
   | { mode: 'kategorie'; dataset: string; column: string }
   | VeraenderungRule;
 /** Wert, der verglichen wird: Parteianteil einer Gruppe oder eine Zahlenspalte, aus einem Datensatz desselben Gebietsstands */
-export interface WertRef { dataset: string; group: string; column: string }
+export interface WertRef { dataset: string; group: string; column: string; period?: string }   // period: Zeitreihe, sonst die gewählte Periode
 export interface VeraenderungRule {
   mode: 'veraenderung'; dataset: string;       // dataset = a.dataset (für Gebietsstand, Quelle)
   kind: 'anteil' | 'wert';
@@ -64,6 +64,7 @@ export interface Doc {
   name: string;
   geoSet: string;
   datasets: Dataset[];
+  periodSel?: Record<string, string>;   // gewählte Periode je Datensatz mit Zeitachse (fehlt = neueste)
   color: ColorRule;
   partyColors: Record<string, string>;
   overrides: Record<string, string>;   // "<geoSet>:<id>" → Farbe

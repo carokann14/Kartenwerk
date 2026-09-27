@@ -7,6 +7,10 @@ import { norm, uid } from '../lib/util';
 import { WbzResult, aggregateWbz } from './wbz';
 import { BE_EBENEN, BE_PARTIES_2026, aggregateBeWbz, beDatum, beStimme, isBeGebiete, isBeWbz } from './berlin';
 import { LTW_PRESETS, ltwGeoFor, ltwPreset } from './ltw';
+import { GLevel, LEVEL_LABEL, genesisRows, isGenesis, parseGenesis } from './genesis';
+import { KREIS_ALT, kreisTargets } from './kreisreformen';
+import { isRate } from './aggregate';
+import type { TimeAxis } from './types';
 
 export const PRESET_LABELS: Record<string, string> = {
   auto: 'Automatisch erkennen',
@@ -17,6 +21,7 @@ export const PRESET_LABELS: Record<string, string> = {
   'bwl-wbz': 'Bundeswahlleiterin · Wahlbezirke → Gemeinden',
   'be-wbz': 'Berlin · Abgeordnetenhauswahl nach Wahlbezirken',
   'be-gebiete': 'Berlin · Abgeordnetenhauswahl nach Wahlkreisen und Bezirken',
+  genesis: 'Regionaldatenbank Deutschland (GENESIS)',
   ...Object.fromEntries(LTW_PRESETS.map(p => [p.id, p.label])),
   allgemein: 'Allgemeine Tabelle',
 };
@@ -31,6 +36,7 @@ export function findRow(cells: Cell[][], test: (r: string[]) => boolean, limit =
 }
 export function detectPreset(raw: RawInput, sheet = 0): PresetId {
   const c = raw.sheets[sheet]?.cells || [];
+  if (isGenesis(c)) return 'genesis';
   // Landtagswahlen zuerst: das Saarland nutzt dasselbe KERG-Format wie die Bundeswahlleiterin
   for (const p of LTW_PRESETS) if (p.find(c) >= 0) return p.id;
   if (findRow(c, r => r[0] === 'Nr' && r[1] === 'Gebiet' && r[2]?.startsWith('gehört')) >= 0) return 'bwl-kerg';
@@ -106,6 +112,12 @@ export function defaultSettings(raw: RawInput, preset: PresetId = 'auto', sheetA
     const attribution = 'Amt für Statistik Berlin-Brandenburg (CC BY 3.0 DE)';
     if (p === 'be-wbz') return { ...base, headerStart: h, headerRows: 1, wbz: { briefwahl: 'anteilig' }, geoSet: 'be-wbz-2026', sourceTitle: beTitle(stimme, datum, 'anteilig'), attribution };
     return { ...base, headerStart: h, headerRows: 1, be: { ebene: BE_EBENEN[0][0] }, geoSet: BE_EBENEN[0][2], sourceTitle: beTitle(stimme, datum, BE_EBENEN[0][0]), attribution };
+  }
+  if (p === 'genesis') {
+    const G = parseGenesis(cells, raw.fileName);
+    const lic = 'dl-de/by-2-0';
+    const titleQ = G.title ? ` „${G.title}“` : '';
+    return { ...base, genesis: { laender: true }, sourceTitle: `Regionaldatenbank Deutschland, Tabelle ${G.code || '?'}${titleQ}${G.stand ? ` (Stand ${G.stand})` : ''}, ${lic}`, attribution: G.copyright.replace(/,\s*Deutschland$/, '') || 'Statistische Ämter des Bundes und der Länder' };
   }
   const lp = ltwPreset(p);
   if (lp) {
@@ -243,6 +255,17 @@ export function buildTable(raw: RawInput, st: ImportSettings): TableResult {
     header = keep.map(k => k[0]);
     body = rows.map(r => keep.map(([, i]) => (i >= 0 ? r[i] ?? null : null)));
     notes.push(`${rows.length} Zeilen der Gebietsart „${ebene}“; ${pcols.length} Wahlvorschläge mit Stimmen.`);
+  } else if (st.preset === 'genesis') {
+    const G = parseGenesis(cells, raw.fileName);
+    const lvl = genesisLevel(G, st.geoSet);
+    const latest = lastPeriodFor(G, lvl);
+    header = ['Schlüssel', 'Name', ...G.columns];
+    // Frühere Gebiete stehen in jedem Jahr in der Tabelle, in neuen Jahren nur mit „.“ bzw. „-“: weglassen
+    const german = detectGerman(genesisRows(G, lvl, latest).slice(0, 200).flatMap(r => r.vals));
+    body = genesisRows(G, lvl, latest).filter(r => r.vals.some(v => classify(v, german).t === 'number')).map(r => [r.key, r.name, ...r.vals]);
+    const lv = (Object.keys(G.levels) as GLevel[]).map(l => `${LEVEL_LABEL[l]} (${G.levels[l]!.size})`).join(', ');
+    notes.push(`Regionaldatenbank, ${G.format === 'ffcsv' ? 'Flat-File-CSV' : 'Tabellenform'}: ${G.columns.length} Spalten, ${G.periods.length} ${G.timeLabel === 'Stichtag' ? 'Stichtage' : 'Jahre'} (${G.periods[0]} bis ${latest}); Ebenen: ${lv}.`);
+    notes.push(`Übernommen: ${LEVEL_LABEL[lvl]}; die Tabelle zeigt ${G.timeLabel === 'Stichtag' ? 'den neuesten Stichtag' : 'das neueste Jahr'}, alle übrigen stehen in der Zeitreihe.`);
   } else if (ltwPreset(st.preset)) {
     const w = ltwPreset(st.preset)!.build(cells, st.headerStart, raw.sheets.map(s => s.cells));
     header = w.header; body = w.body; notes.push(...w.notes);
@@ -285,7 +308,7 @@ export function buildTable(raw: RawInput, st: ImportSettings): TableResult {
   // Summenzeilen
   const summary = body.map(r => isSummaryRow(r, columns, st));
   // Gruppen
-  const groups = st.groups ? st.groups.map(g => mkGroup(g, columns)) : autoGroups(columns, st, pv?.kinds || {}, pv?.colGroup || {});
+  const groups = st.groups ? st.groups.map(g => mkGroup(g, columns)) : st.preset === 'genesis' ? genesisGroups(raw, st, columns) : autoGroups(columns, st, pv?.kinds || {}, pv?.colGroup || {});
   return { columns, body, summary, groups, headerLabels: header, notes, german, joint };
 }
 function mkGroup(g: GroupSetting, columns: Column[]): Group {
@@ -307,6 +330,8 @@ function autoRoles(columns: Column[], body: Cell[][], preset: PresetId) {
     set(columns[0], 'id'); set(by(c => c.label === 'Name'), 'name'); set(by(c => c.label === 'Bezirk'), 'category'); set(by(c => c.label === 'Briefwahl'), 'category'); set(by(c => c.label === 'Wahlkreis'), 'ignore');
   } else if (ltwPreset(preset)) {
     set(by(c => c.label === 'Wahlkreis' || c.label === 'Stimmkreis' || c.label === 'Wahlbereich'), 'id'); set(by(c => c.label === 'Name'), ltwPreset(preset)!.nameRole || 'name');
+  } else if (preset === 'genesis') {
+    set(columns[0], 'id'); set(columns[1], 'name');
   } else if (preset === 'be-gebiete') {
     set(by(c => c.label === 'Nummer'), 'id'); set(by(c => c.label === 'Gebietsname'), 'name');
   } else if (preset === 'bwl-kreis') {
@@ -372,7 +397,7 @@ function isSummaryRow(r: Cell[], columns: Column[], st: ImportSettings) {
   if (st.preset === 'bwl-kerg') { const g = get(c => c.label.startsWith('gehört')); return !/^(0[1-9]|1[0-6])$/.test(g); }
   if (st.preset === 'bwl-umrechnung') { const n = Number(get(c => c.label === 'Wkr-Nr.')); return !(n >= 1 && n <= 299); }
   if (st.preset === 'bwl-kreis') return !/^\d{4,5}$/.test(get(c => c.label === 'Statistische Kennziffer'));
-  if (st.preset === 'bwl-wbz' || st.preset === 'be-wbz' || st.preset === 'be-gebiete' || !!ltwPreset(st.preset)) return false;
+  if (st.preset === 'bwl-wbz' || st.preset === 'be-wbz' || st.preset === 'be-gebiete' || st.preset === 'genesis' || !!ltwPreset(st.preset)) return false;
   const name = get(c => c.role === 'name');
   if (/^(deutschland|bund|bundesgebiet|insgesamt|summe|gesamt|total)$/i.test(name)) return true;
   // Landesnamen sind Summenzeilen, außer die Kennung ist ein Kreis- oder Gemeindeschlüssel (Berlin, Hamburg)
@@ -432,6 +457,18 @@ export function suggestGeoSet(t: TableResult, st?: ImportSettings, fileName = ''
 }
 /** Wie oben; ohne Kennungen werden die Namen auch mit Kreisen und Gemeinden verglichen (lädt deren Grenzen). */
 export async function suggestGeoSetAsync(t: TableResult, st?: ImportSettings, fileName = '', custom: { id: string; label: string }[] = [], current = ''): Promise<{ id: string; reason: string }> {
+  // Regionaldatenbank: der Gebietsstand, der die Gebiete der neuesten Periode am vollständigsten abdeckt (Hanau ist erst 2026 kreisfrei)
+  if (st?.preset === 'genesis') {
+    const keys = t.body.map(r => txt(r[0])), level = levelFromKeys(keys);
+    const cands = GEO_INDEX.filter(s => s.level === level);
+    if (cands.length) {
+      try { await ensureGeo(cands.map(c => c.id)); } catch { /* dann ohne */ }
+      const score = (id: string) => { const g = GEO[id]; if (!g) return -1; const hit = new Set(keys.map(k => normKey(g.meta, k)).filter(k => g.byId.has(k))); return hit.size / g.areas.filter(a => !a.free).length; };
+      const best = [...cands].sort((a, b) => score(b.id) - score(a.id) || b.year - a.year)[0];
+      const s = score(best.id);
+      if (s > 0.5) return { id: best.id, reason: `${Math.round(s * 100)} % der Gebiete von „${best.label}“ haben Werte (neueste Periode)` };
+    }
+  }
   const s1 = suggestGeoSet(t, st, fileName);
   const idc = t.columns.find(c => c.role === 'id'), nmc = t.columns.find(c => c.role === 'name');
   if (idc) {
@@ -554,17 +591,111 @@ export function buildDataset(raw: RawInput, st: ImportSettings, t: TableResult, 
   const nAlias = Object.keys(alias).length;
   if (nAlias) rep.included = nAlias;
   rep.missing = g.areas.filter(a => !matched.has(a.id) && !alias[a.id] && !(g.memberOf && a.free)).sort((x, y) => x.nr - y.nr).map(a => a.id);
-  return {
+  const out: Dataset = {
     id: keepId || uid('ds'), name, fileName: raw.fileName, importedAt: new Date().toISOString(), geoSet: st.geoSet, preset: st.preset,
     settings: { ...st, roles: Object.fromEntries(t.columns.map(c => [c.label, c.role])) },
     columns: t.columns, groups: t.groups, rows, rowKey, rowArea, report: rep,
     ...(joint ? { joint } : {}), ...(nAlias ? { alias } : {}),
   };
+  if (st.preset === 'genesis') out.time = genesisTime(raw, st, t, out);
+  return out;
 }
+
+// ---------- Regionaldatenbank: Ebene und Zeitreihe ----------
+const GEO_LEVEL: Record<string, GLevel> = { lan: 'lan', rbz: 'rbz', krs: 'krs', gem: 'gem', vwg: 'vwg' };
+/** Ebene der Tabelle, die zur gewählten Karte passt; sonst die feinste vorhandene (Kreise vor Ländern) */
+export function genesisLevel(G: ReturnType<typeof parseGenesis>, geoSet: string): GLevel {
+  const want = GEO_LEVEL[GEO[geoSet]?.meta.level || ''];
+  if (want && G.levels[want]?.size) return want;
+  for (const l of ['krs', 'gem', 'vwg', 'lan'] as GLevel[]) if (G.levels[l]?.size) return l;
+  return (Object.keys(G.levels) as GLevel[])[0] || 'krs';
+}
+/** Wahltabellen: je Merkmal mit mindestens zwei Parteispalten eine Gruppe aus allen Spalten des Merkmals (auch „Sonstige“) */
+function genesisGroups(raw: RawInput, st: ImportSettings, columns: Column[]): Group[] {
+  const G = parseGenesis(raw.sheets[st.sheet].cells, raw.fileName), out: Group[] = [];
+  for (const m of [...new Set(G.colMeasure)]) {
+    const idx = G.colMeasure.map((x, k) => (x === m ? k : -1)).filter(k => k >= 0);
+    if (idx.filter(k => G.colParty[k]).length < 2) continue;
+    const cols = idx.filter(k => !G.colTotal[k]).map(k => columns[k + 2]).filter(c => c && c.kind === 'number');
+    const tot = idx.find(k => G.colTotal[k]);
+    const label = m.replace(/^Gültige\s+/i, '');
+    out.push({ id: 'g-' + norm(label).replace(/\s/g, '-'), label, columns: cols.map(c => c.id), total: tot != null ? columns[tot + 2]?.id || null : null, parties: true });
+  }
+  return out;
+}
+/** Neueste Periode mit Werten auf dieser Ebene */
+function lastPeriodFor(G: ReturnType<typeof parseGenesis>, lvl: GLevel): string {
+  const m = G.levels[lvl];
+  for (let k = G.periods.length - 1; k >= 0; k--) { const p = G.periods[k]; if (m && [...m.values()].some(a => a.vals.get(p)?.some(v => v != null && String(v).trim() !== '' && !/^[.x/…]+$/.test(String(v).trim())))) return p; }
+  return G.periods[G.periods.length - 1];
+}
+/** Alle Perioden auf die Gebiete der Karte abbilden. Frühere Kreise werden zusammengelegt (addiert) bzw. nach
+ *  Einwohneranteil verteilt (geschätzt); Anteile und Quoten bleiben dann leer. */
+function genesisTime(raw: RawInput, st: ImportSettings, t: TableResult, ds: Dataset): TimeAxis {
+  const G = parseGenesis(raw.sheets[st.sheet].cells, raw.fileName);
+  const g = GEO[st.geoSet], lvl = genesisLevel(G, st.geoSet);
+  const valCols = t.columns.map((c, i) => ({ c, i })).filter(x => x.i >= 2);
+  const rate = t.columns.map(c => isRate(c));
+  const num = (v: Cell): number | null => { const cl = classify(v, t.german); return cl.t === 'number' ? cl.v : cl.t === 'dash' ? (st.dashIsZero ? 0 : null) : null; };
+  const known = (id: string) => g.byId.has(normKey(g.meta, id));
+  const time: TimeAxis = { label: G.timeLabel, periods: [], byPeriod: {}, merged: {}, estimated: {} };
+  const latest = lastPeriodFor(G, lvl);
+  const unknownOld = new Set<string>();
+  for (const p of G.periods) {
+    if (p > latest) continue;
+    if (p === latest) { time.periods.push(p); time.byPeriod[p] = { rows: ds.rows, rowKey: ds.rowKey, rowArea: ds.rowArea }; continue; }
+    // Gebiete dieser Periode; auf Kreisebene auch die als Gemeinde geführten früheren Kreise (Aachen, Stadt)
+    const src = [...genesisRows(G, lvl, p), ...(lvl === 'krs' ? genesisRows(G, 'gem', p).filter(r => KREIS_ALT[r.key]) : [])]
+      // nur „-“ oder „.“: das Gebiet gab es in diesem Jahr nicht (bzw. noch nicht)
+      .filter(r => r.vals.some(v => classify(v, t.german).t === 'number'));
+    const direct = new Set(src.map(r => normKey(g.meta, r.key)).filter(known));
+    // Beiträge je Zielgebiet: eigener Wert zuerst; frühere Kreise nur, wo der heutige Kreis keinen eigenen Wert hat
+    const acc = new Map<string, { parts: { vals: (number | null)[]; w: number; direct: boolean }[] }>();
+    for (const r of src) {
+      const vals = r.vals.map(num);
+      const k = r.key.length === 8 && lvl === 'krs' ? r.key : normKey(g.meta, r.key);
+      const tg: [string, number][] | null = known(k) ? [[k, 1]] : lvl === 'krs' ? kreisTargets(k, known) : null;
+      if (!tg) { unknownOld.add(`${r.key} ${r.name}`); continue; }
+      const isDirect = known(k);
+      for (const [id, w] of tg) {
+        if (!isDirect && direct.has(id) && !KREIS_ALT[k]?.add) continue;
+        let a = acc.get(id); if (!a) { a = { parts: [] }; acc.set(id, a); } a.parts.push({ vals, w, direct: isDirect && id === k });
+      }
+    }
+    const rows: Cell[][] = [], rowKey: string[] = [], rowArea: (string | null)[] = [], mer: string[] = [], est: string[] = [];
+    for (const [id, a] of acc) {
+      const area = g.areas[g.byId.get(id)!];
+      const single = a.parts.length === 1 && a.parts[0].w === 1;
+      const estimated = a.parts.some(x => x.w < 1);
+      const row: Cell[] = t.columns.map(() => null);
+      row[0] = id; row[1] = area.name;
+      for (const { i } of valCols) {
+        const vi = i - 2;
+        if (single) { row[i] = a.parts[0].vals[vi]; continue; }
+        if (rate[i]) { row[i] = null; continue; }
+        if (a.parts.some(x => x.vals[vi] == null)) { row[i] = null; continue; }
+        row[i] = Math.round(a.parts.reduce((s, x) => s + x.vals[vi]! * x.w, 0) * 1000) / 1000;
+      }
+      if (!single || !a.parts[0].direct) (estimated ? est : mer).push(id);
+      rows.push(row); rowKey.push('id:' + id); rowArea.push(id);
+    }
+    if (!rows.length) continue;   // Periode ohne Werte auf dieser Ebene
+    time.periods.push(p); time.byPeriod[p] = { rows, rowKey, rowArea };
+    if (mer.length) time.merged![p] = mer;
+    if (est.length) time.estimated![p] = est;
+  }
+  if (unknownOld.size) t.notes.push(`Ältere Jahre: ${unknownOld.size} frühere Gebiete ließen sich keinem heutigen zuordnen (${[...unknownOld].slice(0, 4).join('; ')}${unknownOld.size > 4 ? ' …' : ''}).`);
+  if (!Object.keys(time.merged!).length) delete time.merged;
+  if (!Object.keys(time.estimated!).length) delete time.estimated;
+  return time;
+}
+
 export const issueLabel: Record<MatchIssue['kind'], string> = { byName: 'über Namen', ambiguous: 'mehrdeutig', unknown: 'unbekannt', duplicate: 'doppelt' };
 
 /** Kurzer Name für Datensatz und Projekt aus dem (oft langen) amtlichen Titel. */
 export function shortTitle(title: string, fallback = 'Daten'): string {
+  const gt = (title || '').match(/^Regionaldatenbank Deutschland, Tabelle [^ ]+ „(.+?)“/);
+  if (gt) return gt[1];
   const t = (title || '').split(';')[0].replace(/\s*\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
   if (!t) return fallback;
   const bt = t.match(/Wahl zum \d+\. Deutschen Bundestag am .*?(\d{4})/) || t.match(/^Bundestagswahl (\d{4})/);

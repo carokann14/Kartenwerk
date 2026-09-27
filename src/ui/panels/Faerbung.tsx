@@ -4,7 +4,9 @@ import React from 'react';
 import { STEP_T, divergingColors, mixWhite, shortRangeLabels, signed } from '../../lib/color';
 import { PARTY_DEFS, SHARE_KEYS } from '../../data/parties';
 import { setUI, update, useStore } from '../../model/store';
-import { showDataset } from '../../model/actions';
+import { setPeriod, showDataset } from '../../model/actions';
+import { defaultComparePeriod, latestPeriod, periodText, selectedPeriod } from '../../data/time';
+import type { Dataset } from '../../data/types';
 import type { ColorRule, VeraenderungRule } from '../../model/types';
 import { CHANGE_NEG, CHANGE_POS_WERT, colorModel, fillOf, partyColor } from '../../render/colorModel';
 import { geoOf } from '../../render/scene';
@@ -37,7 +39,20 @@ export function PanelFaerbung() {
   const same = usableDatasets(doc);   // eigener Gebietsstand oder auf die Karte summierbar
   const shareRefs = same.flatMap(d => d.groups.filter(g => g.parties).map(g => ({ v: d.id + '|' + g.id, l: (same.length > 1 ? dsLabel(doc, d) + ' · ' : '') + g.label, ds: d.id, grp: g.id })));
   const numRefs = same.flatMap(d => d.columns.filter(c => c.kind === 'number' && c.role === 'value').map(c => ({ v: d.id + '|' + c.id, l: (same.length > 1 ? dsLabel(doc, d) + ' · ' : '') + c.label, ds: d.id, col: c.id })));
+  // Zeitreihe: dieselbe Spalte bzw. Gruppe zu zwei Perioden (Standard: neueste gegen 10 Jahre davor)
+  const rawDs = ds ? doc.datasets.find(d => d.id === ds.id) || null : null;
+  const timeOk = !!rawDs?.time && rawDs.time.periods.length >= 2 && (numCols.length > 0 || partyGroups.length > 0);
+  const mkTimeChange = (): ColorRule => {
+    const a = latestPeriod(rawDs!)!, b = defaultComparePeriod(rawDs!, a)!;
+    if (partyGroups.length) {   // Wahltabellen: Veränderung eines Parteianteils
+      const g = partyGroups[0].id;
+      return { mode: 'veraenderung', dataset: rawDs!.id, kind: 'anteil', party: 'AfD', a: { dataset: rawDs!.id, group: g, column: '', period: a }, b: { dataset: rawDs!.id, group: g, column: '', period: b }, rel: false, palette: 'partei', classes: 6, step: null };
+    }
+    const col = ('column' in rule && numCols.some(c => c.id === rule.column) ? rule.column : numCols[0].id) as string;
+    return { mode: 'veraenderung', dataset: rawDs!.id, kind: 'wert', party: 'AfD', a: { dataset: rawDs!.id, group: '', column: col, period: a }, b: { dataset: rawDs!.id, group: '', column: col, period: b }, rel: true, palette: 'blaurot', classes: 6, step: null };
+  };
   const mkChange = (): ColorRule => {
+    if (timeOk) return mkTimeChange();
     if (shareRefs.length >= 2) {
       const cur = shareRefs.filter(r => r.ds === ds?.id), a = cur.find(r => /Zweit/.test(r.l) && !/Vorperiode/.test(r.l)) || cur[0] || shareRefs[0];
       const b = shareRefs.find(r => r.ds === a.ds && /Vorperiode/.test(r.l) && /Zweit/.test(r.l) === /Zweit/.test(a.l)) || shareRefs.find(r => r.ds !== a.ds && /Zweit/.test(r.l)) || shareRefs.find(r => r.v !== a.v)!;
@@ -46,7 +61,7 @@ export function PanelFaerbung() {
     const a = numRefs[0], b = numRefs[1];
     return { mode: 'veraenderung', dataset: a.ds, kind: 'wert', party: 'AfD', a: { dataset: a.ds, group: '', column: a.col }, b: { dataset: b.ds, group: '', column: b.col }, rel: false, palette: 'blaurot', classes: 6, step: null };
   };
-  const changeOk = shareRefs.length >= 2 || numRefs.length >= 2;
+  const changeOk = timeOk || shareRefs.length >= 2 || numRefs.length >= 2;
   const nColors = new Set(geoOf(doc).all.map(i => fillOf(doc, cm, i))).size;
   return (
     <>
@@ -54,6 +69,8 @@ export function PanelFaerbung() {
         <select value={ds?.id} onChange={e => void showDataset(e.target.value)} aria-label="Datensatz für die Färbung">
           {doc.datasets.map(d => { const u = datasetFor(doc, d.id)!; return <option key={d.id} value={d.id}>{dsLabel(doc, d)}{u.derived ? ' · summiert' : u.geoSet !== doc.geoSet ? ' · andere Ebene' : ''}</option>; })}
         </select>
+        {rawDs?.time && rule.mode !== 'veraenderung' && <PeriodField ds={rawDs} value={selectedPeriod(doc.periodSel, rawDs)!} onChange={p => setPeriod(rawDs.id, p)} />}
+        {rawDs?.time && rule.mode !== 'veraenderung' && <TimeNote ds={rawDs} periods={[selectedPeriod(doc.periodSel, rawDs)!]} />}
         {cm.dataset?.derived && <p className="hint">Auf {geoOf(doc).meta.levelLabel} summiert: Zahlen aus {countLabel(cm.dataset.derived.sources, GEO[cm.dataset.derived.from]?.meta.level || '')} addiert{cm.dataset.derived.rates.length ? ', Anteile und Quoten der Tabelle bleiben leer' : ''}. Details unter „Daten“.</p>}
       </Section>
       <Section title="Darstellung">
@@ -62,7 +79,7 @@ export function PanelFaerbung() {
             <span className="swatches">{m.sw.map((c, k) => <i key={k} style={{ background: c }} />)}</span><span><b>{m.t}</b><span>{m.d}</span></span>
           </button>))}
           <button className={'mode' + (rule.mode === 'veraenderung' ? ' on' : '') + (changeOk ? '' : ' soon')} disabled={!changeOk} onClick={() => changeOk && set(mkChange())} title={changeOk ? '' : 'Braucht eine Vorperiode oder einen zweiten Datensatz desselben Gebietsstands'}>
-            <span className="swatches">{divergingColors(CHANGE_NEG.partei, A, 6).map((c, k) => <i key={k} style={{ background: c }} />)}</span><span><b>Veränderung</b><span>{changeOk ? 'Gewinne und Verluste gegenüber einer Vorwahl, zweiseitig um 0' : 'braucht Vorperiode oder zweiten Datensatz'}</span></span></button>
+            <span className="swatches">{divergingColors(CHANGE_NEG.partei, A, 6).map((c, k) => <i key={k} style={{ background: c }} />)}</span><span><b>Veränderung</b><span>{!changeOk ? 'braucht Vorperiode oder zweiten Datensatz' : timeOk ? 'Zu- und Abnahme zwischen zwei Jahren, zweiseitig um 0' : 'Gewinne und Verluste gegenüber einer Vorwahl, zweiseitig um 0'}</span></span></button>
         </div>
       </Section>
       {(rule.mode === 'siegerStaerke' || rule.mode === 'sieger' || rule.mode === 'anteil') && <Section title="Optionen">
@@ -90,7 +107,9 @@ export function PanelFaerbung() {
         <p className="hint">{rule.method === 'rund' ? 'Runde Zahlen nahe den Quantilen, gut lesbar in der Legende.' : rule.method === 'quantil' ? 'Gleich viele Gebiete je Klasse, Grenzen ungerundet.' : rule.method === 'gleich' ? 'Gleich breite Klassen zwischen kleinstem und größtem Wert.' : `Farbe wächst gleichmäßig vom kleinsten (${fmtN(cm.continuous?.min)}) zum größten Wert (${fmtN(cm.continuous?.max)}). Ohne Klassen ist die Karte schwerer genau abzulesen.`}</p>
         {cm.missing > 0 && <Note>{cm.missing} Gebiete im Fokus ohne Wert. Sie erscheinen als „keine Daten“, nicht als 0.</Note>}
       </Section>}
-      {rule.mode === 'veraenderung' && <ChangeOptions rule={rule} set={set} shareRefs={shareRefs} numRefs={numRefs} cm={cm} />}
+      {rule.mode === 'veraenderung' && (rule.a.period && rule.a.dataset === rule.b.dataset && doc.datasets.find(d => d.id === rule.a.dataset)?.time
+        ? <TimeChangeOptions rule={rule} set={set} ds={doc.datasets.find(d => d.id === rule.a.dataset)!} numCols={numCols} partyGroups={partyGroups} cm={cm} />
+        : <ChangeOptions rule={rule} set={set} shareRefs={shareRefs} numRefs={numRefs} cm={cm} />)}
       {rule.mode === 'kategorie' && <Section title="Optionen">
         <Field label="Spalte"><select value={rule.column} onChange={e => set({ ...rule, column: e.target.value })}>{catCols.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></Field>
         <button className="btn small" onClick={() => setUI({ sel: { kind: 'el', id: 'legend' } })}><Icon.legend /> Legende bearbeiten</button>
@@ -136,6 +155,43 @@ function ChangeOptions({ rule, set, shareRefs, numRefs, cm }: { rule: Veraenderu
     <Field label="Grenzen"><div className="meta-row">{cm.breaks.map(b => <span key={b} className="chip num">{signed(b)}{cm.unit}</span>)}</div></Field>
     <p className="hint">{rule.palette === 'partei' ? (rule.kind === 'anteil' ? 'Parteifarbe = Zuwachs, Grau = Verlust.' : 'Grün = Zuwachs, Grau = Rückgang.') : 'Rot = Zuwachs, Blau = Rückgang.'} Die Stufe wird aus dem Bereich ohne Ausreißer gewählt (5 bis 95 %). Gebiete ohne Wert in einer der beiden Spalten erscheinen als „keine Daten“.</p>
     {cm.mismatch && <Note kind="warn">Der Vergleichswert gehört zu einem anderen Gebietsstand. Beide Werte brauchen dieselben Gebiete, etwa die Bundestagswahl 2021 umgerechnet auf die Wahlkreise 2025.</Note>}
+  </Section>;
+}
+/** Auswahl der Periode (neueste zuerst) */
+function PeriodField({ ds, value, onChange, label }: { ds: Dataset; value: string; onChange: (p: string) => void; label?: string }) {
+  const ps = [...ds.time!.periods].reverse();
+  return <Field label={label || ds.time!.label}><select value={value} onChange={e => onChange(e.target.value)} aria-label={label || ds.time!.label}>{ps.map(p => <option key={p} value={p}>{periodText(p)}</option>)}</select></Field>;
+}
+/** Hinweis auf Werte aus alten Kreisen (zusammengelegt bzw. anteilig geschätzt) */
+function TimeNote({ ds, periods }: { ds: Dataset; periods: string[] }) {
+  const t = ds.time!, ps = periods, period = ps.length === 1 ? ps[0] : null;
+  const est = new Set(ps.flatMap(p => t.estimated?.[p] || [])), mer = new Set(ps.flatMap(p => t.merged?.[p] || []));
+  if (!est.size && !mer.size) return <p className="hint">{t.periods.length} {t.label === 'Stichtag' ? 'Stichtage' : 'Jahre'} von {periodText(t.periods[0])} bis {periodText(t.periods[t.periods.length - 1])}.</p>;
+  return <Note>{mer.size ? `${mer.size} Gebiete${period ? '' : ' im Vergleichsjahr'} aus früheren Kreisen zusammengelegt (addiert). ` : ''}{est.size ? `${est.size} Gebiete${period ? '' : ' im Vergleichsjahr'} anteilig aus geteilten Kreisen geschätzt. ` : ''}Anteile und Quoten der Tabelle bleiben dort leer.</Note>;
+}
+function TimeChangeOptions({ rule, set, ds, numCols, partyGroups, cm }: { rule: VeraenderungRule; set: (r: ColorRule) => void; ds: Dataset; numCols: { id: string; label: string }[]; partyGroups: { id: string; label: string }[]; cm: ReturnType<typeof colorModel> }) {
+  const upd = (p: Partial<VeraenderungRule>) => { const n = { ...rule, ...p }; n.dataset = n.a.dataset; set(n); };
+  const setCol = (id: string) => upd(rule.kind === 'anteil' ? { a: { ...rule.a, group: id }, b: { ...rule.b, group: id } } : { a: { ...rule.a, column: id }, b: { ...rule.b, column: id } });
+  const cols = rule.kind === 'anteil' ? partyGroups : numCols;
+  const both = partyGroups.length > 0 && numCols.length > 0;
+  const setKind = (kind: 'anteil' | 'wert') => {
+    if (kind === rule.kind) return;
+    if (kind === 'anteil') upd({ kind, palette: 'partei', rel: false, a: { ...rule.a, group: partyGroups[0].id, column: '' }, b: { ...rule.b, group: partyGroups[0].id, column: '' } });
+    else upd({ kind, palette: 'blaurot', rel: true, a: { ...rule.a, group: '', column: numCols[0].id }, b: { ...rule.b, group: '', column: numCols[0].id } });
+  };
+  return <Section title="Optionen">
+    {both && <Field label="Vergleich von"><Seg items={[['anteil', 'Parteianteil'], ['wert', 'Zahlenwert']]} value={rule.kind} onChange={setKind} /></Field>}
+    {rule.kind === 'anteil' && <Field label="Partei"><select value={rule.party} onChange={e => upd({ party: e.target.value })}>{SHARE_KEYS.map(p => <option key={p} value={p}>{PARTY_DEFS.find(x => x.key === p)?.label}</option>)}</select></Field>}
+    <Field label={rule.kind === 'anteil' ? 'Stimmen' : 'Spalte'}><select value={rule.kind === 'anteil' ? rule.a.group : rule.a.column} onChange={e => setCol(e.target.value)}>{cols.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></Field>
+    <PeriodField ds={ds} label="Neu" value={rule.a.period!} onChange={p => upd({ a: { ...rule.a, period: p } })} />
+    <PeriodField ds={ds} label="Gegenüber" value={rule.b.period || rule.a.period!} onChange={p => upd({ b: { ...rule.b, period: p } })} />
+    {rule.kind === 'wert' && <Field label="Angabe"><Seg items={[['abs', 'Absolut'], ['rel', 'In %']]} value={rule.rel ? 'rel' : 'abs'} onChange={v => upd({ rel: v === 'rel' })} /></Field>}
+    <Field label="Farben"><Seg items={[['partei', rule.kind === 'anteil' ? 'Partei / Grau' : 'Grün / Grau'], ['blaurot', 'Blau / Rot']]} value={rule.palette} onChange={v => upd({ palette: v })} /></Field>
+    <Field label="Klassen"><Seg items={[['4', '4'], ['6', '6'], ['8', '8']]} value={String(rule.classes) as '6'} onChange={v => upd({ classes: +v as 4 | 6 | 8 })} /></Field>
+    <Field label="Stufe"><div className="row-btns"><NumInput min={0.1} max={100000} step={rule.kind === 'anteil' || rule.rel ? 0.5 : 1} value={cm.diverging?.step ?? rule.step ?? 1} onChange={n => upd({ step: n })} ariaLabel="Breite einer Klasse" />{rule.step != null ? <button className="btn small ghost" onClick={() => upd({ step: null })}>automatisch</button> : <span className="hint">automatisch</span>}</div></Field>
+    <Field label="Grenzen"><div className="meta-row">{cm.breaks.map(b => <span key={b} className="chip num">{signed(b)}{cm.unit}</span>)}</div></Field>
+    <p className="hint">{rule.palette === 'partei' ? 'Zuwachs farbig, Rückgang grau.' : 'Rot = Zuwachs, Blau = Rückgang.'} Gebiete ohne Wert in einem der beiden Jahre erscheinen als „keine Daten“.</p>
+    <TimeNote ds={ds} periods={[rule.a.period!, rule.b.period!].filter(Boolean)} />
   </Section>;
 }
 export { Icon };

@@ -2,6 +2,7 @@
 import { CATEGORICAL, CONT_STEPS, OTHER_GREY, STEP_T, classOf, contColor, divergingBreaks, divergingColors, equalBreaks, mixWhite, niceBreaks, quantileBreaks } from '../lib/color';
 import { areaRowIndex, colIndex, groupMetrics, partyShare } from '../data/derive';
 import { datasetFor } from '../data/aggregate';
+import { periodText, periodYear } from '../data/time';
 import { partyDef, partyOf } from '../data/parties';
 
 const NEG_GREY = '#BDB6A8';
@@ -41,7 +42,7 @@ export function unionLabelOf(ds: Dataset, grp: Group): string {
 
 const cache = new WeakMap<Doc['color'], { deps: unknown[]; cm: ColorModel }>();
 export function colorModel(doc: Doc): ColorModel {
-  const deps = [doc.datasets, doc.partyColors, doc.categoryColors, doc.fokus, doc.geoSet, doc.style.noData, geoOf(doc)];
+  const deps = [doc.datasets, doc.periodSel, doc.partyColors, doc.categoryColors, doc.fokus, doc.geoSet, doc.style.noData, geoOf(doc)];
   const hit = cache.get(doc.color);
   if (hit && hit.deps.every((d, i) => d === deps[i])) return hit.cm;
   const cm = compute(doc);
@@ -159,7 +160,7 @@ function compute(doc: Doc): ColorModel {
 export const CHANGE_NEG = { partei: '#6B6B6B', blaurot: '#2F5D8A' } as const;
 export const CHANGE_POS_WERT = '#B23A2E';
 function refValue(doc: Doc, r: WertRef, kind: 'anteil' | 'wert', party: string): ((areaId: string) => number | null) | null {
-  const ds = datasetFor(doc, r.dataset); if (!ds || ds.geoSet !== doc.geoSet) return null;
+  const ds = datasetFor(doc, r.dataset, doc.geoSet, r.period); if (!ds || ds.geoSet !== doc.geoSet) return null;
   const rows = areaRowIndex(ds);
   if (kind === 'anteil') {
     const grp = ds.groups.find(x => x.id === r.group); if (!grp) return null;
@@ -176,7 +177,7 @@ export function refLabel(doc: Doc, r: WertRef, kind: 'anteil' | 'wert'): string 
 function computeChange(doc: Doc, cm: ColorModel, rule: VeraenderungRule) {
   const g = geoOf(doc);
   const A = refValue(doc, rule.a, rule.kind, rule.party), B = refValue(doc, rule.b, rule.kind, rule.party);
-  const dsB = datasetFor(doc, rule.b.dataset);
+  const dsB = datasetFor(doc, rule.b.dataset, doc.geoSet, rule.b.period);
   if (dsB && dsB.geoSet !== doc.geoSet) { cm.mismatch = dsB.geoSet; return; }
   if (!A || !B) return;
   cm.valueOf = i => {
@@ -194,7 +195,8 @@ function computeChange(doc: Doc, cm: ColorModel, rule: VeraenderungRule) {
   cm.unit = rule.kind === 'anteil' ? ' Pkt.' : rule.rel ? ' %' : '';
   // „gegenüber …“: Vorperiode, sonst der Name des Vergleichsdatensatzes bzw. die Spalte
   const bLabel = refLabel(doc, rule.b, rule.kind);
-  const against = /Vorperiode/i.test(bLabel) ? 'der Vorperiode' : rule.b.dataset !== rule.a.dataset ? (doc.datasets.find(d => d.id === rule.b.dataset)?.name || bLabel) : bLabel;
+  const samePlace = rule.b.dataset === rule.a.dataset && (rule.kind === 'anteil' ? rule.b.group === rule.a.group : rule.b.column === rule.a.column);
+  const against = rule.b.period && rule.b.dataset === rule.a.dataset && (samePlace || rule.b.period !== rule.a.period) ? periodText(rule.b.period) : /Vorperiode/i.test(bLabel) ? 'der Vorperiode' : rule.b.dataset !== rule.a.dataset ? (doc.datasets.find(d => d.id === rule.b.dataset)?.name || bLabel) : bLabel;
   cm.diverging = { step, unit: rule.kind === 'anteil' ? 'Prozentpunkten' : rule.rel ? '%' : '', against };
   let lo = Infinity, hi = -Infinity;
   const F = new Set(fokusIdx(doc));
@@ -220,6 +222,13 @@ export function legendTitleAuto(doc: Doc, cm: ColorModel): string {
   if (r.mode === 'anteil') return `${partyLabel(r.party)} · Anteil (${grp})`;
   if (r.mode === 'wert') return cm.dataset?.columns.find(c => c.id === r.column)?.label || 'Wert';
   if (r.mode === 'kategorie') return cm.dataset?.columns.find(c => c.id === r.column)?.label || 'Kategorie';
-  if (r.mode === 'veraenderung') return r.kind === 'anteil' ? `${partyLabel(r.party)} · Veränderung (${refLabel(doc, r.a, 'anteil')})` : `${refLabel(doc, r.a, 'wert')} · Veränderung`;
+  if (r.mode === 'veraenderung') {
+    // Zeitreihe: „Einwohner · Veränderung 2015–2025“
+    if (r.a.period && r.b.period && r.a.dataset === r.b.dataset) {
+      const col = r.kind === 'anteil' ? `${partyLabel(r.party)} · Anteil` : doc.datasets.find(d => d.id === r.a.dataset)?.columns.find(c => c.id === r.a.column)?.label || 'Wert';
+      return `${col} · Veränderung ${periodYear(r.b.period)}–${periodYear(r.a.period)}`;
+    }
+    return r.kind === 'anteil' ? `${partyLabel(r.party)} · Veränderung (${refLabel(doc, r.a, 'anteil')})` : `${refLabel(doc, r.a, 'wert')} · Veränderung`;
+  }
   return '';
 }

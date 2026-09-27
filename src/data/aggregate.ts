@@ -6,6 +6,7 @@ import { GEO, GeoSet } from '../geo/geo';
 import { keyAt, vg } from '../geo/relate';
 import type { Doc } from '../model/types';
 import type { Cell, Column, Dataset, DerivedInfo } from './types';
+import { atPeriod, selectedPeriod } from './time';
 
 const ORDER = ['lan', 'rbz', 'krs', 'vwg', 'gem'];
 const coarser = (a: string, b: string) => ORDER.indexOf(a) < ORDER.indexOf(b);   // a ist gröber als b
@@ -120,9 +121,11 @@ export function deriveDataset(ds: Dataset, from: GeoSet, to: GeoSet): Dataset | 
 }
 
 /** Datensatz für die Karte: passt er zum Gebietsstand, unverändert; sonst, wo möglich, auf die Gebiete der Karte summiert. */
-export function datasetFor(doc: Doc, id: string | null | undefined, geoId: string = doc.geoSet): Dataset | null {
+export function datasetFor(doc: Doc, id: string | null | undefined, geoId: string = doc.geoSet, period?: string | null): Dataset | null {
   if (!id) return null;
-  const ds = doc.datasets.find(d => d.id === id); if (!ds) return null;
+  const ds0 = doc.datasets.find(d => d.id === id); if (!ds0) return null;
+  // Zeitreihe: gewählte Periode (bzw. ausdrücklich übergebene, etwa der Vergleichswert bei „Veränderung“)
+  const ds = ds0.time ? atPeriod(ds0, period || selectedPeriod(doc.periodSel, ds0)) : ds0;
   if (ds.geoSet === geoId) return ds;
   const from = GEO[ds.geoSet], to = GEO[geoId];
   return (from && to && deriveDataset(ds, from, to)) || ds;

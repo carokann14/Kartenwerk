@@ -4,6 +4,7 @@ import { areaRowIndex, groupMetrics } from '../../data/derive';
 import { PRESET_LABELS } from '../../data/pipeline';
 import { datasetFor, dsLabel } from '../../data/aggregate';
 import type { Dataset } from '../../data/types';
+import { periodText, periodYear, selectedPeriod } from '../../data/time';
 import { countLabel } from '../../geo/geo';
 import { GEO } from '../../geo/geo';
 import { removeDataset, setGeoSet, showDataset } from '../../model/actions';
@@ -54,6 +55,7 @@ export function PanelDaten() {
               <p className="hint">{d.fileName} · {PRESET_LABELS[d.preset]} · {GEO[d.geoSet]?.meta.label}</p>
               <div className="meta-row">
                 <span className={'chip ' + (open ? 'warn' : 'ok')}><span className="dot" />{r.exact + r.byName + r.ruled - r.ignored} von {GEO[d.geoSet]?.areas.length} zugeordnet</span>
+                {d.time && <span className="chip" title={`${d.time.label}: ${d.time.periods.map(periodText).join(', ')}`}>Zeitreihe {periodYear(d.time.periods[0])}–{periodYear(d.time.periods[d.time.periods.length - 1])}{used && selectedPeriod(doc.periodSel, d) !== d.time.periods[d.time.periods.length - 1] ? ` · Karte: ${periodText(selectedPeriod(doc.periodSel, d)!)}` : ''}</span>}
                 {r.summary > 0 && <span className="chip">{r.summary} Summenzeilen ausgeschlossen</span>}
                 {r.byName > 0 && <span className="chip">{r.byName} über Namen</span>}
                 {open > 0 && <span className="chip err">{open} offen</span>}
