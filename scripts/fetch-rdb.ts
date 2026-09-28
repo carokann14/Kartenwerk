@@ -14,9 +14,14 @@ const BASE = process.env.REGIONALSTATISTIK_URL || 'https://www.regionalstatistik
 const OUT = process.env.RDB || 'data-src/rdb';
 const FIRST = +(process.env.RDB_START || 1990), LAST = new Date().getFullYear(), STEP = +(process.env.RDB_STEP || 6);
 const token = process.env.REGIONALSTATISTIK_TOKEN, user = process.env.REGIONALSTATISTIK_USERNAME, pw = process.env.REGIONALSTATISTIK_PASSWORD;
-const die = (m: string): never => { console.error('FEHLER: ' + m); process.exit(1); };
+// In der GitHub Action zusätzlich als Anmerkung (::error::/::notice::): steht dann direkt in der Zusammenfassung des Laufs
+const GH = !!process.env.GITHUB_ACTIONS;
+const esc = (m: string) => m.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+const note = (m: string) => { console.log(m); if (GH) console.log(`::notice title=Katalog laden::${esc(m)}`); };
+const die = (m: string): never => { console.error('FEHLER: ' + m); if (GH) console.log(`::error title=Katalog laden::${esc(m)}`); process.exit(1); };
 if (!token && !(user && pw)) die('Zugangsdaten fehlen: Repo-Secret REGIONALSTATISTIK_TOKEN oder REGIONALSTATISTIK_USERNAME und REGIONALSTATISTIK_PASSWORD anlegen.');
-const auth: Record<string, string> = token ? { username: token } : { username: user!, password: pw! };
+// Mit Token: Token als username, password leer (Beispiel von Destatis: 'username': TOKEN, 'password': "")
+const auth: Record<string, string> = token ? { username: token.trim(), password: '' } : { username: user!.trim(), password: pw! };
 
 async function post(method: string, params: Record<string, string>) {
   for (let attempt = 1; ; attempt++) {
@@ -48,10 +53,12 @@ function status(text: string): { code: number; content: string } | null {
 
 // Anmeldung prüfen (zeigt früh, ob die Server von hier erreichbar sind und die Zugangsdaten stimmen)
 {
-  const r = await post('helloworld/logincheck', {});
-  const t = asText(r.buf).trim();
-  console.log(`Anmeldung (HTTP ${r.status}): ${t.slice(0, 200)}`);
-  if (r.status !== 200 || !/erfolgreich|success/i.test(t)) die('Anmeldung bei regionalstatistik.de fehlgeschlagen – Zugangsdaten im Repo-Secret prüfen.');
+  let r;
+  try { r = await post('helloworld/logincheck', {}); }
+  catch (e) { die(`regionalstatistik.de nicht erreichbar (${BASE}): ${(e as Error).message}${(e as { cause?: Error }).cause ? ' – ' + (e as { cause: Error }).cause.message : ''}`); }
+  const t = asText(r!.buf).trim().slice(0, 300);
+  note(`Anmeldung mit ${token ? 'Token' : 'Benutzername/Passwort'}: HTTP ${r!.status} (${r!.type || 'ohne Typ'}): ${t}`);
+  if (r!.status !== 200 || !/erfolgreich|success/i.test(t)) die(`Anmeldung bei regionalstatistik.de fehlgeschlagen (HTTP ${r!.status}): ${t} – Zugangsdaten im Repo-Secret prüfen.`);
 }
 fs.mkdirSync(OUT, { recursive: true });
 for (const table of TABLES) {
@@ -72,6 +79,7 @@ for (const table of TABLES) {
     await new Promise(res => setTimeout(res, 1500));   // freundlich zur Schnittstelle
   }
   if (!rows.size) die(`${table}: keine Daten erhalten`);
+  note(`${table}: ${rows.size} Zeilen geladen`);
   const file = path.join(OUT, `${table}_api.csv`);
   fs.writeFileSync(file, header + '\n' + [...rows].join('\n') + '\n');
   console.log(`${file}: ${rows.size} Zeilen`);
