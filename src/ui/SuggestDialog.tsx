@@ -35,7 +35,7 @@ export function SuggestDialog() {
         <header className="modal-head"><h2 id="sug-title"><Icon.spark /> Passende Grafiken</h2><span className="spacer" /><button className="btn icon ghost" onClick={close} aria-label="Schließen"><Icon.x /></button></header>
         <div className="modal-body stack-12">
           <p className="hint">Zu <b>{ds?.name || 'diesem Datensatz'}</b> passen diese Karten und Diagramme. Angekreuzte werden als Grafiken in der Mappe angelegt{fresh ? ' (die erste ersetzt die leere Grafik)' : ''} und lassen sich danach frei ändern.</p>
-          {!list.length ? <p className="hint">Für diesen Datensatz gibt es noch keine Vorschläge. Zeitreihen als Linien folgen mit M8.</p> :
+          {!list.length ? <p className="hint">Für diesen Datensatz gibt es noch keine Vorschläge.</p> :
             <div className="sug-list" role="group" aria-label="Vorschläge">{list.map(s => { const I = Icon[s.icon]; return (
               <label key={s.id} className={'sug' + (on.has(s.id) ? ' on' : '')}>
                 <input type="checkbox" checked={on.has(s.id)} onChange={() => flip(s.id)} />

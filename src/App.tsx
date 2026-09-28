@@ -11,6 +11,7 @@ import { ImportWizard } from './ui/ImportWizard';
 import { GeoImportWizard } from './ui/GeoImportWizard';
 import { TableEditor } from './ui/TableEditor';
 import { SuggestDialog } from './ui/SuggestDialog';
+import { KatalogDialog } from './ui/KatalogDialog';
 import { RightPanel } from './ui/RightPanel';
 import { StartDialog } from './ui/StartDialog';
 import { TopBar } from './ui/TopBar';
@@ -149,6 +150,7 @@ export function App() {
   const geoWizard = useStore(s => s.ui.geoWizard);
   const tableEdit = useStore(s => s.ui.tableEdit);
   const suggest = useStore(s => s.ui.suggest);
+  const katalog = useStore(s => s.ui.katalog);
   const panelOpen = useStore(s => s.ui.panelOpen);
   const panelW = useStore(s => s.ui.panelW);
   const stepW = useStore(s => s.ui.stepW);
@@ -174,6 +176,7 @@ export function App() {
       {wizard && hasDoc && <ImportWizard />}
       {geoWizard && hasDoc && <GeoImportWizard />}
       {tableEdit && hasDoc && <TableEditor />}
+      {katalog && hasDoc && <KatalogDialog />}
       {suggest && hasDoc && <SuggestDialog />}
       <Toast />
       <Busy />

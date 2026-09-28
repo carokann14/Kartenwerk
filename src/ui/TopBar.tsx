@@ -6,7 +6,7 @@ import { redo, setUI, undo, useStore } from '../model/store';
 import { activeVariant } from '../render/elements';
 import { Icon, ratioIcon } from './common';
 
-export const APP_VERSION = 'M7 · Etappe 2+3';
+export const APP_VERSION = 'M8 · Linie + Katalog';
 
 function useOutside(open: boolean, close: () => void) {
   const ref = useRef<HTMLDivElement>(null);

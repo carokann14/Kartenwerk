@@ -25,6 +25,7 @@ export interface UI {
   suggest: string | null;    // Vorschläge für diesen Datensatz zeigen
   suggestFresh: boolean;   // Vorschläge direkt nach „Mit Daten starten“: der erste ersetzt die leere Grafik
   afterImport: 'suggest' | null;   // „Mit Daten starten“: nach dem Import Vorschläge zeigen
+  katalog: boolean;          // Kennzahlen-Katalog offen (M8)
 }
 interface State {
   doc: Doc | null; ui: UI; past: Doc[]; future: Doc[]; lastKey: string; lastAt: number;
@@ -34,7 +35,7 @@ export const useStore = create<State>(() => ({
   ui: {
     step: 'gebiete', panelOpen: true, panelW: 312, stepW: 296, sel: { kind: 'graphic' }, mapMode: null, view: { x: 0, y: 0, z: 0.5 }, hover: null, menu: null,
     expanded: {}, search: '', tableSort: { k: 'nr', dir: 1 }, tableDataset: null, exportProfile: 'png', pngWidth: null, svgMerge: false,
-    wizard: null, start: true, toast: null, saveState: 'idle', tool: null, busy: null, regionEdit: null, geoWizard: false, tableEdit: null, suggest: null, suggestFresh: false, afterImport: null,
+    wizard: null, start: true, toast: null, saveState: 'idle', tool: null, busy: null, regionEdit: null, geoWizard: false, tableEdit: null, suggest: null, suggestFresh: false, afterImport: null, katalog: false,
   },
   past: [], future: [], lastKey: '', lastAt: 0,
 }));

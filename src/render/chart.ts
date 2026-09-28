@@ -140,7 +140,8 @@ function chartModelRaw(doc: Doc): ChartModel {
       const minShare = spec.minShare;
       const kept = [...maxShare.keys()].filter(k => (maxShare.get(k) || 0) >= minShare && !OTHER.test(meta.get(k)!.label));
       const rest = [...maxShare.keys()].filter(k => !kept.includes(k));
-      const lines: LineSeries[] = kept.map(k => { const mm = meta.get(k)!; return { key: k, label: mm.label, party: mm.party, color: mm.party ? partyColor(doc, mm.party) : doc.categoryColors[mm.label] || OTHER_GREY, points: periods.map((p, i) => ({ period: p, value: byPeriod[i].get(k)?.share ?? null })) }; });
+      // Vor dem ersten Antreten (Anteil 0, z. B. AfD vor 2013) keine Linie auf der Nulllinie, sondern eine Lücke
+      const lines: LineSeries[] = kept.map(k => { const mm = meta.get(k)!; let started = false; return { key: k, label: mm.label, party: mm.party, color: mm.party ? partyColor(doc, mm.party) : doc.categoryColors[mm.label] || OTHER_GREY, points: periods.map((p, i) => { const v = byPeriod[i].get(k)?.share ?? null; if (v != null && v > 0) started = true; return { period: p, value: started ? v : null }; }) }; });
       if (rest.length && rest.some(k => (maxShare.get(k) || 0) > 0.05)) lines.push({ key: 'Sonstige', label: 'Sonstige', party: null, color: OTHER_GREY, points: periods.map((p, i) => ({ period: p, value: rest.reduce((s, k) => s + (byPeriod[i].get(k)?.share ?? 0), 0) })) });
       lines.sort((a, b) => (b.points[b.points.length - 1]?.value ?? 0) - (a.points[a.points.length - 1]?.value ?? 0));
       if (!lines.length) return { ...base, dataset: ds, empty: 'Keine Werte im gewählten Ausschnitt.' };
@@ -249,7 +250,8 @@ export function chartPrims(doc: Doc, v: Variant): Prims {
     const lines = M.lines || [], periods = M.periods || [];
     const axisSize = Math.round((spec.axisSize ?? 16) * ts), labSize = Math.round((spec.valueSize ?? 24) * ts);
     const gridOn = spec.gridOn !== false, ptsOn = spec.pointsOn !== false;
-    const endLabel = (l: (typeof lines)[number]) => { const last = [...l.points].reverse().find(p => p.value != null); return last ? `${l.label} ${fmt(last.value!, dec)}${M.unit}` : l.label; };
+    // Eine Linie: nur der Wert (Titel nennt das Merkmal); mehrere: Name und Wert
+    const endLabel = (l: (typeof lines)[number]) => { const last = [...l.points].reverse().find(p => p.value != null); const v = last ? `${fmt(last.value!, dec)}${M.unit}` : ''; return lines.length === 1 ? v : `${l.label} ${v}`.trim(); };
     const endW = Math.max(0, ...lines.map(l => measureW(endLabel(l), 'bold', labSize)));
     const allVals = lines.flatMap(l => l.points.map(p => p.value)).filter((x): x is number => x != null);
     const maxV = Math.max(0, ...allVals), minV = Math.min(0, ...allVals);
@@ -266,6 +268,7 @@ export function chartPrims(doc: Doc, v: Variant): Prims {
       texts.push({ x: plotLeft - 8, y: y + axisSize * 0.32, text: fmt(t, step < 1 ? 1 : 0), cut: 'text', size: axisSize, color: soft, anchor: 'end' });
     }
     periods.forEach((p, i) => texts.push({ x: X(i), y: plotBottom + axisSize * 1.4, text: (periodText(p).match(/\d{4}/) || [periodText(p)])[0], cut: 'text', size: axisSize, color: soft, anchor: 'middle' }));
+    const ends: { x: number; y: number; l: (typeof lines)[number] }[] = [];
     for (const l of lines) {
       const pts = l.points.map((p, i) => (p.value != null ? [X(i), Y(p.value)] as const : null));
       let d = '';
@@ -273,8 +276,15 @@ export function chartPrims(doc: Doc, v: Variant): Prims {
       if (d) paths.push({ d: d.trim(), fill: 'none', stroke: l.color, width: 2.6, cap: 'round' });
       if (ptsOn) pts.forEach(pt => { if (pt) paths.push({ d: `M${(pt[0] - 3.2).toFixed(1)} ${pt[1].toFixed(1)}a3.2 3.2 0 1 0 6.4 0a3.2 3.2 0 1 0 -6.4 0`, fill: l.color }); });
       const lastPt = [...pts].reverse().find((p): p is readonly [number, number] => !!p);
-      if (lastPt) texts.push({ x: lastPt[0] + 8, y: lastPt[1] + labSize * 0.34, text: endLabel(l), cut: 'bold', size: labSize, color: l.color, anchor: 'start' });
+      if (lastPt) ends.push({ x: lastPt[0] + 8, y: lastPt[1], l });
     }
+    // Endbeschriftungen nicht übereinander: von oben nach unten mit Mindestabstand, dann wenn nötig zurück nach oben schieben
+    const gap = labSize * 1.12;
+    ends.sort((a, b) => a.y - b.y);
+    const ys = ends.map(e => e.y);
+    for (let i = 1; i < ys.length; i++) ys[i] = Math.max(ys[i], ys[i - 1] + gap);
+    for (let i = ys.length - 1; i >= 0; i--) ys[i] = Math.min(ys[i], (i === ys.length - 1 ? plotBottom : ys[i + 1] - gap));
+    ends.forEach((e, i) => texts.push({ x: e.x, y: ys[i] + labSize * 0.34, text: endLabel(e.l), cut: 'bold', size: labSize, color: e.l.color, anchor: 'start' }));
     return { texts, rects, paths, box };
   }
   // Säulen bzw. Gewinne/Verluste

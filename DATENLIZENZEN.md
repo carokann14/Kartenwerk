@@ -74,6 +74,16 @@ Bezug: Fundstellen je Land im Katalog `src/data/ltw.ts` (MV: https://www.laiv-mv
 
 Die Bundeswahlleiterin erlaubt die Verwendung der Ergebnisse mit Quellenangabe. Die Dateien sind unverändert, außer `btw2025_gemeinden.csv`: Dort sind die Wahlbezirke je Gemeinde zusammengefasst, und die Briefwahl, die mehrere Gemeinden gemeinsam ausgezählt haben (Ämter, Samt- und Verbandsgemeinden), ist nach der Zahl der Wahlberechtigten mit Wahlschein auf die Gemeinden verteilt. Diese Werte sind geschätzt und in der Spalte „Briefwahl“ gekennzeichnet; der Titel in der Datei sagt das auch. Die Originaldatei lässt sich im Importassistenten direkt öffnen (ZIP), dann mit Wahl zwischen „anteilig“ und „als eine Fläche“.
 
+## Kennzahlen-Katalog
+
+Die Dateien in `public/katalog/` sind verkleinerte Auszüge (nur Deutschland, Länder und Kreise, nur die Kennzahlen des Katalogs) aus Flat-File-CSVs der Regionaldatenbank Deutschland. `npm run katalog` erzeugt sie neu (Quellordner über `RDB=…`, Standard `data-src/rdb`).
+
+| Datei | Inhalt | Quelle und Lizenz |
+|---|---|---|
+| `public/katalog/12411-01-01-4_bevoelkerung.csv` | Bevölkerung nach Geschlecht (Tabelle 12411-01-01-4) | © Statistische Ämter des Bundes und der Länder, Regionaldatenbank Deutschland, Datenlizenz Deutschland – Namensnennung – Version 2.0 |
+| `public/katalog/13211-02-05-4_arbeitslosigkeit.csv` | Arbeitslose und Arbeitslosenquoten, Jahresdurchschnitt (Tabelle 13211-02-05-4; Quelle der Werte: Statistik der Bundesagentur für Arbeit) | ebenso |
+| `public/katalog/14111-01-04-4_wahlbeteiligung.csv`, `…_bundestagswahlen.csv` | Bundestagswahlen: Wahlberechtigte, Wahlbeteiligung, Zweitstimmen (Tabelle 14111-01-04-4) | ebenso |
+
 ## Schriften
 
 - **Merriweather** (Grafiken, auch als Pfade im Export): © The Merriweather Project Authors, SIL Open Font License 1.1. In vier Schnitte instanziiert und auf lateinische Zeichen reduziert.

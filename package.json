@@ -17,6 +17,7 @@
     "beispiele": "esbuild scripts/build-examples.ts --bundle --platform=node --format=esm --outfile=data-src/.tmp/build-examples.mjs --log-level=warning && node data-src/.tmp/build-examples.mjs",
     "berlin": "esbuild scripts/build-berlin.ts --bundle --platform=node --format=esm --packages=external --outfile=data-src/.tmp/build-berlin.mjs --log-level=warning && node data-src/.tmp/build-berlin.mjs",
     "ltw": "esbuild scripts/build-ltw.ts --bundle --platform=node --format=esm --packages=external --outfile=data-src/.tmp/build-ltw.mjs --log-level=warning && node data-src/.tmp/build-ltw.mjs",
+    "katalog": "esbuild scripts/build-katalog.ts --bundle --platform=node --format=esm --packages=external --outfile=data-src/.tmp/build-katalog.mjs --log-level=warning && node data-src/.tmp/build-katalog.mjs",
     "ltw:derive": "esbuild scripts/derive-ltw.ts --bundle --platform=node --format=esm --packages=external --outfile=data-src/.tmp/derive-ltw.mjs --log-level=warning && node data-src/.tmp/derive-ltw.mjs"
   },
   "dependencies": {

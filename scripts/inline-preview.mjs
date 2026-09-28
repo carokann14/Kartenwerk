@@ -17,11 +17,13 @@ for (const f of fs.readdirSync('public/data')) {
 for (const f of fs.readdirSync('public/fonts')) add(path.join('fonts', f), true);
 // große Beispieldateien (Berliner Wahlbezirke, 3,5 MB) nur in der GitHub-Fassung
 for (const f of fs.readdirSync('public/beispiele')) if (fs.statSync(path.join('public/beispiele', f)).size < 3e6) add(path.join('beispiele', f), true);
+// Kennzahlen-Katalog: nur kleinere Dateien (die Bundestagswahlen mit allen Parteien nur in der GitHub-Fassung)
+if (fs.existsSync('public/katalog')) for (const f of fs.readdirSync('public/katalog')) if (f === 'index.json' || fs.statSync(path.join('public/katalog', f)).size < 1e6) add(path.join('katalog', f), f !== 'index.json');
 let html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
 const json = JSON.stringify(assets).replace(/</g, '\\u003c');
 html = html.replace('<head>', () => `<head>\n<script>window.__KW_ASSETS__=${json};</script>`);
 fs.writeFileSync(path.join(dir, 'kartenwerk-preview.html'), html);
-for (const d of ['data', 'fonts', 'beispiele']) fs.rmSync(path.join(dir, d), { recursive: true, force: true });
+for (const d of ['data', 'fonts', 'beispiele', 'katalog']) fs.rmSync(path.join(dir, d), { recursive: true, force: true });
 console.log('preview/kartenwerk-preview.html', (html.length / 1024 / 1024).toFixed(2), 'MB');
 
 // Fassung für ein Claude-Artifact: ohne eigenes Grundgerüst (doctype/html/head/body), Titel zuerst.

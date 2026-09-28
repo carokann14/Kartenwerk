@@ -89,6 +89,7 @@ export function PanelDaten() {
       <Section title="Datensätze" aside={`${doc.datasets.length} im Projekt`}>
         <div className="row-btns">
           <button className="btn primary" onClick={() => setUI({ wizard: { mode: 'new' } })}><Icon.upload /> Datei importieren …</button>
+          <button className="btn" onClick={() => setUI({ katalog: true })} title="Amtliche Kennzahlen (Bevölkerung, Arbeitslosenquote, Wahlen) für Kreise und Länder, mit allen Jahren"><Icon.katalog /> Aus dem Katalog …</button>
           <button className="btn" onClick={() => setUI({ tableEdit: 'new' })} title="Kleine Tabelle eintippen oder aus Excel einfügen, für Diagramme"><Icon.daten /> Neue Tabelle …</button>
         </div>
         {doc.datasets.length > 1 && <p className="hint">Welcher Datensatz die Karte färbt, wechselst du mit „Karte damit färben“ oder oben im Schritt „Färbung“.</p>}

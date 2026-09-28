@@ -83,13 +83,16 @@ export function chartTexts(doc: Doc, spec: ChartSpec): { title: string; subtitle
   if (src.kind === 'linie') {
     const scope = src.scope.kind === 'alle' ? '' : ' (Ausschnitt)';
     const span = ds.time ? `${periodYear(ds.time.periods[0])}–${periodYear(ds.time.periods[ds.time.periods.length - 1])}` : '';
+    // Name ohne Zusatz der Ebene („· Länder“) und ohne Untertitel („Bundestagswahlen: Zweitstimmen“ → „Bundestagswahlen“)
+    const name = ds.name.replace(/\s·\s(Länder|Deutschland)$/, '').replace(/,.*$/, '').replace(/:.*$/, '').trim();
     if (src.mode === 'partei') {
       const g = ds.groups.find(x => x.id === src.group)?.label || '';
-      const name = ds.name.replace(/,.*$/, '');
-      return { title: `${name}: Entwicklung ${span}`, subtitle: `${g} in Prozent${scope}` };
+      return { title: `${name} ${span}`.trim(), subtitle: `${g} in Prozent${scope}` };
     }
-    const labs = src.columns.map(id => ds.columns.find(c => c.id === id)?.label).filter(Boolean).join(', ');
-    return { title: labs || ds.name, subtitle: [span, `je ${ds.time?.label || 'Zeitpunkt'}`, scope].filter(Boolean).join(', ') };
+    const raw = src.columns.map(id => ds.columns.find(c => c.id === id)?.label).filter((x): x is string => !!x);
+    const pct = raw.length > 0 && raw.every(l => /\((Prozent|%)\)/.test(l));
+    const labs = raw.map(l => l.replace(/\s*\((Prozent|%)\)/, '')).join(', ');
+    return { title: labs || name, subtitle: [span, pct && 'in Prozent'].filter(Boolean).join(', ') + scope };
   }
   const col = ds.columns.find(c => c.id === src.column)?.label || '', cmp = ds.columns.find(c => c.id === src.cmp)?.label || '';
   const pct = looksLikeParties(ds) || /%|prozent|anteil/i.test(col);

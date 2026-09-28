@@ -20,9 +20,9 @@ export function StartDialog() {
   const [confirm, setConfirm] = useState<string | null>(null);
   const [pick, setPick] = useState<'map' | null>(null);
   const startChart = async (type: ChartType) => { setBusy(true); await startEmpty(GEO_INDEX[0]?.id || 'btw-wk-2025'); makeChartProject(type); setBusy(false); };
-  const startWithData = async (how: 'file' | 'table') => {
+  const startWithData = async (how: 'file' | 'table' | 'katalog') => {
     setBusy(true); await startEmpty(GEO_INDEX[0]?.id || 'btw-wk-2025'); setBusy(false);
-    setUI({ afterImport: 'suggest', step: 'daten', ...(how === 'file' ? { wizard: { mode: 'new' } } : { tableEdit: 'new' }) });
+    setUI({ afterImport: 'suggest', step: 'daten', ...(how === 'file' ? { wizard: { mode: 'new' } } : how === 'katalog' ? { katalog: true } : { tableEdit: 'new' }) });
   };
   const fileRef = useRef<HTMLInputElement>(null);
   const refresh = () => listLocal().then(setList);
@@ -56,8 +56,9 @@ export function StartDialog() {
             </div>}
             <div className="start-card primary">
               <Icon.spark size={22} />
-              <span className="stack-8"><b>Mit Daten starten</b><span className="hint">Excel- oder CSV-Datei laden (Wahlergebnis, Regionaldatenbank, eigene Tabelle). Kartenwerk schlägt passende Karten und Diagramme vor.</span>
+              <span className="stack-8"><b>Mit Daten starten</b><span className="hint">Excel- oder CSV-Datei laden (Wahlergebnis, Regionaldatenbank, eigene Tabelle) oder amtliche Kennzahlen aus dem Katalog nehmen. Kartenwerk schlägt passende Karten und Diagramme vor.</span>
                 <span className="row-btns"><button className="btn primary small" disabled={busy} onClick={() => startWithData('file')}><Icon.upload size={13} /> Datei importieren …</button>
+                  <button className="btn small" disabled={busy} onClick={() => startWithData('katalog')}><Icon.katalog size={13} /> Aus dem Katalog …</button>
                   <button className="btn small" disabled={busy} onClick={() => startWithData('table')}><Icon.daten size={13} /> Tabelle eintippen …</button></span>
               </span>
             </div>

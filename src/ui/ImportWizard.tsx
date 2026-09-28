@@ -4,7 +4,7 @@ import { fmtInt, norm } from '../lib/util';
 import { readFile } from '../data/parse';
 import { EXAMPLES, exampleAvailable } from '../data/examples';
 import { ltwPreset } from '../data/ltw';
-import { PRESET_LABELS, beTitle, wbzTitle, buildDataset, buildTable, defaultSettings, genesisDeDataset, genesisLevel, issueLabel, shortTitle, suggestGeoSetAsync } from '../data/pipeline';
+import { PRESET_LABELS, beTitle, wbzTitle, buildDataset, buildTable, defaultSettings, genesisDeDataset, genesisLevel, issueLabel, laenderStandFor, shortTitle, suggestGeoSetAsync } from '../data/pipeline';
 import { LEVEL_LABEL, parseGenesis } from '../data/genesis';
 import { periodText } from '../data/time';
 import { GEO_INDEX } from '../geo/geo';
@@ -71,7 +71,7 @@ export function ImportWizard() {
       // Regionaldatenbank: Länder als eigener Datensatz (amtliche Werte, auch für Quoten)
       if (raw && st && st.preset === 'genesis' && st.genesis?.laender) {
         const G = parseGenesis(raw.sheets[st.sheet].cells, raw.fileName), lvl = genesisLevel(G, st.geoSet);
-        const lan = laenderSetFor(st.geoSet);
+        const lan = laenderStandFor(st.geoSet);
         if (lvl !== 'lan' && G.levels.lan?.size && lan && await loadGeoSets([lan])) {
           const s2 = { ...st, geoSet: lan, rules: {} }, t2 = buildTable(raw, s2);
           addDataset(buildDataset(raw, s2, t2, `${ds.name} · Länder`), false);
@@ -305,12 +305,6 @@ function StepMatch({ st, set, ds, base }: { st: ImportSettings; set: (p: Partial
   );
 }
 
-/** Länder-Gebietsstand zum gewählten Stand (gleiches Jahr), sonst der neueste */
-function laenderSetFor(geoSet: string): string | null {
-  const y = GEO_INDEX.find(e => e.id === geoSet)?.year;
-  const lan = GEO_INDEX.filter(e => e.level === 'lan').sort((a, b) => b.year - a.year);
-  return (lan.find(e => e.year === y) || lan[0])?.id || null;
-}
 function GenesisCard({ raw, st, set }: { raw: RawInput; st: ImportSettings; set: (p: Partial<ImportSettings>) => void }) {
   const G = parseGenesis(raw.sheets[st.sheet].cells, raw.fileName), lvl = genesisLevel(G, st.geoSet);
   const levels = (Object.keys(G.levels) as (keyof typeof G.levels)[]).map(l => `${LEVEL_LABEL[l]} (${G.levels[l]!.size})`).join(' · ');

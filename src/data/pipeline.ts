@@ -712,6 +712,12 @@ export function shortTitle(title: string, fallback = 'Daten'): string {
   return t.length > 70 ? t.slice(0, 67).replace(/\s+\S*$/, '') + ' …' : t;
 }
 
+/** Länder-Gebietsstand zu einem Gebietsstand (gleiches Jahr), sonst der neueste */
+export function laenderStandFor(geoSet: string): string | null {
+  const y = GEO_INDEX.find(e => e.id === geoSet)?.year;
+  const lan = GEO_INDEX.filter(e => e.level === 'lan').sort((a, b) => b.year - a.year);
+  return (lan.find(e => e.year === y) || lan[0])?.id || null;
+}
 // ---------- Regionaldatenbank: Deutschland als eigener Datensatz (ohne Gebiet, für Diagramme) ----------
 /** Zeile „DG Deutschland“ je Periode; gleiche Spalten und Gruppen wie der Hauptdatensatz. null, wenn die Datei keine Deutschland-Werte hat. */
 export function genesisDeDataset(raw: RawInput, st: ImportSettings, base: Dataset, name: string): Dataset | null {

@@ -9,6 +9,7 @@ const S = (d: React.ReactNode) => (p: { size?: number }) => (
 );
 export const Icon = {
   gebiete: S(<><path d="M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5z" /><path d="M9 4v13.5M15 6.5V20" /></>),
+  katalog: S(<><path d="M5 5.5A1.5 1.5 0 0 1 6.5 4H19v13H6.5A1.5 1.5 0 0 0 5 18.5z" /><path d="M5 18.5A1.5 1.5 0 0 0 6.5 20H19" /><path d="M9 8h6M9 11h4" /></>),
   daten: S(<><rect x="3.5" y="4.5" width="17" height="15" rx="1.5" /><path d="M3.5 9.5h17M3.5 14.5h17M9.5 9.5v10" /></>),
   faerbung: S(<><path d="M12 3.5c3 4 6 7 6 10.5a6 6 0 0 1-12 0C6 10.5 9 7.5 12 3.5z" /><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5" /></>),
   elemente: S(<><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1" /><circle cx="17" cy="7.2" r="3.7" /><path d="M4 20.5 7.5 14l3.5 6.5z" /><path d="M14 17.5h7M17.5 14v7" /></>),
