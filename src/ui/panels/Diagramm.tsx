@@ -1,12 +1,15 @@
 // Schritt „Diagramm“ (M7): Art, Daten, Ausschnitt, Vergleich, Darstellung
 import React from 'react';
-import { update, setUI, useStore } from '../../model/store';
+import { getDoc, update, setUI, useStore } from '../../model/store';
+import { addDataset } from '../../model/actions';
+import { duplicateGraphic } from '../../model/graphics';
+import { tableDataset } from '../TableEditor';
 import type { ChartScope, ChartSource, ChartSpec, ChartType, Doc } from '../../model/types';
 import type { Dataset } from '../../data/types';
 import { dsLabel } from '../../data/aggregate';
 import { latestPeriod, periodText } from '../../data/time';
 import { GEO, LAENDER } from '../../geo/geo';
-import { chartModel, defaultChart } from '../../render/chart';
+import { chartModel, defaultChart, SeatModel } from '../../render/chart';
 import { chartTexts, cmpOptions, defaultSource, isOwnTable, numCols, partyGroups, typeFor } from '../../render/chartSource';
 import { Check, ColorField, Field, Icon, Note, NumInput, Section, Seg } from '../common';
 
@@ -57,7 +60,7 @@ export function PanelDiagramm() {
     let s = c.source;
     const d0 = s ? doc.datasets.find(d => d.id === s!.dataset) : null;
     // Balken zeigen Gebiete bzw. eine Tabelle, Säulen und Gewinne/Verluste ein Parteiergebnis, Linie eine eigene Quelle mit Zeitachse
-    if (d0 && ((type === 'balken') !== (s!.kind !== 'partei') || (type === 'gewinne' && s!.kind === 'partei' && !s!.cmp) || (type === 'linie') !== (s!.kind === 'linie'))) s = defaultSource(doc, d0, type) || s;
+    if (d0 && ((type === 'balken') !== (s!.kind !== 'partei') || (type === 'gewinne' && s!.kind === 'partei' && !s!.cmp) || (type === 'linie') !== (s!.kind === 'linie') || (type === 'sitze') !== (s!.kind === 'sitze'))) s = defaultSource(doc, d0, type) || (type === 'sitze' ? null : s);
     return { ...c, type, source: s };
   });
   if (!doc.datasets.length) return <Section title="Diagramm">
@@ -66,11 +69,13 @@ export function PanelDiagramm() {
       <button className="btn primary" onClick={() => setUI({ wizard: { mode: 'new' } })}><Icon.upload /> Datei importieren …</button>
       <button className="btn" onClick={() => setUI({ tableEdit: 'new' })}><Icon.daten /> Neue Tabelle …</button>
     </div>
+    {spec.type === 'sitze' && <SeatTemplate />}
   </Section>;
   return <>
     <Section title="Art">
-      <Seg full items={[['saeulen', 'Säulen'], ['gewinne', 'Gewinne/Verluste'], ['balken', 'Balken'], ['linie', 'Linie']]} value={spec.type} onChange={setType} />
-      <p className="hint">{spec.type === 'saeulen' ? 'Ergebnis je Partei, nach Größe, „Sonstige“ am Ende. Vergleich als schmale helle Säule.' : spec.type === 'gewinne' ? 'Veränderung je Partei in Prozentpunkten, gleiche Reihenfolge wie das Ergebnis.' : spec.type === 'balken' ? 'Werte je Gebiet oder Zeile, waagerecht und sortiert – gut für lange Namen.' : 'Verlauf über die Zeit; mehrere Merkmale eines Datensatzes mit Zeitachse als eigene Linien.'}</p>
+      <Seg full items={[['saeulen', 'Säulen'], ['gewinne', 'Gewinne'], ['balken', 'Balken'], ['linie', 'Linie'], ['sitze', 'Sitze']]} value={spec.type} onChange={setType} />
+      <p className="hint">{spec.type === 'saeulen' ? 'Ergebnis je Partei, nach Größe, „Sonstige“ am Ende. Vergleich als schmale helle Säule.' : spec.type === 'gewinne' ? 'Gewinne und Verluste je Partei in Prozentpunkten, gleiche Reihenfolge wie das Ergebnis.' : spec.type === 'balken' ? 'Werte je Gebiet oder Zeile, waagerecht und sortiert – gut für lange Namen.' : spec.type === 'linie' ? 'Verlauf über die Zeit; mehrere Merkmale eines Datensatzes mit Zeitachse als eigene Linien.' : 'Sitzverteilung im Halbkreis: Sitze aus einer Tabelle oder als Projektion aus Prozenten, mit Mehrheit und Koalitionen.'}</p>
+      {spec.type === 'sitze' && !usable.length && <SeatTemplate />}
     </Section>
     <Section title="Daten">
       <Field label="Datensatz"><select value={ds?.id || ''} onChange={e => { const d = doc.datasets.find(x => x.id === e.target.value); if (d) setSource(defaultSource(doc, d, spec.type)); }} aria-label="Datensatz">
@@ -81,15 +86,17 @@ export function PanelDiagramm() {
       {src?.kind === 'gebiete' && ds && <GebieteOptions ds={ds} src={src} />}
       {src?.kind === 'tabelle' && ds && <TabelleOptions ds={ds} src={src} type={spec.type} />}
       {src?.kind === 'linie' && ds && <LinieOptions doc={doc} ds={ds} src={src} />}
+      {src?.kind === 'sitze' && ds && <SitzeOptions ds={ds} src={src} />}
       {M.empty && src && <Note kind="warn">{M.empty}</Note>}
     </Section>
     <Section title="Darstellung">
       {spec.type === 'saeulen' && M.hasCmp && <Check checked={spec.showCmp} onChange={v => setChart(c => ({ ...c, showCmp: v }))}>Vergleich als schmale Säule daneben</Check>}
       {spec.type === 'saeulen' && M.hasCmp && spec.showCmp && <Check checked={spec.keyVisible} onChange={v => setChart(c => ({ ...c, keyVisible: v }))}>Zeichenerklärung ({M.curLabel} · {M.cmpLabel})</Check>}
       {isPartyLike && <Field label="Sonstige unter"><div className="row-btns"><NumInput min={0} max={20} step={0.5} value={spec.minShare} onChange={n => setChart(c => ({ ...c, minShare: n }))} ariaLabel="Schwelle für Sonstige in Prozent" /><span className="hint">%</span></div></Field>}
-      <Field label="Nachkommastellen"><Seg items={[['0', '0'], ['1', '1'], ['2', '2']]} value={String(spec.decimals) as '1'} onChange={v => setChart(c => ({ ...c, decimals: +v }))} /></Field>
-      {!isPartyLike && !(src?.kind === 'linie' && src.mode === 'werte' && src.columns.length > 1) && <Field label="Farbe"><div className="swatch-grid">{HUES.map(h => <button key={h} className={'swatch-btn' + (spec.color === h ? ' on' : '')} style={{ background: h }} onClick={() => setChart(c => ({ ...c, color: h }))} aria-label={'Farbton ' + h} />)}<ColorField value={spec.color || HUES[0]} onChange={hex => setChart(c => ({ ...c, color: hex }))} ariaLabel="Eigene Farbe" /></div></Field>}
-      {!isPartyLike && M.bars.length > 1 && <Field label={spec.type === 'linie' ? 'Farbe und Name je Linie' : 'Farbe und Name je Balken'}>
+      {M.seats && <SeatDisplay spec={spec} S={M.seats} />}
+      {spec.type !== 'sitze' && <Field label="Nachkommastellen"><Seg items={[['0', '0'], ['1', '1'], ['2', '2']]} value={String(spec.decimals) as '1'} onChange={v => setChart(c => ({ ...c, decimals: +v }))} /></Field>}
+      {!isPartyLike && spec.type !== 'sitze' && !(src?.kind === 'linie' && src.mode === 'werte' && src.columns.length > 1) && <Field label="Farbe"><div className="swatch-grid">{HUES.map(h => <button key={h} className={'swatch-btn' + (spec.color === h ? ' on' : '')} style={{ background: h }} onClick={() => setChart(c => ({ ...c, color: h }))} aria-label={'Farbton ' + h} />)}<ColorField value={spec.color || HUES[0]} onChange={hex => setChart(c => ({ ...c, color: hex }))} ariaLabel="Eigene Farbe" /></div></Field>}
+      {!isPartyLike && M.bars.length > 1 && <Field label={spec.type === 'linie' ? 'Farbe und Name je Linie' : spec.type === 'sitze' ? 'Farbe und Name je Partei' : 'Farbe und Name je Balken'}>
         <div className="ptable">{M.bars.map(b => (
           <div key={b.key} className="prow">
             <ColorField value={b.color} onChange={hex => setBarColor(b.key, hex)} ariaLabel={'Farbe ' + b.label} />
@@ -176,5 +183,77 @@ function LinieOptions({ doc, ds, src }: { doc: Doc; ds: Dataset; src: Extract<Ch
     </Field>}
     <ScopeField ds={ds} scope={src.scope} onChange={s => setSource({ ...src, scope: s })} />
     {ds.time && <p className="hint">Zeigt den Verlauf über {ds.time.label === 'Jahr' ? 'die Jahre' : 'alle Zeitpunkte'} des Datensatzes ({periodText(ds.time.periods[0])}–{periodText(ds.time.periods[ds.time.periods.length - 1])}).</p>}
+  </>;
+}
+
+// ---------- Sitzverteilung (M9) ----------
+/** Vorlage: Sitze des 21. Bundestags (Wahl 2025) als eigene Tabelle */
+function SeatTemplate() {
+  const add = () => {
+    const ds = tableDataset('Bundestag 2025: Sitze', ['Partei', 'Sitze'], [['CDU/CSU', '208'], ['AfD', '152'], ['SPD', '120'], ['Grüne', '85'], ['Die Linke', '64'], ['SSW', '1']]);
+    ds.settings.attribution = 'Die Bundeswahlleiterin';
+    ds.settings.sourceTitle = 'Bundestagswahl 2025, Sitzverteilung (amtliches Endergebnis)';
+    addDataset(ds);
+    if (!getDoc().chart?.source) setSource(defaultSource(getDoc(), ds, 'sitze'));
+  };
+  return <p className="hint"><button className="btn small" onClick={add}><Icon.sitze /> Beispiel: Bundestag 2025</button> legt die Sitze des Bundestags als eigene Tabelle an – zum Ausprobieren oder als Vorlage für eigene Zahlen.</p>;
+}
+function SitzeOptions({ ds, src }: { ds: Dataset; src: Extract<ChartSource, { kind: 'sitze' }> }) {
+  const calc = src.calc;
+  const setCalc = (p: Partial<NonNullable<typeof calc>>) => setSource({ ...src, calc: { seats: calc?.seats ?? 630, threshold: calc?.threshold ?? 5, ...p } } as ChartSource);
+  const calcFields = calc && <>
+    <Field label="Sitze insgesamt"><NumInput min={1} max={2000} value={calc.seats} onChange={n => setCalc({ seats: n })} ariaLabel="Zahl der Sitze" /></Field>
+    <Field label="Hürde"><div className="row-btns"><NumInput min={0} max={20} step={0.5} value={calc.threshold} onChange={n => setCalc({ threshold: n })} ariaLabel="Sperrklausel in Prozent" /><span className="hint">%</span></div></Field>
+    <p className="hint">Projektion nach Sainte-Laguë wie im Bundestag, ohne Grundmandate, Direktmandate und Ausnahmen (etwa SSW). Die Unterzeile sagt „Projektion“.</p>
+  </>;
+  if (src.from === 'tabelle') {
+    const nc = numCols(ds);
+    return <>
+      <Field label="Spalte"><select value={src.column} onChange={e => setSource({ ...src, column: e.target.value })}>{nc.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></Field>
+      <Check checked={!!calc} onChange={on => setSource({ ...src, calc: on ? { seats: 630, threshold: 5 } : null })}>Sitze aus Prozenten bzw. Stimmen berechnen</Check>
+      {calcFields}
+      <button className="btn small" onClick={() => setUI({ tableEdit: ds.id })}><Icon.daten /> Tabelle bearbeiten …</button>
+    </>;
+  }
+  const groups = partyGroups(ds);
+  return <>
+    {groups.length > 1 && <Field label="Stimmen"><select value={src.group} onChange={e => setSource({ ...src, group: e.target.value })}>{groups.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}</select></Field>}
+    <PeriodSelect ds={ds} value={src.period} onChange={p => setSource({ ...src, period: p })} />
+    <ScopeField ds={ds} scope={src.scope} onChange={s => setSource({ ...src, scope: s })} />
+    {calcFields}
+  </>;
+}
+function SeatDisplay({ spec, S }: { spec: ChartSpec; S: SeatModel }) {
+  const coal = spec.coalition || [];
+  const flip = (k: string, on: boolean) => setChart(c => { const x = (c.coalition || []).filter(y => y !== k); const n = on ? [...x, k] : x; return { ...c, coalition: n.length ? n : undefined }; });
+  // Reihenfolge ohne Koalitions-Vorzug: so wie sie ohne Koalition stünde
+  const order = S.groups.map(g => g.key);
+  const move = (from: number, to: number) => {
+    if (to < 0 || to >= order.length || from === to) return;
+    const o = [...order]; const [k] = o.splice(from, 1); o.splice(to, 0, k);
+    setChart(c => ({ ...c, seatOrder: o }));
+  };
+  const [drag, setDrag] = React.useState<number | null>(null);
+  return <>
+    <Field label="Form"><Seg items={[['punkte', 'Punkte'], ['ring', 'Halbring']] as ['punkte' | 'ring', string][]} value={spec.seatStyle || 'punkte'} onChange={v => setChart(c => ({ ...c, seatStyle: v }))} /></Field>
+    <Check checked={spec.majorityOn !== false} onChange={on => setChart(c => ({ ...c, majorityOn: on }))}>Mehrheitsmarke ({S.majority} von {S.total})</Check>
+    <Field label="Koalition" stack>
+      <div className="ptable">{S.groups.map(g => (
+        <div key={g.key} className="prow"><Check checked={coal.includes(g.key)} onChange={on => flip(g.key, on)}><span className="dot" style={{ background: g.color }} /> {g.label} <span className="hint">{g.seats}</span></Check></div>
+      ))}</div>
+      {S.coalition ? <p className="hint"><b>{S.coalition.seats} von {S.total} Sitzen</b> – {S.coalition.reached ? `Mehrheit (${S.majority}) erreicht` : `es fehlen ${S.majority - S.coalition.seats} zur Mehrheit (${S.majority})`}. Weitere Koalition: <button className="btn small ghost" onClick={() => duplicateGraphic(getDoc().page)}><Icon.copy size={13} /> Grafik duplizieren</button></p>
+        : <p className="hint">Parteien ankreuzen: Sie stehen dann links beisammen und kräftig, die übrigen blass. In der Mitte steht ihre Summe.</p>}
+    </Field>
+    <Field label="Reihenfolge" stack>
+      <div className="ptable seat-order">{S.groups.map((g, i) => (
+        <div key={g.key} className={'prow' + (drag === i ? ' dragging' : '')} draggable onDragStart={() => setDrag(i)} onDragEnd={() => setDrag(null)}
+          onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); if (drag != null) move(drag, i); setDrag(null); }}>
+          <span className="grip" aria-hidden="true">⋮⋮</span><span className="dot" style={{ background: g.color }} /><span className="grow">{g.label}</span>
+          <button className="btn icon ghost small" disabled={i === 0} onClick={() => move(i, i - 1)} aria-label={`${g.label} nach links`}>↑</button>
+          <button className="btn icon ghost small" disabled={i === S.groups.length - 1} onClick={() => move(i, i + 1)} aria-label={`${g.label} nach rechts`}>↓</button>
+        </div>
+      ))}</div>
+      <p className="hint">Von links nach rechts im Halbkreis; ziehen oder mit den Pfeilen verschieben. {spec.seatOrder && <button className="btn small ghost" onClick={() => setChart(c => ({ ...c, seatOrder: undefined }))}>Politisch links → rechts</button>}</p>
+    </Field>
   </>;
 }

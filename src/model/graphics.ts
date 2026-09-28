@@ -16,7 +16,7 @@ import { autoRule, loadGeoSets } from './actions';
 import { usableDatasets } from '../data/aggregate';
 
 const KIND_NAME: Record<GraphicKind, string> = { map: 'Karte', chart: 'Diagramm' };
-export const CHART_NAME: Record<ChartType, string> = { saeulen: 'Ergebnis', gewinne: 'Gewinne und Verluste', balken: 'Balken', linie: 'Entwicklung' };
+export const CHART_NAME: Record<ChartType, string> = { saeulen: 'Ergebnis', gewinne: 'Gewinne und Verluste', balken: 'Balken', linie: 'Entwicklung', sitze: 'Sitzverteilung' };
 
 /** Zustand der aktiven Grafik ablegen und Grafik k nach oben holen (im selben Änderungsschritt) */
 function swapTo(d: Draft<Doc>, k: number) {

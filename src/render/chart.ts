@@ -6,8 +6,9 @@ import { GEO } from '../geo/geo';
 import { atPeriod, periodText, selectedPeriod } from '../data/time';
 import { partyDef, partyOf } from '../data/parties';
 import { isRate } from '../data/aggregate';
+import { politicalRank, sainteLague, seatLayout } from './seats';
 import type { Cell, Dataset, Group } from '../data/types';
-import type { ChartScope, ChartSpec, Doc, Variant } from '../model/types';
+import type { ChartScope, ChartSpec, Doc, SeatCalc, Variant } from '../model/types';
 import { partyColor, partyLabel, unionLabelOf } from './colorModel';
 import type { PathPrim, Prims, RectPrim, TextPrim } from './elements';
 
@@ -16,7 +17,16 @@ export interface Bar { key: string; label: string; value: number; cmp: number | 
 export interface LinePoint { period: string; value: number | null }
 /** Linie im Diagramm „Linie“ (M8): ein Merkmal (Partei bzw. Zahlenspalte) über alle Zeitpunkte */
 export interface LineSeries { key: string; label: string; color: string; party: string | null; points: LinePoint[]; auto?: string }
-export interface ChartModel { type: ChartSpec['type']; bars: Bar[]; lines?: LineSeries[]; periods?: string[]; unit: string; curLabel: string; cmpLabel: string; hasCmp: boolean; empty: string | null; dataset: Dataset | null }
+/** Partei in der Sitzverteilung (M9) */
+export interface SeatGroup { key: string; label: string; color: string; party: string | null; seats: number; share: number | null; auto?: string }
+export interface SeatModel {
+  groups: SeatGroup[];              // in Sitzordnung von links nach rechts (Koalition zuerst)
+  total: number; majority: number;
+  calc: SeatCalc | null;            // gesetzt = Projektion aus Anteilen
+  below: { label: string; share: number }[];   // Projektion: an der Hürde gescheitert
+  coalition: { keys: string[]; seats: number; reached: boolean } | null;
+}
+export interface ChartModel { type: ChartSpec['type']; bars: Bar[]; lines?: LineSeries[]; periods?: string[]; seats?: SeatModel; unit: string; curLabel: string; cmpLabel: string; hasCmp: boolean; empty: string | null; dataset: Dataset | null }
 
 export const defaultChart = (type: ChartSpec['type'] = 'saeulen'): ChartSpec => ({ type, source: null, showCmp: true, minShare: 3, decimals: 1, color: '#2F5D8A', keyVisible: true });
 const num = (v: Cell) => (typeof v === 'number' && isFinite(v) ? v : null);
@@ -87,6 +97,11 @@ export const scopeLabel = (ds: Dataset, s: ChartScope) => {
  *  zeigen kann, während `Bar.label` (Anzeige/Export) die eigene Fassung übernimmt, sobald eine gesetzt ist. */
 export function chartModel(doc: Doc): ChartModel {
   const m = chartModelRaw(doc), bc = doc.chart?.barColors, bl = doc.chart?.barLabels;
+  if (m.seats) {
+    const groups = m.seats.groups.map(g => ({ ...g, auto: g.label, color: bc?.[g.key] ?? g.color, label: bl?.[g.key] ?? g.label }));
+    const bars: Bar[] = groups.map(g => ({ key: g.key, label: g.label, value: g.seats, cmp: null, color: g.color, party: g.party, auto: g.auto }));
+    return { ...m, seats: { ...m.seats, groups }, bars };
+  }
   if (m.lines && m.lines.length) {
     const lines = m.lines.map(l => ({ ...l, auto: l.label, color: bc?.[l.key] ?? l.color, label: bl?.[l.key] ?? l.label }));
     const bars: Bar[] = lines.map(l => { const last = [...l.points].reverse().find(p => p.value != null); return { key: l.key, label: l.label, value: last?.value ?? 0, cmp: null, color: l.color, party: l.party, auto: l.auto, other: l.key === 'Sonstige' }; });
@@ -190,6 +205,7 @@ function chartModelRaw(doc: Doc): ChartModel {
     const pct = cols.some(ci => isRate(ds.columns[ci]) || /%|prozent|anteil/i.test(ds.columns[ci].label));
     return { ...base, dataset: ds, lines, periods, unit: pct ? ' %' : '' };
   }
+  if (src.kind === 'sitze') return seatModel(doc, spec, src, ds0, base);
   // eigene Tabelle: Zeilen = Kategorien
   const ds = ds0, ci = ds.columns.findIndex(c => c.id === src.column), ki = src.cmp ? ds.columns.findIndex(c => c.id === src.cmp) : -1;
   if (ci < 0) return { ...base, empty: 'Die Spalte fehlt.' };
@@ -207,6 +223,129 @@ function chartModelRaw(doc: Doc): ChartModel {
   const pct = /%|prozent|anteil/i.test(lab(src.column)) || bars.some(b => b.party);
   return { ...base, dataset: ds, bars, unit: spec.type === 'gewinne' ? (pct ? ' Pkt.' : '') : pct ? ' %' : '', curLabel: lab(src.column), cmpLabel: lab(src.cmp), hasCmp: ki >= 0 };
 }
+
+// ---------- Sitzverteilung (M9) ----------
+/** Halbkreis (Punkte oder Ring), Mehrheitsmarke, Zahl in der Mitte, Parteien mit Sitzen darunter */
+function seatPrims(S: SeatModel, spec: ChartSpec, doc: Doc, F: { x: number; y: number; w: number; h: number }, ts: number, out: Prims & { paths: PathPrim[] }): Prims {
+  const { texts, rects, paths } = out;
+  const ink = doc.style.ink, soft = doc.style.inkSoft;
+  const lab = Math.round((spec.valueSize ?? 24) * ts), gap = Math.round(18 * ts);
+  const coal = S.coalition, dim = (g: SeatGroup) => (coal && !coal.keys.includes(g.key) ? mixWhite(g.color, 0.72) : g.color);
+  // Beschriftung unten: ■ Partei Sitze, in Zeilen umbrochen, zentriert
+  const sq = Math.round(lab * 0.72), itemGap = Math.round(lab * 1.1);
+  const items = S.groups.map(g => { const n = String(g.seats), wn = measureW(g.label, 'text', lab), ws = measureW(n, 'bold', lab); return { g, n, wn, ws, w: sq + 6 + wn + 6 + ws }; });
+  const lines: (typeof items)[] = [];
+  for (const it of items) { const L = lines[lines.length - 1]; if (L && L.reduce((a, x) => a + x.w + itemGap, 0) + it.w <= F.w) L.push(it); else lines.push([it]); }
+  const lineH = Math.round(lab * 1.55);
+  const note = S.calc && S.below.length ? `Unter ${fmtN(S.calc.threshold)} %: ${S.below.slice(0, 6).map(b => `${b.label} ${fmtN(b.share)} %`).join(', ')}` : '';
+  const noteSize = Math.round(lab * 0.78);
+  const legendH = lines.length * lineH + (note ? noteSize * 1.8 : 0);
+  const majH = spec.majorityOn !== false ? Math.round(lab * 1.7) : 0;
+  const R = Math.max(20, Math.min(F.w / 2, F.h - legendH - majH - gap));
+  const cx = F.x + F.w / 2, cy = F.y + majH + R;
+  const P = (a: number, r: number) => [cx + r * R * Math.cos(a), cy - r * R * Math.sin(a)] as const;
+  const f = (n: number) => n.toFixed(1);
+  let inner: number;
+  if (spec.seatStyle === 'ring') {
+    inner = 0.52;
+    const gapA = S.groups.length > 1 ? Math.min(0.012, Math.PI / S.total / 3) : 0;
+    let a0 = Math.PI;
+    for (const g of S.groups) {
+      const span = Math.PI * g.seats / S.total, a1 = a0 - span;
+      const s0 = a0 - (a0 < Math.PI ? gapA / 2 : 0), s1 = a1 + (a1 > 1e-9 ? gapA / 2 : 0);
+      if (s0 > s1) {
+        const [x0, y0] = P(s0, 1), [x1, y1] = P(s1, 1), [x2, y2] = P(s1, inner), [x3, y3] = P(s0, inner);
+        paths.push({ d: `M${f(x0)} ${f(y0)}A${f(R)} ${f(R)} 0 0 1 ${f(x1)} ${f(y1)}L${f(x2)} ${f(y2)}A${f(R * inner)} ${f(R * inner)} 0 0 0 ${f(x3)} ${f(y3)}Z`, fill: dim(g) });
+      }
+      a0 = a1;
+    }
+  } else {
+    inner = 0.4;
+    const L = seatLayout(S.total, inner), rr = L.r * R;
+    let k = 0;
+    for (const g of S.groups) {
+      let d = '';
+      for (let j = 0; j < g.seats && k < L.seats.length; j++, k++) {
+        const s = L.seats[k], x = cx + s.x * R, y = cy - s.y * R;
+        d += `M${f(x - rr)} ${f(y)}a${f(rr)} ${f(rr)} 0 1 0 ${f(2 * rr)} 0a${f(rr)} ${f(rr)} 0 1 0 ${f(-2 * rr)} 0`;
+      }
+      if (d) paths.push({ d, fill: dim(g) });
+    }
+  }
+  // Mehrheitsmarke oben in der Mitte
+  if (majH) {
+    const top = cy - R - Math.round(6 * ts);
+    paths.push({ d: `M${f(cx)} ${f(cy - R * inner + 2)}V${f(top)}`, fill: 'none', stroke: ink, width: Math.max(1.2, 1.6 * ts), dash: `${f(5 * ts)} ${f(4 * ts)}` });
+    texts.push({ x: cx, y: top - Math.round(lab * 0.35), text: `Mehrheit: ${S.majority}`, cut: 'text', size: Math.round(lab * 0.8), color: soft, anchor: 'middle' });
+  }
+  // Zahl in der Mitte: alle Sitze bzw. Sitze der Koalition
+  const big = Math.round(Math.min(lab * 2.6, R * inner * 0.62)), sub = Math.round(Math.min(lab * 0.85, R * inner * 0.22));
+  texts.push({ x: cx, y: cy - sub * 1.5, text: String(coal ? coal.seats : S.total), cut: 'display', size: big, color: ink, anchor: 'middle' });
+  texts.push({ x: cx, y: cy - 2, text: coal ? `von ${S.total} Sitzen · ${coal.reached ? 'Mehrheit' : `${S.majority - coal.seats} fehlen`}` : 'Sitze', cut: 'text', size: sub, color: soft, anchor: 'middle' });
+  // Beschriftung unten
+  let y = cy + gap + lab;
+  for (const L of lines) {
+    const w = L.reduce((a, x) => a + x.w, 0) + itemGap * (L.length - 1);
+    let x = cx - w / 2;
+    for (const it of L) {
+      rects.push({ x, y: y - sq + Math.round(lab * 0.08), w: sq, h: sq, fill: dim(it.g) });
+      const c = coal && !coal.keys.includes(it.g.key) ? soft : ink;
+      texts.push({ x: x + sq + 6, y, text: it.g.label, cut: 'text', size: lab, color: c, anchor: 'start' });
+      texts.push({ x: x + sq + 6 + it.wn + 6, y, text: it.n, cut: 'bold', size: lab, color: c, anchor: 'start' });
+      x += it.w + itemGap;
+    }
+    y += lineH;
+  }
+  if (note) texts.push({ x: cx, y: y - lineH + noteSize * 1.9, text: note, cut: 'text', size: noteSize, color: soft, anchor: 'middle' });
+  return out;
+}
+function seatModel(doc: Doc, spec: ChartSpec, src: Extract<NonNullable<ChartSpec['source']>, { kind: 'sitze' }>, ds0: Dataset, base: ChartModel): ChartModel {
+  // Parteien mit Stimmen/Anteil bzw. Sitzen einsammeln
+  type P = { key: string; label: string; party: string | null; v: number; other: boolean };
+  let list: P[] = [], ds = ds0;
+  if (src.from === 'tabelle') {
+    const ci = ds.columns.findIndex(c => c.id === src.column); if (ci < 0) return { ...base, dataset: ds, empty: 'Die Spalte fehlt.' };
+    const nameCol = Math.max(0, ds.columns.findIndex(c => c.role === 'name'));
+    list = ds.rows.map((r, i) => {
+      const label = String(r[nameCol] ?? '').trim(), p = partyOf(label), v = num(r[ci]);
+      return { key: label || String(i), label: p ? (partyDef(p.key)?.label || label) : label, party: p?.key || null, v: v ?? NaN, other: OTHER.test(label) };
+    }).filter(x => isFinite(x.v) && x.v > 0);
+  } else {
+    ds = inPeriod(doc, ds0, src.period);
+    const grp = ds.groups.find(g => g.id === src.group) || ds.groups.find(g => g.parties);
+    if (!grp) return { ...base, dataset: ds, empty: 'Der Datensatz hat keine Parteien.' };
+    for (const [key, x] of partyShares(ds, grp, scopeRows(ds, src.scope))) if (x.share > 0) list.push({ key, label: x.label, party: x.party, v: x.share, other: key === 'Sonstige' });
+  }
+  if (!list.length) return { ...base, dataset: ds, empty: 'Keine Werte für eine Sitzverteilung.' };
+  const calc = src.calc;
+  let seats = new Map<string, number>(), below: { label: string; share: number }[] = [];
+  const sumV = list.reduce((a, x) => a + x.v, 0);
+  const shareOf = (x: P) => 100 * x.v / sumV;
+  if (calc) {
+    const passed = list.filter(x => !x.other && shareOf(x) >= calc.threshold);
+    seats = sainteLague(passed.map(x => ({ key: x.key, v: x.v })), Math.max(0, Math.round(calc.seats)));
+    below = list.filter(x => !x.other && shareOf(x) < calc.threshold && shareOf(x) >= 0.5).sort((a, b) => b.v - a.v).map(x => ({ label: x.label, share: shareOf(x) }));
+  } else for (const x of list) seats.set(x.key, Math.round(x.v));
+  let groups: SeatGroup[] = list.filter(x => (seats.get(x.key) || 0) > 0).map(x => ({
+    key: x.key, label: x.label, party: x.party, seats: seats.get(x.key)!, share: calc ? shareOf(x) : null,
+    color: x.party ? partyColor(doc, x.party) : x.other ? OTHER_GREY : doc.categoryColors[x.label] || spec.color,
+  }));
+  if (!groups.length) return { ...base, dataset: ds, empty: calc ? `Keine Partei über der ${fmtN(calc.threshold)}-%-Hürde.` : 'Keine Sitze.' };
+  // Reihenfolge: eigene (seatOrder), sonst politisch links → rechts; eine Koalition steht links beisammen
+  const own = spec.seatOrder || [];
+  const rank = (g: SeatGroup) => { const i = own.indexOf(g.key); return i >= 0 ? i - 1000 : politicalRank(g.party, g.key); };
+  groups.sort((a, b) => rank(a) - rank(b) || b.seats - a.seats);
+  const total = groups.reduce((a, g) => a + g.seats, 0), majority = Math.floor(total / 2) + 1;
+  const ck = (spec.coalition || []).filter(k => groups.some(g => g.key === k));
+  let coalition: SeatModel['coalition'] = null;
+  if (ck.length) {
+    groups = [...groups.filter(g => ck.includes(g.key)), ...groups.filter(g => !ck.includes(g.key))];
+    const cs = groups.filter(g => ck.includes(g.key)).reduce((a, g) => a + g.seats, 0);
+    coalition = { keys: ck, seats: cs, reached: cs >= majority };
+  }
+  return { ...base, dataset: ds, seats: { groups, total, majority, calc, below, coalition }, bars: [], unit: '' };
+}
+const fmtN = (v: number) => v.toLocaleString('de-DE', { maximumFractionDigits: 1 });
 
 // ---------- Zeichnen ----------
 const fmt = (v: number, dec: number, sign = false) => (sign && v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toLocaleString('de-DE', { minimumFractionDigits: dec, maximumFractionDigits: dec });
@@ -233,6 +372,7 @@ export function chartPrims(doc: Doc, v: Variant): Prims {
     rects.push({ x: F.x, y: F.y, w: F.w, h: F.h, fill: '#F5F3EF' });
     return { texts, rects, paths, box };
   }
+  if (M.type === 'sitze' && M.seats) return seatPrims(M.seats, spec, doc, F, ts, { texts, rects, paths, box });
   const dec = spec.decimals, n = M.bars.length;
   const valSize = Math.round((spec.valueSize ?? 28) * ts), nameSize = Math.round(24 * ts), smallSize = Math.round(18 * ts);
   const gapMul = Math.min(1.3, Math.max(0.15, 1 - (spec.gap ?? 0)));

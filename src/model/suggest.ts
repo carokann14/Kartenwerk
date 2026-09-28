@@ -13,7 +13,7 @@ export interface Suggestion {
   id: string;
   kind: GraphicKind;
   type?: ChartType;               // Diagramm
-  icon: 'gebiete' | 'saeulen' | 'gewinne' | 'balken' | 'linie';
+  icon: 'gebiete' | 'saeulen' | 'gewinne' | 'balken' | 'linie' | 'sitze';
   label: string;                  // „Karte: stärkste Partei je Wahlkreis“
   hint: string;                   // ein Satz, warum bzw. was
   name: string;                   // Name der Grafik in der Leiste
@@ -45,6 +45,9 @@ function biggestMover(doc: Doc, src: Extract<ChartSource, { kind: 'partei' }>): 
   return b ? { party: b.party!, label: b.label, delta: b.value } : null;
 }
 
+const PROJ_HINT = 'Sitze nach Sainte-Laguë aus den Anteilen, 5-%-Hürde – als Projektion gekennzeichnet.';
+/** Eigene Tabelle, deren Zeilen überwiegend Parteien sind */
+const looksParty = (doc: Doc, ds: Dataset) => chartModel({ ...doc, chart: { ...defaultChart('saeulen'), source: { kind: 'tabelle', dataset: ds.id, column: numCols(ds)[0]?.id || '', cmp: null } } } as Doc).bars.filter(b => b.party).length >= 2;
 export function suggestFor(doc: Doc, dsId: string): Suggestion[] {
   const ds = doc.datasets.find(d => d.id === dsId); if (!ds) return [];
   const out: (Suggestion | null)[] = [];
@@ -53,6 +56,9 @@ export function suggestFor(doc: Doc, dsId: string): Suggestion[] {
 
   if (!geo || isOwnTable(ds)) {
     // Eigene Tabelle bzw. Deutschland-Werte: nur Diagramme
+    const ss = defaultSource(doc, ds, 'sitze');
+    // Spalte „Sitze“ (Q16) → Sitzverteilung zuerst
+    if (ss?.kind === 'sitze' && ss.from === 'tabelle' && !ss.calc) out.push(chartSug(doc, ds, 'sitze', ss, 'Sitzverteilung', 'Halbkreis mit einem Punkt je Sitz, Mehrheitsmarke; Koalitionen im Schritt „Diagramm“.', 'Sitzverteilung'));
     const src = defaultSource(doc, ds, 'saeulen');
     if (src?.kind === 'partei') {
       out.push(chartSug(doc, ds, 'saeulen', src, 'Säulen: Ergebnis', src.cmp ? 'Stimmenanteile in Parteifarben, daneben schmal der Vergleichswert.' : 'Stimmenanteile in Parteifarben.', 'Ergebnis'));
@@ -70,6 +76,7 @@ export function suggestFor(doc: Doc, dsId: string): Suggestion[] {
         if (nc.length >= 2) out.push(chartSug(doc, ds, 'gewinne', src.cmp ? src : { ...src, cmp: nc[1].id }, 'Säulen: Veränderung', `Differenz „${nc[0].label}“ gegenüber „${nc[1].label}“.`, 'Veränderung'));
       }
     }
+    if (ss?.kind === 'sitze' && ss.calc && (src?.kind === 'partei' || looksParty(doc, ds))) out.push(chartSug(doc, ds, 'sitze', ss, 'Sitzverteilung: Projektion', PROJ_HINT, 'Sitzverteilung'));
     return dedupe(out);
   }
 
@@ -102,6 +109,8 @@ export function suggestFor(doc: Doc, dsId: string): Suggestion[] {
       const lsrc = defaultSource(doc, ds, 'linie');
       if (lsrc) out.push(chartSug(doc, ds, 'linie', lsrc, 'Linie: Entwicklung über die Zeit', 'Anteile je Partei über alle Wahltage bzw. Zeitpunkte.', 'Entwicklung'));
     }
+    const sp = defaultSource(doc, ds, 'sitze');
+    if (sp) out.push(chartSug(doc, ds, 'sitze', sp, 'Sitzverteilung: Projektion', PROJ_HINT, 'Sitzverteilung'));
     const bl = defaultSource(doc, ds, 'balken');
     if (bl?.kind === 'gebiete') out.push(chartSug(doc, ds, 'balken', bl, `Balken: Top 10 der ${GEO[ds.geoSet]?.meta.levelLabel || 'Gebiete'}`, 'Die zehn höchsten Werte einer Spalte, zum Beispiel Wahlbeteiligung.', 'Top 10'));
     return dedupe(out);

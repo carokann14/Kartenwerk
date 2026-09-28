@@ -45,7 +45,7 @@ export function StartDialog() {
               <button className="build" disabled={busy} onClick={() => startChart('gewinne')}><Icon.gewinne size={22} /><b>Gewinne/Verluste</b><span className="hint">Veränderung in Punkten</span></button>
               <button className="build" disabled={busy} onClick={() => startChart('balken')}><Icon.balken size={22} /><b>Balken</b><span className="hint">Rangliste, Top 10, eigene Werte</span></button>
               <button className="build" disabled={busy} onClick={() => startChart('linie')}><Icon.linie size={22} /><b>Linie</b><span className="hint">Verlauf über die Zeit</span></button>
-              <button className="build" disabled title="kommt mit M9"><Icon.sitze size={22} /><b>Sitzverteilung</b><span className="hint">bald</span></button>
+              <button className="build" disabled={busy} onClick={() => startChart('sitze')}><Icon.sitze size={22} /><b>Sitzverteilung</b><span className="hint">Halbkreis, Mehrheit, Koalitionen</span></button>
             </div>
             {pick === 'map' && <div className="start-card">
               <Icon.gebiete size={22} />

@@ -48,6 +48,7 @@ export function GraphicsBar() {
           <button className="menu-item" role="menuitem" onClick={() => { setUI({ menu: null }); addGraphic('chart', 'gewinne'); }}><Icon.gewinne /> Gewinne und Verluste</button>
           <button className="menu-item" role="menuitem" onClick={() => { setUI({ menu: null }); addGraphic('chart', 'balken'); }}><Icon.balken /> Balken</button>
           <button className="menu-item" role="menuitem" onClick={() => { setUI({ menu: null }); addGraphic('chart', 'linie'); }}><Icon.linie /> Linie</button>
+          <button className="menu-item" role="menuitem" onClick={() => { setUI({ menu: null }); addGraphic('chart', 'sitze'); }}><Icon.sitze /> Sitzverteilung</button>
           <p className="hint menu-hint">Alle Grafiken teilen sich Daten, Parteifarben und Logo. Texte, Farbregel, Jahr und Formate gelten je Grafik.</p>
         </div>}
       </div>

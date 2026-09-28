@@ -24,7 +24,7 @@ import { MapZoom } from './MapZoom';
 import { setLogoVisible } from '../model/logo';
 
 // ---------- Ebenen ----------
-const CHART_LABEL = { saeulen: 'Säulen', gewinne: 'Gewinne und Verluste', balken: 'Balken', linie: 'Linie' } as const;
+const CHART_LABEL = { saeulen: 'Säulen', gewinne: 'Gewinne und Verluste', balken: 'Balken', linie: 'Linie', sitze: 'Sitzverteilung' } as const;
 function Layers() {
   const doc = useStore(s => s.doc!);
   const sel = useStore(s => s.ui.sel);
@@ -316,19 +316,21 @@ function GraphicProps({ doc }: { doc: Doc }) {
  *  wie neue Diagramme sehen dadurch unverändert aus, solange niemand daran dreht. */
 function ChartFrameProps({ doc }: { doc: Doc }) {
   const spec = doc.chart || defaultChart();
-  const isBalken = spec.type === 'balken', isLinie = spec.type === 'linie';
+  const isBalken = spec.type === 'balken', isLinie = spec.type === 'linie', isSitze = spec.type === 'sitze';
   const setC = (patch: Partial<ChartSpec>, key?: string) => update(d => { if (!d.chart) d.chart = defaultChart() as never; Object.assign(d.chart, patch); }, key ? { key } : undefined);
   return <>
     <Head t="Diagramm" sub={CHART_LABEL[spec.type]} />
     <Section title="Darstellung">
-      <Field label={isLinie ? 'Schriftgröße Werte/Endbeschriftung (px)' : 'Schriftgröße Werte (px)'}><NumInput min={10} max={60} value={spec.valueSize ?? (isLinie ? 24 : 28)} onChange={n => setC({ valueSize: n }, 'chart-valsize')} ariaLabel="Schriftgröße der Wertbeschriftung" /></Field>
-      {!isLinie && <Field label="Abstand zwischen Balken (%)"><NumInput min={-30} max={80} step={5} value={Math.round((spec.gap ?? 0) * 100)} onChange={n => setC({ gap: n / 100 }, 'chart-gap')} ariaLabel="Abstand zwischen den Balken bzw. Säulen, negativ für enger als bisher" /></Field>}
+      <Field label={isLinie ? 'Schriftgröße Werte/Endbeschriftung (px)' : isSitze ? 'Schriftgröße Beschriftung (px)' : 'Schriftgröße Werte (px)'}><NumInput min={10} max={60} value={spec.valueSize ?? (isLinie || isSitze ? 24 : 28)} onChange={n => setC({ valueSize: n }, 'chart-valsize')} ariaLabel="Schriftgröße der Wertbeschriftung" /></Field>
+      {isSitze && <Field label="Form"><Seg items={[['punkte', 'Punkte'], ['ring', 'Halbring']] as ['punkte' | 'ring', string][]} value={spec.seatStyle || 'punkte'} onChange={v => setC({ seatStyle: v })} /></Field>}
+      {isSitze && <Check checked={spec.majorityOn ?? true} onChange={on => setC({ majorityOn: on })}>Mehrheitsmarke</Check>}
+      {!isLinie && !isSitze && <Field label="Abstand zwischen Balken (%)"><NumInput min={-30} max={80} step={5} value={Math.round((spec.gap ?? 0) * 100)} onChange={n => setC({ gap: n / 100 }, 'chart-gap')} ariaLabel="Abstand zwischen den Balken bzw. Säulen, negativ für enger als bisher" /></Field>}
       {(isBalken || isLinie) && <Check checked={spec.gridOn ?? true} onChange={on => setC({ gridOn: on })}>Rasterlinien anzeigen</Check>}
       {isLinie && <Check checked={spec.pointsOn ?? true} onChange={on => setC({ pointsOn: on })}>Punkte an den Werten zeigen</Check>}
       {(isBalken || isLinie) && <Field label="Schriftgröße Achse (px)"><NumInput min={8} max={40} value={spec.axisSize ?? 16} onChange={n => setC({ axisSize: n }, 'chart-axsize')} ariaLabel="Schriftgröße der Achsenbeschriftung" /></Field>}
       {isBalken && <Field label="Abstand Achse (px)"><NumInput min={0} max={60} value={spec.axisGap ?? 20} onChange={n => setC({ axisGap: n }, 'chart-axgap')} ariaLabel="Abstand der Achsenbeschriftung zu den Balken" /></Field>}
     </Section>
-    <p className="hint">Art, Daten und Farben je {isLinie ? 'Linie' : 'Balken'} stehen im Schritt „Diagramm“.</p>
+    <p className="hint">{isSitze ? 'Daten, Koalition und Reihenfolge der Parteien stehen im Schritt „Diagramm“.' : `Art, Daten und Farben je ${isLinie ? 'Linie' : 'Balken'} stehen im Schritt „Diagramm“.`}</p>
   </>;
 }
 

@@ -63,8 +63,10 @@ export interface SourceEl {
 /** Grafik einer Mappe (Karte oder Diagramm). Die aktive Grafik steht mit ihren Feldern oben im Doc,
  *  die übrigen liegen in `pageData` (siehe src/model/graphics.ts, GRAPHIC_KEYS). */
 export type GraphicKind = 'map' | 'chart';
-/** Diagramm einer Grafik (M7/M8): Säulen (Parteiergebnis), Balken (waagerecht, sortiert), Gewinne/Verluste, Linie (Zeitreihe) */
-export type ChartType = 'saeulen' | 'balken' | 'gewinne' | 'linie';
+/** Diagramm einer Grafik (M7–M9): Säulen (Parteiergebnis), Balken (waagerecht, sortiert), Gewinne/Verluste, Linie (Zeitreihe), Sitzverteilung */
+export type ChartType = 'saeulen' | 'balken' | 'gewinne' | 'linie' | 'sitze';
+/** Sitzrechner (M9): Sitze aus Anteilen nach Sainte-Laguë, Parteien unter der Hürde (%) ohne Sitze */
+export interface SeatCalc { seats: number; threshold: number }
 export type ChartScope = { kind: 'alle' } | { kind: 'land'; bl: string } | { kind: 'gebiet'; id: string };
 export type ChartSource =
   | { kind: 'partei'; dataset: string; group: string; scope: ChartScope; period?: string | null;
@@ -74,7 +76,11 @@ export type ChartSource =
   | { kind: 'tabelle'; dataset: string; column: string; cmp: string | null }
   /** Linie (M8): Verlauf über alle Zeitpunkte eines Datensatzes mit Zeitachse; mehrere Merkmale als eigene Linien */
   | { kind: 'linie'; dataset: string; mode: 'partei'; group: string; scope: ChartScope }
-  | { kind: 'linie'; dataset: string; mode: 'werte'; columns: string[]; scope: ChartScope };
+  | { kind: 'linie'; dataset: string; mode: 'werte'; columns: string[]; scope: ChartScope }
+  /** Sitzverteilung (M9): Zeilen = Parteien (eigene Tabelle); Spalte mit Sitzen, oder mit Prozenten/Stimmen und Rechner */
+  | { kind: 'sitze'; from: 'tabelle'; dataset: string; column: string; calc: SeatCalc | null }
+  /** Sitzverteilung (M9): Projektion aus einem Wahlergebnis (Parteien als Spalten), Anteile über den Ausschnitt summiert */
+  | { kind: 'sitze'; from: 'wahl'; dataset: string; group: string; scope: ChartScope; period?: string | null; calc: SeatCalc };
 export interface ChartSpec {
   type: ChartType;
   source: ChartSource | null;
@@ -92,6 +98,11 @@ export interface ChartSpec {
   axisSize?: number;     // Schriftgröße der Achsenbeschriftung (Balken und Linie, px bei ts=1); ungesetzt = 16
   axisGap?: number;      // Abstand der Achsenbeschriftung zu den Balken (nur Balken, px bei ts=1); ungesetzt = 20
   pointsOn?: boolean;    // Linie: Punkte an den Messwerten zeigen; ungesetzt = an
+  // Sitzverteilung (M9)
+  seatStyle?: 'punkte' | 'ring';   // ein Punkt je Sitz bzw. Halbring mit Bogen je Partei; ungesetzt = Punkte
+  majorityOn?: boolean;            // Mehrheitsmarke; ungesetzt = an
+  coalition?: string[];            // hervorgehobene Parteien (Schlüssel wie Bar.key); leer/ungesetzt = keine Koalition
+  seatOrder?: string[];            // eigene Reihenfolge von links nach rechts (Schlüssel); fehlende nach politischer Ordnung
 }
 export interface GraphicMeta { id: string; name: string; kind: GraphicKind }
 export interface Doc {

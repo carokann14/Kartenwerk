@@ -35,11 +35,13 @@ Kartenwerk läuft komplett im Browser. Deine Dateien werden nirgendwohin hochgel
 - **Ortsmarker:** Ortssuche über das amtliche Gemeindeverzeichnis (10.749 Gemeinden), Klick in die Karte oder Koordinaten. Formen Kreis, Quadrat, Dreieck, Raute, Stern, Stecknadel oder eigenes einfarbiges SVG-Symbol; Beschriftung mit Position, verschiebbar mit Führungslinie; Marker mit gleichem Legendentext bilden einen Legendeneintrag.
 - **Textkästen:** an einen Kartenpunkt gehängt (mit Führungslinie) oder frei auf der Fläche; Umbruchbreite, Ausrichtung, Hintergrund und Rahmen.
 - **Pfeile:** gerade oder gebogen, Spitze am Ziel, am Start, an beiden Enden oder keine, auch gestrichelt. Die Enden rasten an Markern, Textkästen und Gebietsmitten ein und bleiben verbunden, wenn du die Elemente verschiebst.
+- **Diagramme:** Säulen (mit Vergleich), Gewinne und Verluste, Balken, Linien über die Zeit und Sitzverteilung (ein Punkt je Sitz oder Halbring, Mehrheitsmarke, Koalitionen, Reihenfolge links → rechts; Sitze aus einer Tabelle oder als Projektion nach Sainte-Laguë mit Sperrklausel). Ein Projekt ist eine Mappe mit beliebig vielen Karten und Diagrammen.
+- **Kennzahlen-Katalog:** Bevölkerung, Arbeitslosenquote, Wahlbeteiligung und Zweitstimmen der Bundestagswahlen für Kreise, Länder und Deutschland mit allen Jahren, monatlich aktualisiert aus der Regionaldatenbank.
 - **Formate:** 4:5, 1:1, 9:16, 16:9, LinkedIn und frei. Jede Variante hat ihr eigenes Layout.
 - **Export:** PNG zum direkten Posten (Voreinstellung 2×, bis 10.000 px breit, auch mit transparentem Hintergrund) und SVG mit echten Vektoren für Illustrator, Affinity, Figma oder Inkscape (Text als Pfade, Ebenen als benannte Gruppen). Auf Wunsch fasst das SVG Gebiete gleicher Farbe zu einer Fläche zusammen, sinnvoll bei Gemeinden.
 - **Speichern:** Jedes Projekt wird laufend im Browser gesichert. Zusätzlich lässt es sich als Projektdatei (`.kartenwerk.json`) speichern und wieder öffnen.
 
-Als Nächstes: Sitzverteilung (M9).
+Als Nächstes: optionaler KI-Vorschlag für Grafiken (nach M9).
 
 ## Veröffentlichen auf GitHub Pages
 
@@ -98,7 +100,7 @@ npm run ltw:derive -- bb  # Brandenburg: Wahlkreise aus Gemeinden ableiten (vor 
 npm run berlin         # Berliner Wahlgebiete aus data-src/berlin/RBS_OD_UWB_AH26.zip (und Namen aus …_A_BE.csv)
 npm run katalog:laden  # Katalog-Tabellen von regionalstatistik.de nach data-src/rdb (REGIONALSTATISTIK_TOKEN)
 npm run katalog        # Kennzahlen-Katalog public/katalog/ aus data-src/rdb (oder RDB=<Ordner>)
-npm test               # Tests ohne Rohdaten (Linie, Katalog, Grafiken, Text, Legende)
+npm test               # Tests ohne Rohdaten (Linie, Katalog, Grafiken, Text, Legende, Sitzverteilung)
 ```
 
 Bekannte Einschränkung: Excel wird mit SheetJS 0.18.5 gelesen, der letzten Fassung auf npm. Sie hat bekannte Schwachstellen bei präparierten Dateien (CVE-2023-30533, CVE-2024-22363). Weil alles lokal im Browser läuft, ist das Risiko gering. Excel-Dateien aus unbekannten Quellen besser vorher als CSV speichern. Das Update auf 0.20 folgt, sobald es sich hier einbinden lässt.

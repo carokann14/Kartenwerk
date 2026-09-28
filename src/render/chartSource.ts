@@ -5,6 +5,7 @@ import { isRate } from '../data/aggregate';
 import { latestPeriod, periodText, periodYear } from '../data/time';
 import { partyOf } from '../data/parties';
 import { GEO } from '../geo/geo';
+import { chartModel } from './chart';
 
 export type Cmp = NonNullable<Extract<ChartSource, { kind: 'partei' }>['cmp']>;
 export interface CmpOption { value: Cmp; label: string }
@@ -30,6 +31,22 @@ export function cmpOptions(doc: Doc, ds: Dataset, groupId: string, period?: stri
 }
 /** Standardquelle für einen Datensatz und eine Diagrammart */
 export function defaultSource(doc: Doc, ds: Dataset, type: ChartType): ChartSource | null {
+  if (type === 'sitze') {
+    // eigene Tabelle: Spalte „Sitze“/„Mandate“ direkt; Prozente (Summe ~100) bzw. Kommazahlen → Rechner
+    if (isOwnTable(ds)) {
+      const nc = numCols(ds); if (!nc.length || ds.rows.length < 1) return null;
+      const seat = nc.find(c => /sitz|mandat/i.test(c.label));
+      if (seat) return { kind: 'sitze', from: 'tabelle', dataset: ds.id, column: seat.id, calc: null };
+      const col = nc[0], ci = ds.columns.indexOf(col);
+      const vals = ds.rows.map(r => r[ci]).filter((v): v is number => typeof v === 'number');
+      const sum = vals.reduce((a, b) => a + b, 0);
+      const pct = /%|prozent|anteil|umfrage/i.test(col.label) || (sum > 90 && sum < 110) || vals.some(v => v % 1 !== 0);
+      return { kind: 'sitze', from: 'tabelle', dataset: ds.id, column: col.id, calc: pct ? { seats: defaultSeats(ds), threshold: 5 } : null };
+    }
+    const pg = partyGroups(ds); if (!pg.length) return null;
+    const grp = pg.find(g => /Zweit/.test(g.label)) || pg.find(g => /Gesamt/.test(g.label)) || pg[0];
+    return { kind: 'sitze', from: 'wahl', dataset: ds.id, group: grp.id, scope: { kind: 'alle' }, period: null, calc: { seats: defaultSeats(ds), threshold: 5 } };
+  }
   if (type === 'linie') {
     if (!ds.time || ds.time.periods.length < 2) return null;
     const pg = partyGroups(ds);
@@ -55,8 +72,12 @@ export function defaultSource(doc: Doc, ds: Dataset, type: ChartType): ChartSour
   const col = nc.find(c => isRate(c)) || nc[0];
   return { kind: 'gebiete', dataset: ds.id, column: col.id, period: ds.time ? latestPeriod(ds) : null, select: 'top', n: 10, scope: { kind: 'alle' } };
 }
+/** Sitze im Rechner: Bundestag 630 (seit 2025), Landtage und Berlin als Vorschlag 100 – im Schritt „Diagramm“ änderbar */
+export const defaultSeats = (ds: Dataset) => (/^(ltw-|be-)/.test(ds.geoSet) ? 100 : 630);
+/** „A“, „A und B“, „A, B und C“ */
+export const joinDe = (xs: string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} und ${xs[xs.length - 1]}`);
 /** Art, die zu einer Quelle passt (Gebiete → Balken) */
-export const typeFor = (src: ChartSource | null, want: ChartType): ChartType => (src?.kind === 'linie' ? 'linie' : src?.kind === 'gebiete' ? 'balken' : want === 'balken' && src?.kind === 'partei' ? 'saeulen' : want);
+export const typeFor = (src: ChartSource | null, want: ChartType): ChartType => (src?.kind === 'sitze' ? 'sitze' : src?.kind === 'linie' ? 'linie' : src?.kind === 'gebiete' ? 'balken' : want === 'balken' && src?.kind === 'partei' ? 'saeulen' : want);
 /** Standard-Titel und -Unterzeile für ein neues Diagramm */
 export function chartTexts(doc: Doc, spec: ChartSpec): { title: string; subtitle: string } | null {
   const src = spec.source; if (!src) return null;
@@ -79,6 +100,21 @@ export function chartTexts(doc: Doc, spec: ChartSpec): { title: string; subtitle
     const pct = /\((Prozent|%)\)/.test(raw), col = raw.replace(/\s*\((Prozent|%)\)/, '');
     const n = src.select === 'alle' ? '' : `${src.n} ${lvl} mit den ${src.select === 'top' ? 'höchsten' : 'niedrigsten'} Werten`;
     return { title: col, subtitle: [n, pct && 'in Prozent', src.period ? (ds.time?.label === 'Jahr' ? '' : ds.time?.label + ' ') + periodText(src.period) : ''].filter(Boolean).join(', ') };
+  }
+  if (src.kind === 'sitze') {
+    const S = chartModel({ ...doc, chart: spec } as Doc).seats;
+    if (!S) return { title: 'Sitzverteilung', subtitle: ds.name };
+    const name = ds.name.replace(/\s·\s(Länder|Deutschland)$/, '').replace(/:.*$/, '').trim();
+    const g = src.from === 'wahl' ? ds.groups.find(x => x.id === src.group)?.label || '' : '';
+    const when = src.from === 'wahl' ? year(src.period || (ds.time ? ds.time.periods[ds.time.periods.length - 1] : null)) : '';
+    const how = S.calc ? `${S.total} Sitze nach Sainte-Laguë, ${S.calc.threshold.toLocaleString('de-DE')}-%-Hürde` : `${S.total} Sitze`;
+    const head = [name && !name.includes(when) ? `${name}${when ? ' ' + when : ''}` : name, g].filter(Boolean).join(', ');
+    const sub = `${head ? head + ': ' : ''}${how}, Mehrheit ab ${S.majority}${S.calc ? ' (Projektion)' : ''}`;
+    if (S.coalition) {
+      const labs = S.groups.filter(x => S.coalition!.keys.includes(x.key)).sort((a, b) => b.seats - a.seats).map(x => x.label);
+      return { title: `${joinDe(labs)}: ${S.coalition.seats} Sitze`, subtitle: S.coalition.reached ? sub : `${sub} – es fehlen ${S.majority - S.coalition.seats}` };
+    }
+    return { title: S.calc ? 'Sitzverteilung (Projektion)' : 'Sitzverteilung', subtitle: sub };
   }
   if (src.kind === 'linie') {
     const scope = src.scope.kind === 'alle' ? '' : ' (Ausschnitt)';

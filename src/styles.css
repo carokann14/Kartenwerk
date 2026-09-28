@@ -793,6 +793,12 @@ button.start-card:hover { border-color: var(--accent); }
 
 /* M7 · Vorschläge und Startdialog */
 .modal.suggest { width: min(640px, 100%); height: auto; }
+/* Sitzverteilung (M9): Koalition und Reihenfolge im Schritt „Diagramm“ */
+.ptable .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: middle; flex: none; }
+.seat-order .prow { display: flex; align-items: center; gap: 6px; cursor: grab; }
+.seat-order .prow.dragging { opacity: .45; }
+.seat-order .grip { color: var(--muted); font-size: 11px; letter-spacing: -2px; }
+.seat-order .grow { flex: 1; min-width: 0; }
 /* Kennzahlen-Katalog (M8) */
 .modal.katalog { width: min(680px, 100%); height: min(760px, 100%); }
 .kat-level { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
