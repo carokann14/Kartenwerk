@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 
-// "npm run build"          → docs/  (für GitHub Pages: Branch main, Ordner /docs)
+// "npm run build"          → docs/  (nur lokal; GitHub Pages baut die GitHub Action, .github/workflows/seite.yml)
 // "npm run build:preview"  → preview/ (eine einzige HTML-Datei, Daten eingebettet)
 export default defineConfig(({ mode }) => ({
   base: './',

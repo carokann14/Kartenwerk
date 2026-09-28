@@ -37,6 +37,21 @@ function scopeRows(ds: Dataset, scope: ChartScope): number[] {
 }
 const raw = (doc: Doc, id: string) => doc.datasets.find(d => d.id === id) || null;
 const inPeriod = (doc: Doc, ds: Dataset, p?: string | null) => (ds.time ? atPeriod(ds, p || selectedPeriod(doc.periodSel, ds)) : ds);
+/** Amtlicher Wert für einen Ausschnitt aus dem Datensatz der gröberen Ebene derselben Datei (Regionaldatenbank:
+ *  „… · Deutschland“ bzw. „… · Länder“): für Quoten, die sich nicht aus Gebieten zusammenfassen lassen */
+function officialRow(doc: Doc, ds: Dataset, scope: ChartScope): { ds: Dataset; row: (d: Dataset) => number } | null {
+  const same = (x: Dataset) => x !== ds && x.fileName === ds.fileName && x.preset === ds.preset;
+  if (scope.kind === 'alle') {
+    const de = doc.datasets.find(x => same(x) && !x.geoSet);
+    return de ? { ds: de, row: d => (d.rows.length ? 0 : -1) } : null;
+  }
+  if (scope.kind === 'land') {
+    const lan = doc.datasets.find(x => same(x) && GEO[x.geoSet]?.meta.level === 'lan');
+    if (!lan) return null;
+    return { ds: lan, row: d => { const g = GEO[d.geoSet]; return d.rowArea.findIndex(a => { const k = a && g ? g.byId.get(a) : undefined; return k != null && g!.areas[k].bl === scope.bl; }); } };
+  }
+  return null;
+}
 /** Anteile je Partei (Schlüssel) einer Gruppe, summiert über die Zeilen */
 function partyShares(ds: Dataset, grp: Group, rows: number[]) {
   const cols = grp.columns.map(id => ds.columns.findIndex(c => c.id === id));
@@ -147,19 +162,31 @@ function chartModelRaw(doc: Doc): ChartModel {
       if (!lines.length) return { ...base, dataset: ds, empty: 'Keine Werte im gewählten Ausschnitt.' };
       return { ...base, dataset: ds, lines, periods, unit: ' %' };
     }
-    // mode 'werte': eine oder mehrere Zahlenspalten, je Zeitpunkt über den Ausschnitt summiert bzw. (bei Raten) gemittelt
+    // mode 'werte': eine oder mehrere Zahlenspalten, je Zeitpunkt über den Ausschnitt summiert. Quoten (Arbeitslosenquote,
+    // Wahlbeteiligung …) lassen sich nicht aus Gebieten mitteln (ungewichtet wäre falsch): Sie kommen aus dem amtlichen
+    // Datensatz der gröberen Ebene derselben Datei (Deutschland bzw. Länder, M6/M7), sonst bleibt die Linie leer.
     const cols = src.columns.map(id => ds.columns.findIndex(c => c.id === id)).filter(i => i >= 0);
     if (!cols.length) return { ...base, dataset: ds, empty: 'Spalte wählen.' };
+    const official = officialRow(doc, ds, src.scope);
+    let missingRate = false;
     const lines: LineSeries[] = cols.map((ci, idx) => {
       const c = ds.columns[ci], rate = isRate(c);
+      const oc = official && official.ds.columns.findIndex(x => x.label === c.label);
       const points = periods.map(p => {
         const dsp = atPeriod(ds, p), rows = scopeRows(dsp, src.scope);
+        if (rate && rows.length > 1) {
+          if (!official || oc == null || oc < 0) { missingRate = true; return { period: p, value: null }; }
+          const op = atPeriod(official.ds, p), r = official.row(op);
+          return { period: p, value: r >= 0 ? num(op.rows[r][oc]) : null };
+        }
         let sum = 0, cnt = 0;
         for (const r of rows) { const v = num(dsp.rows[r][ci]); if (v != null) { sum += v; cnt++; } }
-        return { period: p, value: cnt ? (rate ? sum / cnt : sum) : null };
+        return { period: p, value: cnt ? sum : null };
       });
       return { key: c.id, label: c.label, party: null, color: cols.length > 1 ? LINE_HUES[idx % LINE_HUES.length] : spec.color, points };
     });
+    if (missingRate && lines.every(l => l.points.every(pt => pt.value == null)))
+      return { ...base, dataset: ds, empty: 'Quoten lassen sich nicht über mehrere Gebiete zusammenfassen. Für den Verlauf von Deutschland bzw. einem Land den Deutschland- oder Länder-Datensatz derselben Tabelle wählen, oder als Ausschnitt ein einzelnes Gebiet.' };
     const pct = cols.some(ci => isRate(ds.columns[ci]) || /%|prozent|anteil/i.test(ds.columns[ci].label));
     return { ...base, dataset: ds, lines, periods, unit: pct ? ' %' : '' };
   }

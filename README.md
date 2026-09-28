@@ -87,7 +87,7 @@ Nur nötig, wenn du am Code arbeiten willst.
 ```bash
 npm install
 npm run dev            # Entwicklungsserver
-npm run build          # Typprüfung und Build nach docs/ (GitHub Pages)
+npm run build          # Typprüfung und Build nach docs/ (lokal; veröffentlicht wird über die GitHub Action)
 npm run build:preview  # eine einzelne HTML-Datei mit eingebetteten Daten
 npm run geodata        # Geodaten neu aufbereiten (Quelldateien in data-src/, siehe DATENLIZENZEN.md)
 npm run orte           # Ortsliste aus dem Gemeindeverzeichnis (data-src/AuszugGV….xlsx)

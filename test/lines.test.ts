@@ -86,19 +86,28 @@ const doc: Doc = { ...doc0, datasets: [ds] } as Doc;
   ok(!!txt?.title && !!txt?.subtitle, 'Titel/Unterzeile für Linie (Parteien) erzeugt');
 }
 
-// ---------- mode: 'werte', eine Ratenspalte (Mittelung statt Summierung) ----------
+// ---------- mode: 'werte', eine Ratenspalte: nie ungewichtet mitteln, sondern amtlicher Wert der gröberen Ebene ----------
 {
   const src = { kind: 'linie' as const, dataset: ds.id, mode: 'werte' as const, columns: ['quote'], scope: { kind: 'alle' as const } };
   const spec = { ...defaultChart('linie'), source: src };
-  const m = chartModel({ ...doc, chart: spec } as Doc);
-  ok(!m.empty, `kein Fehler bei Ratenspalte: ${m.empty}`);
-  ok(m.lines?.length === 1, 'eine Linie für eine Zahlenspalte');
+  // ohne Deutschland-Datensatz: keine erfundene Linie, sondern Hinweis
+  const m0 = chartModel({ ...doc, chart: spec } as Doc);
+  ok(!!m0.empty && /Quoten/.test(m0.empty), `ohne amtlichen Wert kein Mittelwert der Gebiete: ${m0.empty}`);
+  // mit Deutschland-Datensatz derselben Datei: dessen Werte
+  const de: Dataset = { ...ds, id: 'ds-de', name: 'Wahlen Testkreis · Deutschland', geoSet: '', rows: [['DG', 0, 0, 0, 0, 0, 6.3]], rowKey: ['id:DG'], rowArea: [null],
+    time: { label: 'Jahr', periods: ['2015', '2020', '2025'], byPeriod: {
+      '2015': { rows: [['DG', 0, 0, 0, 0, 0, 6.1]], rowKey: ['id:DG'], rowArea: [null] },
+      '2020': { rows: [['DG', 0, 0, 0, 0, 0, 7.2]], rowKey: ['id:DG'], rowArea: [null] },
+      '2025': { rows: [['DG', 0, 0, 0, 0, 0, 6.3]], rowKey: ['id:DG'], rowArea: [null] } } } };
+  const doc2 = { ...doc, datasets: [ds, de] } as Doc;
+  const m = chartModel({ ...doc2, chart: spec } as Doc);
+  ok(!m.empty && m.lines?.length === 1, `mit Deutschland-Datensatz eine Linie: ${m.empty}`);
   const l = m.lines![0];
-  // 2015: (5.0+7.0)/2 = 6.0; 2020: (6.0+8.0)/2 = 7.0; 2025: (5.5+7.5)/2 = 6.5 – Mittelwert, nicht Summe
-  ok(Math.abs((l.points[0].value ?? 0) - 6.0) < 0.01, `2015 gemittelt (Rate), nicht summiert: ${l.points[0].value}`);
-  ok(Math.abs((l.points[1].value ?? 0) - 7.0) < 0.01, `2020 gemittelt: ${l.points[1].value}`);
-  ok(Math.abs((l.points[2].value ?? 0) - 6.5) < 0.01, `2025 gemittelt: ${l.points[2].value}`);
+  ok(l.points.map(p => p.value).join('/') === '6.1/7.2/6.3', `Quote aus dem Deutschland-Datensatz (amtlich), nicht gemittelt: ${l.points.map(p => p.value).join('/')}`);
   ok(m.unit === ' %', 'Arbeitslosenquote wird als % erkannt (isRate)');
+  // Deutschland-Datensatz selbst: eine Zeile, direkt
+  const m2 = chartModel({ ...doc2, chart: { ...spec, source: { ...src, dataset: 'ds-de' } } } as Doc);
+  ok(m2.lines?.[0].points.map(p => p.value).join('/') === '6.1/7.2/6.3', 'Deutschland-Datensatz direkt');
 }
 
 // ---------- mode: 'werte', eine Nicht-Ratenspalte (Summierung über die Zeilen) ----------

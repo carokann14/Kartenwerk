@@ -6,3 +6,6 @@ Thumbs.db
 .env
 .env.*
 data-src/.tmp/
+# Build (seit M8 baut und veröffentlicht die GitHub Action, siehe .github/workflows/seite.yml)
+docs/
+preview/
