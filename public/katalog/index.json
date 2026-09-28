@@ -11,21 +11,51 @@
    "file": "12411-01-01-4_bevoelkerung.csv",
    "timeLabel": "Stichtag",
    "periods": [
+    "1995-12-31",
+    "1996-12-31",
+    "1997-12-31",
+    "1998-12-31",
+    "1999-12-31",
+    "2000-12-31",
+    "2001-12-31",
+    "2002-12-31",
+    "2003-12-31",
+    "2004-12-31",
+    "2005-12-31",
+    "2006-12-31",
+    "2007-12-31",
+    "2008-12-31",
+    "2009-12-31",
+    "2010-12-31",
+    "2011-12-31",
+    "2012-12-31",
+    "2013-12-31",
+    "2014-12-31",
+    "2015-12-31",
+    "2016-12-31",
+    "2017-12-31",
+    "2018-12-31",
+    "2019-12-31",
+    "2020-12-31",
+    "2021-12-31",
+    "2022-12-31",
+    "2023-12-31",
+    "2024-12-31",
     "2025-12-31"
    ],
    "columns": [
     "Insgesamt",
-    "weiblich",
-    "männlich"
+    "männlich",
+    "weiblich"
    ],
    "levels": {
     "de": 1,
     "lan": 16,
     "krs": 475
    },
-   "source": "12411-01-01-4_bevölkerung_nach_geschlecht_flat.csv",
-   "retrieved": "2026-09-26",
-   "bytes": 152028
+   "source": "12411-01-01-4_api.csv",
+   "retrieved": "2026-09-28",
+   "bytes": 4364204
   },
   {
    "id": "arbeitslosigkeit",
@@ -37,14 +67,38 @@
    "file": "13211-02-05-4_arbeitslosigkeit.csv",
    "timeLabel": "Jahr",
    "periods": [
+    "2001",
+    "2002",
+    "2003",
+    "2004",
+    "2005",
+    "2006",
+    "2007",
+    "2008",
+    "2009",
+    "2010",
+    "2011",
+    "2012",
+    "2013",
+    "2014",
+    "2015",
+    "2016",
+    "2017",
+    "2018",
+    "2019",
+    "2020",
+    "2021",
+    "2022",
+    "2023",
+    "2024",
     "2025"
    ],
    "columns": [
     "Arbeitslosenquote (Prozent)",
     "Arbeitslosenquote (Prozent) · Männer",
-    "Arbeitslosenquote (Prozent) · 15 bis unter 25 Jahre",
-    "Arbeitslosenquote (Prozent) · ausländisch",
     "Arbeitslosenquote (Prozent) · Frauen",
+    "Arbeitslosenquote (Prozent) · ausländisch",
+    "Arbeitslosenquote (Prozent) · 15 bis unter 25 Jahre",
     "Arbeitslose"
    ],
    "levels": {
@@ -52,9 +106,9 @@
     "lan": 16,
     "krs": 475
    },
-   "source": "13211-02-05-4_arbeitslose_und_arbeitslosenquote_flat.csv",
-   "retrieved": "2026-09-26",
-   "bytes": 280842
+   "source": "13211-02-05-4_api.csv",
+   "retrieved": "2026-09-28",
+   "bytes": 6712316
   },
   {
    "id": "wahlbeteiligung",
@@ -85,9 +139,9 @@
     "lan": 16,
     "krs": 475
    },
-   "source": "14111-01-04-4_Bundestagswahlen_Beteiligung_und_Partein_flat.csv",
-   "retrieved": "2026-09-26",
-   "bytes": 694988
+   "source": "14111-01-04-4_api.csv",
+   "retrieved": "2026-09-28",
+   "bytes": 695018
   },
   {
    "id": "bundestagswahlen",
@@ -110,15 +164,15 @@
     "2025-02-23"
    ],
    "columns": [
-    "Wahlberechtigte",
     "Gültige Zweitstimmen",
-    "FDP · Gültige Zweitstimmen",
-    "GRÜNE · Gültige Zweitstimmen",
     "Gültige Zweitstimmen · Sonstige Parteien",
     "CDU/CSU · Gültige Zweitstimmen",
+    "FDP · Gültige Zweitstimmen",
+    "GRÜNE · Gültige Zweitstimmen",
     "AfD · Gültige Zweitstimmen",
     "Die Linke · Gültige Zweitstimmen",
     "SPD · Gültige Zweitstimmen",
+    "Wahlberechtigte",
     "Wahlbeteiligung (Prozent)"
    ],
    "levels": {
@@ -126,9 +180,9 @@
     "lan": 16,
     "krs": 475
    },
-   "source": "14111-01-04-4_Bundestagswahlen_Beteiligung_und_Partein_flat.csv",
-   "retrieved": "2026-09-26",
-   "bytes": 4198405
+   "source": "14111-01-04-4_api.csv",
+   "retrieved": "2026-09-28",
+   "bytes": 4198443
   }
  ]
 }
