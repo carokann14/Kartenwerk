@@ -40,11 +40,11 @@
     "2025"
    ],
    "columns": [
-    "Arbeitslosenquote bez. auf alle zivile Erwerbsp. (Prozent)",
-    "Arbeitslosenquote bez. auf alle zivile Erwerbsp. (Prozent) · Männer",
-    "Arbeitslosenquote bez. auf alle zivile Erwerbsp. (Prozent) · 15 bis unter 25 Jahre",
-    "Arbeitslosenquote bez. auf alle zivile Erwerbsp. (Prozent) · ausländisch",
-    "Arbeitslosenquote bez. auf alle zivile Erwerbsp. (Prozent) · Frauen",
+    "Arbeitslosenquote (Prozent)",
+    "Arbeitslosenquote (Prozent) · Männer",
+    "Arbeitslosenquote (Prozent) · 15 bis unter 25 Jahre",
+    "Arbeitslosenquote (Prozent) · ausländisch",
+    "Arbeitslosenquote (Prozent) · Frauen",
     "Arbeitslose"
    ],
    "levels": {
@@ -54,7 +54,7 @@
    },
    "source": "13211-02-05-4_arbeitslose_und_arbeitslosenquote_flat.csv",
    "retrieved": "2026-09-26",
-   "bytes": 359417
+   "bytes": 280842
   },
   {
    "id": "wahlbeteiligung",
@@ -112,12 +112,12 @@
    "columns": [
     "Wahlberechtigte",
     "Gültige Zweitstimmen",
-    "AfD · Gültige Zweitstimmen",
-    "Die Linke · Gültige Zweitstimmen",
+    "FDP · Gültige Zweitstimmen",
     "GRÜNE · Gültige Zweitstimmen",
     "Gültige Zweitstimmen · Sonstige Parteien",
     "CDU/CSU · Gültige Zweitstimmen",
-    "FDP · Gültige Zweitstimmen",
+    "AfD · Gültige Zweitstimmen",
+    "Die Linke · Gültige Zweitstimmen",
     "SPD · Gültige Zweitstimmen",
     "Wahlbeteiligung (Prozent)"
    ],

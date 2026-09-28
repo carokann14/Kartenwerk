@@ -39,26 +39,22 @@ Kartenwerk läuft komplett im Browser. Deine Dateien werden nirgendwohin hochgel
 - **Export:** PNG zum direkten Posten (Voreinstellung 2×, bis 10.000 px breit, auch mit transparentem Hintergrund) und SVG mit echten Vektoren für Illustrator, Affinity, Figma oder Inkscape (Text als Pfade, Ebenen als benannte Gruppen). Auf Wunsch fasst das SVG Gebiete gleicher Farbe zu einer Fläche zusammen, sinnvoll bei Gemeinden.
 - **Speichern:** Jedes Projekt wird laufend im Browser gesichert. Zusätzlich lässt es sich als Projektdatei (`.kartenwerk.json`) speichern und wieder öffnen.
 
-Als Nächstes: eine Vorlage für die Regionaldatenbank (GENESIS).
+Als Nächstes: Sitzverteilung (M9).
 
-## Einrichten auf GitHub Pages (einmalig)
+## Veröffentlichen auf GitHub Pages
 
-1. Auf GitHub ein öffentliches Repository anlegen (hier: `Kartenwerk`). Kein README, keine Lizenz anhaken, beides ist schon im Ordner.
-2. Die ZIP-Datei auf dem Rechner entpacken. GitHub packt ZIP-Dateien nicht aus, deshalb nie die ZIP selbst hochladen.
-3. Im Repo **Add file › Upload files**. Den entpackten Ordner `kartenwerk` öffnen, **alles darin** markieren (Strg+A) und in das Upload-Feld ziehen. Nicht den Ordner `kartenwerk` selbst ziehen, sonst liegt `docs` eine Ebene zu tief.
-4. Unten **Commit changes**.
-5. **Settings › Pages**. Bei „Build and deployment“: Source **Deploy from a branch**, Branch **main**, Ordner **/docs**. **Save**.
-6. Nach ein bis zwei Minuten läuft Kartenwerk unter `https://carokann14.github.io/Kartenwerk/`.
+Seit M8 baut eine GitHub Action (`.github/workflows/seite.yml`) die Seite selbst: Bei jedem Push auf `main` prüft sie Typen und Tests, baut und veröffentlicht. Einmal im Monat (am 4.) lädt sie außerdem die Tabellen des Kennzahlen-Katalogs neu von regionalstatistik.de; nur wenn sich Zahlen geändert haben, committet sie `public/katalog/` und veröffentlicht neu. Danach vor der nächsten eigenen Änderung in GitHub Desktop **Pull origin**.
 
-Danach liegen im Repo direkt `docs`, `src`, `public` und `README.md`.
+Einmalig einrichten:
 
-### Neue Version einspielen
+1. Kostenloses Konto bei [regionalstatistik.de](https://www.regionalstatistik.de/) anlegen (seit Mai 2025 für die Schnittstelle nötig).
+2. Im Repo **Settings › Secrets and variables › Actions › New repository secret**: `REGIONALSTATISTIK_TOKEN` (API-Token aus dem Konto) oder `REGIONALSTATISTIK_USERNAME` und `REGIONALSTATISTIK_PASSWORD`.
+3. **Settings › Pages** › „Build and deployment“ › Source **GitHub Actions**.
+4. **Actions › Seite bauen und veröffentlichen › Run workflow**, einmal mit Haken bei „Kennzahlen-Katalog neu … laden“: prüft, ob GitHub die Server erreicht und die Zugangsdaten stimmen.
 
-Den neuen Ordner genauso hochladen (**Add file › Upload files**) und committen. Gleichnamige Dateien werden ersetzt. Deine Projekte bleiben erhalten, weil sie in deinem Browser liegen, nicht im Repo.
+Kartenwerk läuft unter `https://carokann14.github.io/Kartenwerk/`. Deine Projekte liegen in deinem Browser, nicht im Repo, und bleiben bei jeder neuen Version erhalten.
 
-Wenn Dateien in einer neuen Version wegfallen, stehen sie in den Versionshinweisen. Sie lassen sich auf GitHub einzeln löschen, stören aber auch nicht.
-
-GitHub nimmt beim Hochladen im Browser höchstens 100 Dateien und je Datei höchstens 25 MB. Die größten Dateien (Verwaltungsgrenzen) haben rund 7,5 MB.
+Von Hand ohne Action: `npm run katalog:laden` (Zugangsdaten als Umgebungsvariablen) bzw. `RDB=<Ordner mit Flat-File-CSVs> npm run katalog`, danach `npm run build`.
 
 ## Daten
 
@@ -86,7 +82,7 @@ Browserdaten können beim Aufräumen oder in privaten Fenstern verloren gehen. W
 
 ## Für Entwickler
 
-Nur nötig, wenn du am Code arbeiten willst. Für die Nutzung reicht der Ordner `docs`.
+Nur nötig, wenn du am Code arbeiten willst.
 
 ```bash
 npm install
@@ -100,6 +96,9 @@ npm run beispiele      # Beispiel „nach Gemeinden“ aus data-src/btw25_wbz.zi
 npm run ltw            # Landtagswahlkreise aus data-src/ltw/<land>-<jahr>/ (Katalog src/data/ltw.ts)
 npm run ltw:derive -- bb  # Brandenburg: Wahlkreise aus Gemeinden ableiten (vor npm run ltw)
 npm run berlin         # Berliner Wahlgebiete aus data-src/berlin/RBS_OD_UWB_AH26.zip (und Namen aus …_A_BE.csv)
+npm run katalog:laden  # Katalog-Tabellen von regionalstatistik.de nach data-src/rdb (REGIONALSTATISTIK_TOKEN)
+npm run katalog        # Kennzahlen-Katalog public/katalog/ aus data-src/rdb (oder RDB=<Ordner>)
+npm test               # Tests ohne Rohdaten (Linie, Katalog, Grafiken, Text, Legende)
 ```
 
 Bekannte Einschränkung: Excel wird mit SheetJS 0.18.5 gelesen, der letzten Fassung auf npm. Sie hat bekannte Schwachstellen bei präparierten Dateien (CVE-2023-30533, CVE-2024-22363). Weil alles lokal im Browser läuft, ist das Risiko gering. Excel-Dateien aus unbekannten Quellen besser vorher als CSV speichern. Das Update auf 0.20 folgt, sobald es sich hier einbinden lässt.

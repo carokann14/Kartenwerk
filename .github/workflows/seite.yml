@@ -1,0 +1,90 @@
+# Kartenwerk bauen, prüfen und auf GitHub Pages veröffentlichen (M8, Plan Q7/Q18).
+# - bei jedem Push auf main: bauen, Tests, veröffentlichen
+# - monatlich (und von Hand mit „Daten laden“): Kennzahlen-Katalog von regionalstatistik.de neu laden;
+#   nur wenn sich Zahlen geändert haben, wird committet und neu veröffentlicht
+# Einmalig nötig: Settings › Pages › Source „GitHub Actions“; Settings › Secrets and variables › Actions:
+#   REGIONALSTATISTIK_TOKEN (oder REGIONALSTATISTIK_USERNAME und REGIONALSTATISTIK_PASSWORD)
+name: Seite bauen und veröffentlichen
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      daten:
+        description: Kennzahlen-Katalog neu von regionalstatistik.de laden
+        type: boolean
+        default: false
+  schedule:
+    - cron: '23 5 4 * *'   # am 4. jedes Monats, 05:23 UTC
+
+permissions:
+  contents: write   # neue Katalog-Daten committen
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.publish.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Kennzahlen von regionalstatistik.de laden
+        id: daten
+        if: github.event_name == 'schedule' || inputs.daten
+        env:
+          REGIONALSTATISTIK_TOKEN: ${{ secrets.REGIONALSTATISTIK_TOKEN }}
+          REGIONALSTATISTIK_USERNAME: ${{ secrets.REGIONALSTATISTIK_USERNAME }}
+          REGIONALSTATISTIK_PASSWORD: ${{ secrets.REGIONALSTATISTIK_PASSWORD }}
+        run: |
+          npm run katalog:laden
+          KATALOG_STRICT=1 npm run katalog
+          if git diff --quiet -- public/katalog; then echo "neu=false" >> "$GITHUB_OUTPUT"; echo "Keine neuen Zahlen."; else echo "neu=true" >> "$GITHUB_OUTPUT"; git diff --stat -- public/katalog; fi
+
+      - name: Prüfen (Typen und Tests)
+        run: npm run typecheck && npm test
+
+      - name: Neue Zahlen committen
+        if: steps.daten.outputs.neu == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/katalog
+          git commit -m "Kennzahlen-Katalog aktualisiert (regionalstatistik.de)"
+          git pull --rebase
+          git push
+
+      - name: Veröffentlichen?
+        id: publish
+        run: echo "publish=${{ github.event_name != 'schedule' || steps.daten.outputs.neu == 'true' }}" >> "$GITHUB_OUTPUT"
+
+      - name: Bauen
+        if: steps.publish.outputs.publish == 'true'
+        run: npx vite build
+
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.publish.outputs.publish == 'true'
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
