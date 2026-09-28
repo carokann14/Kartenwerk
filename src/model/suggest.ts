@@ -13,7 +13,7 @@ export interface Suggestion {
   id: string;
   kind: GraphicKind;
   type?: ChartType;               // Diagramm
-  icon: 'gebiete' | 'saeulen' | 'gewinne' | 'balken';
+  icon: 'gebiete' | 'saeulen' | 'gewinne' | 'balken' | 'linie';
   label: string;                  // „Karte: stärkste Partei je Wahlkreis“
   hint: string;                   // ein Satz, warum bzw. was
   name: string;                   // Name der Grafik in der Leiste
@@ -33,7 +33,7 @@ function chartSug(doc: Doc, ds: Dataset, type: ChartType, src: ChartSource, labe
   const spec = { ...defaultChart(type), source: src };
   const probe = { ...doc, chart: spec } as Doc;
   const m = chartModel(probe);
-  if (m.empty || m.bars.length < 2) return null;
+  if (m.empty || (type === 'linie' ? !m.bars.length : m.bars.length < 2)) return null;
   const tx = chartTexts(probe, spec) || { title: ds.name, subtitle: '' };
   return { id: `${type}-${src.kind}`, kind: 'chart', type, icon: type, label, hint, name, source: src, title: tx.title, subtitle: tx.subtitle };
 }
@@ -98,6 +98,10 @@ export function suggestFor(doc: Doc, dsId: string): Suggestion[] {
         }
       }
     }
+    if (ds.time && ds.time.periods.length >= 2) {
+      const lsrc = defaultSource(doc, ds, 'linie');
+      if (lsrc) out.push(chartSug(doc, ds, 'linie', lsrc, 'Linie: Entwicklung über die Zeit', 'Anteile je Partei über alle Wahltage bzw. Zeitpunkte.', 'Entwicklung'));
+    }
     const bl = defaultSource(doc, ds, 'balken');
     if (bl?.kind === 'gebiete') out.push(chartSug(doc, ds, 'balken', bl, `Balken: Top 10 der ${GEO[ds.geoSet]?.meta.levelLabel || 'Gebiete'}`, 'Die zehn höchsten Werte einer Spalte, zum Beispiel Wahlbeteiligung.', 'Top 10'));
     return dedupe(out);
@@ -119,6 +123,8 @@ export function suggestFor(doc: Doc, dsId: string): Suggestion[] {
       out.push({ id: 'map-veraenderung', kind: 'map', icon: 'gebiete', label: `Karte: Veränderung ${periodText(b)} bis ${periodText(a)}`, hint: 'Zu- und Abnahme in Prozent, blau = Rückgang, rot = Zunahme.', name: 'Veränderung',
         geoSet: ds.geoSet, color: { mode: 'veraenderung', dataset: ds.id, kind: 'wert', party: 'AfD', a: { dataset: ds.id, group: '', column: col.id, period: a }, b: { dataset: ds.id, group: '', column: col.id, period: b }, rel: true, palette: 'blaurot', classes: 6, step: null },
         title: `${col.label}: Veränderung`, subtitle: `${periodText(b)} bis ${periodText(a)}, in Prozent, je ${S}` });
+      const lsrc = defaultSource(doc, ds, 'linie');
+      if (lsrc) out.push(chartSug(doc, ds, 'linie', lsrc, 'Linie: Entwicklung über die Zeit', `${col.label} über die Zeit.`, 'Entwicklung'));
     }
     return dedupe(out);
   }

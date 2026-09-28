@@ -30,6 +30,14 @@ export function cmpOptions(doc: Doc, ds: Dataset, groupId: string, period?: stri
 }
 /** Standardquelle für einen Datensatz und eine Diagrammart */
 export function defaultSource(doc: Doc, ds: Dataset, type: ChartType): ChartSource | null {
+  if (type === 'linie') {
+    if (!ds.time || ds.time.periods.length < 2) return null;
+    const pg = partyGroups(ds);
+    if (pg.length) { const grp = pg.find(g => /Zweit/.test(g.label)) || pg.find(g => /Gesamt/.test(g.label)) || pg[0]; return { kind: 'linie', dataset: ds.id, mode: 'partei', group: grp.id, scope: { kind: 'alle' } }; }
+    const nc = numCols(ds); if (!nc.length) return null;
+    const col = nc.find(c => isRate(c)) || nc[0];
+    return { kind: 'linie', dataset: ds.id, mode: 'werte', columns: [col.id], scope: { kind: 'alle' } };
+  }
   if (isOwnTable(ds)) {
     const nc = numCols(ds); if (!nc.length) return null;
     return { kind: 'tabelle', dataset: ds.id, column: nc[0].id, cmp: type === 'gewinne' || nc.length > 1 ? nc[1]?.id || null : null };
@@ -48,7 +56,7 @@ export function defaultSource(doc: Doc, ds: Dataset, type: ChartType): ChartSour
   return { kind: 'gebiete', dataset: ds.id, column: col.id, period: ds.time ? latestPeriod(ds) : null, select: 'top', n: 10, scope: { kind: 'alle' } };
 }
 /** Art, die zu einer Quelle passt (Gebiete → Balken) */
-export const typeFor = (src: ChartSource | null, want: ChartType): ChartType => (src?.kind === 'gebiete' ? 'balken' : want === 'balken' && src?.kind === 'partei' ? 'saeulen' : want);
+export const typeFor = (src: ChartSource | null, want: ChartType): ChartType => (src?.kind === 'linie' ? 'linie' : src?.kind === 'gebiete' ? 'balken' : want === 'balken' && src?.kind === 'partei' ? 'saeulen' : want);
 /** Standard-Titel und -Unterzeile für ein neues Diagramm */
 export function chartTexts(doc: Doc, spec: ChartSpec): { title: string; subtitle: string } | null {
   const src = spec.source; if (!src) return null;
@@ -71,6 +79,17 @@ export function chartTexts(doc: Doc, spec: ChartSpec): { title: string; subtitle
     const pct = /\((Prozent|%)\)/.test(raw), col = raw.replace(/\s*\((Prozent|%)\)/, '');
     const n = src.select === 'alle' ? '' : `${src.n} ${lvl} mit den ${src.select === 'top' ? 'höchsten' : 'niedrigsten'} Werten`;
     return { title: col, subtitle: [n, pct && 'in Prozent', src.period ? (ds.time?.label === 'Jahr' ? '' : ds.time?.label + ' ') + periodText(src.period) : ''].filter(Boolean).join(', ') };
+  }
+  if (src.kind === 'linie') {
+    const scope = src.scope.kind === 'alle' ? '' : ' (Ausschnitt)';
+    const span = ds.time ? `${periodYear(ds.time.periods[0])}–${periodYear(ds.time.periods[ds.time.periods.length - 1])}` : '';
+    if (src.mode === 'partei') {
+      const g = ds.groups.find(x => x.id === src.group)?.label || '';
+      const name = ds.name.replace(/,.*$/, '');
+      return { title: `${name}: Entwicklung ${span}`, subtitle: `${g} in Prozent${scope}` };
+    }
+    const labs = src.columns.map(id => ds.columns.find(c => c.id === id)?.label).filter(Boolean).join(', ');
+    return { title: labs || ds.name, subtitle: [span, `je ${ds.time?.label || 'Zeitpunkt'}`, scope].filter(Boolean).join(', ') };
   }
   const col = ds.columns.find(c => c.id === src.column)?.label || '', cmp = ds.columns.find(c => c.id === src.cmp)?.label || '';
   const pct = looksLikeParties(ds) || /%|prozent|anteil/i.test(col);

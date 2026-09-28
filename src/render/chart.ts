@@ -5,17 +5,23 @@ import { OTHER_GREY, mixWhite } from '../lib/color';
 import { GEO } from '../geo/geo';
 import { atPeriod, periodText, selectedPeriod } from '../data/time';
 import { partyDef, partyOf } from '../data/parties';
+import { isRate } from '../data/aggregate';
 import type { Cell, Dataset, Group } from '../data/types';
 import type { ChartScope, ChartSpec, Doc, Variant } from '../model/types';
 import { partyColor, partyLabel, unionLabelOf } from './colorModel';
 import type { PathPrim, Prims, RectPrim, TextPrim } from './elements';
 
 export interface Bar { key: string; label: string; value: number; cmp: number | null; color: string; party: string | null; other?: boolean; auto?: string }
-export interface ChartModel { type: ChartSpec['type']; bars: Bar[]; unit: string; curLabel: string; cmpLabel: string; hasCmp: boolean; empty: string | null; dataset: Dataset | null }
+/** Punkt einer Linie (M8): ein Zeitpunkt, Wert fehlt = Lücke in der Linie */
+export interface LinePoint { period: string; value: number | null }
+/** Linie im Diagramm „Linie“ (M8): ein Merkmal (Partei bzw. Zahlenspalte) über alle Zeitpunkte */
+export interface LineSeries { key: string; label: string; color: string; party: string | null; points: LinePoint[]; auto?: string }
+export interface ChartModel { type: ChartSpec['type']; bars: Bar[]; lines?: LineSeries[]; periods?: string[]; unit: string; curLabel: string; cmpLabel: string; hasCmp: boolean; empty: string | null; dataset: Dataset | null }
 
 export const defaultChart = (type: ChartSpec['type'] = 'saeulen'): ChartSpec => ({ type, source: null, showCmp: true, minShare: 3, decimals: 1, color: '#2F5D8A', keyVisible: true });
 const num = (v: Cell) => (typeof v === 'number' && isFinite(v) ? v : null);
 const OTHER = /^(sonstige|übrige|andere)/i;
+const LINE_HUES = ['#2F5D8A', '#1F7A6D', '#8A5A2F', '#6B4C9A', '#A33B4F', '#3C3F45'];
 
 /** Zeilen eines Datensatzes im gewählten Ausschnitt (alle, ein Land, ein Gebiet) */
 function scopeRows(ds: Dataset, scope: ChartScope): number[] {
@@ -66,6 +72,11 @@ export const scopeLabel = (ds: Dataset, s: ChartScope) => {
  *  zeigen kann, während `Bar.label` (Anzeige/Export) die eigene Fassung übernimmt, sobald eine gesetzt ist. */
 export function chartModel(doc: Doc): ChartModel {
   const m = chartModelRaw(doc), bc = doc.chart?.barColors, bl = doc.chart?.barLabels;
+  if (m.lines && m.lines.length) {
+    const lines = m.lines.map(l => ({ ...l, auto: l.label, color: bc?.[l.key] ?? l.color, label: bl?.[l.key] ?? l.label }));
+    const bars: Bar[] = lines.map(l => { const last = [...l.points].reverse().find(p => p.value != null); return { key: l.key, label: l.label, value: last?.value ?? 0, cmp: null, color: l.color, party: l.party, auto: l.auto, other: l.key === 'Sonstige' }; });
+    return { ...m, lines, bars };
+  }
   if (!m.bars.length) return m;
   return { ...m, bars: m.bars.map(b => ({ ...b, auto: b.label, color: bc?.[b.key] ?? b.color, label: bl?.[b.key] ?? b.label })) };
 }
@@ -115,6 +126,41 @@ function chartModelRaw(doc: Doc): ChartModel {
     bars.sort((a, b) => (src.select === 'bottom' ? a.value - b.value : b.value - a.value));
     if (src.select !== 'alle') bars = bars.slice(0, Math.max(1, src.n));
     return { ...base, dataset: ds, bars, unit: /%|prozent/i.test(col.label) ? ' %' : '' };
+  }
+  if (src.kind === 'linie') {
+    const ds = ds0;
+    if (!ds.time || ds.time.periods.length < 2) return { ...base, dataset: ds, empty: 'Für eine Linie braucht es einen Datensatz mit mindestens zwei Zeitpunkten.' };
+    const periods = ds.time.periods;
+    if (src.mode === 'partei') {
+      const grp = ds.groups.find(g => g.id === src.group) || ds.groups.find(g => g.parties);
+      if (!grp) return { ...base, dataset: ds, empty: 'Der Datensatz hat keine Parteien.' };
+      const byPeriod = periods.map(p => { const dsp = atPeriod(ds, p); return partyShares(dsp, grp, scopeRows(dsp, src.scope)); });
+      const maxShare = new Map<string, number>(), meta = new Map<string, { label: string; party: string | null }>();
+      byPeriod.forEach(shares => { for (const [k, v] of shares) { maxShare.set(k, Math.max(maxShare.get(k) || 0, v.share)); meta.set(k, { label: v.label, party: v.party }); } });
+      const minShare = spec.minShare;
+      const kept = [...maxShare.keys()].filter(k => (maxShare.get(k) || 0) >= minShare && !OTHER.test(meta.get(k)!.label));
+      const rest = [...maxShare.keys()].filter(k => !kept.includes(k));
+      const lines: LineSeries[] = kept.map(k => { const mm = meta.get(k)!; return { key: k, label: mm.label, party: mm.party, color: mm.party ? partyColor(doc, mm.party) : doc.categoryColors[mm.label] || OTHER_GREY, points: periods.map((p, i) => ({ period: p, value: byPeriod[i].get(k)?.share ?? null })) }; });
+      if (rest.length && rest.some(k => (maxShare.get(k) || 0) > 0.05)) lines.push({ key: 'Sonstige', label: 'Sonstige', party: null, color: OTHER_GREY, points: periods.map((p, i) => ({ period: p, value: rest.reduce((s, k) => s + (byPeriod[i].get(k)?.share ?? 0), 0) })) });
+      lines.sort((a, b) => (b.points[b.points.length - 1]?.value ?? 0) - (a.points[a.points.length - 1]?.value ?? 0));
+      if (!lines.length) return { ...base, dataset: ds, empty: 'Keine Werte im gewählten Ausschnitt.' };
+      return { ...base, dataset: ds, lines, periods, unit: ' %' };
+    }
+    // mode 'werte': eine oder mehrere Zahlenspalten, je Zeitpunkt über den Ausschnitt summiert bzw. (bei Raten) gemittelt
+    const cols = src.columns.map(id => ds.columns.findIndex(c => c.id === id)).filter(i => i >= 0);
+    if (!cols.length) return { ...base, dataset: ds, empty: 'Spalte wählen.' };
+    const lines: LineSeries[] = cols.map((ci, idx) => {
+      const c = ds.columns[ci], rate = isRate(c);
+      const points = periods.map(p => {
+        const dsp = atPeriod(ds, p), rows = scopeRows(dsp, src.scope);
+        let sum = 0, cnt = 0;
+        for (const r of rows) { const v = num(dsp.rows[r][ci]); if (v != null) { sum += v; cnt++; } }
+        return { period: p, value: cnt ? (rate ? sum / cnt : sum) : null };
+      });
+      return { key: c.id, label: c.label, party: null, color: cols.length > 1 ? LINE_HUES[idx % LINE_HUES.length] : spec.color, points };
+    });
+    const pct = cols.some(ci => isRate(ds.columns[ci]) || /%|prozent|anteil/i.test(ds.columns[ci].label));
+    return { ...base, dataset: ds, lines, periods, unit: pct ? ' %' : '' };
   }
   // eigene Tabelle: Zeilen = Kategorien
   const ds = ds0, ci = ds.columns.findIndex(c => c.id === src.column), ki = src.cmp ? ds.columns.findIndex(c => c.id === src.cmp) : -1;
@@ -197,6 +243,38 @@ export function chartPrims(doc: Doc, v: Variant): Prims {
       if (d) paths.push({ d, fill: b.color });
       texts.push({ x: X(Math.max(0, b.value)) + 8, y: cy + valSize * 0.34, text: fmt(b.value, dec) + M.unit, cut: 'bold', size: valSize, color: ink, anchor: 'start' });
     });
+    return { texts, rects, paths, box };
+  }
+  if (M.type === 'linie') {
+    const lines = M.lines || [], periods = M.periods || [];
+    const axisSize = Math.round((spec.axisSize ?? 16) * ts), labSize = Math.round((spec.valueSize ?? 24) * ts);
+    const gridOn = spec.gridOn !== false, ptsOn = spec.pointsOn !== false;
+    const endLabel = (l: (typeof lines)[number]) => { const last = [...l.points].reverse().find(p => p.value != null); return last ? `${l.label} ${fmt(last.value!, dec)}${M.unit}` : l.label; };
+    const endW = Math.max(0, ...lines.map(l => measureW(endLabel(l), 'bold', labSize)));
+    const allVals = lines.flatMap(l => l.points.map(p => p.value)).filter((x): x is number => x != null);
+    const maxV = Math.max(0, ...allVals), minV = Math.min(0, ...allVals);
+    const step = niceStep((maxV - minV) / 4 || 1);
+    const niceMax = Math.ceil(maxV / step) * step, niceMin = Math.floor(minV / step) * step;
+    const yLabW = Math.max(measureW(fmt(niceMin, step < 1 ? 1 : 0), 'text', axisSize), measureW(fmt(niceMax, step < 1 ? 1 : 0), 'text', axisSize));
+    const plotLeft = F.x + yLabW + 10, plotRight = F.x + F.w - endW - 16, plotTop = top + 6, plotBottom = F.y + F.h - axisSize * 1.9;
+    const span = (niceMax - niceMin) || 1;
+    const X = (i: number) => plotLeft + (periods.length > 1 ? i / (periods.length - 1) : 0.5) * (plotRight - plotLeft);
+    const Y = (val: number) => plotBottom - (val - niceMin) / span * (plotBottom - plotTop);
+    for (let t = niceMin; t <= niceMax + 1e-9; t += step) {
+      const y = Y(t);
+      if (gridOn) paths.push({ d: `M${plotLeft.toFixed(1)} ${y.toFixed(1)}H${plotRight.toFixed(1)}`, fill: 'none', stroke: Math.abs(t) < 1e-9 ? '#9A968E' : '#E4E0D8', width: Math.abs(t) < 1e-9 ? 1.2 : 1 });
+      texts.push({ x: plotLeft - 8, y: y + axisSize * 0.32, text: fmt(t, step < 1 ? 1 : 0), cut: 'text', size: axisSize, color: soft, anchor: 'end' });
+    }
+    periods.forEach((p, i) => texts.push({ x: X(i), y: plotBottom + axisSize * 1.4, text: (periodText(p).match(/\d{4}/) || [periodText(p)])[0], cut: 'text', size: axisSize, color: soft, anchor: 'middle' }));
+    for (const l of lines) {
+      const pts = l.points.map((p, i) => (p.value != null ? [X(i), Y(p.value)] as const : null));
+      let d = '';
+      pts.forEach((pt, i) => { if (!pt) return; d += (d && pts[i - 1] ? 'L' : 'M') + pt[0].toFixed(1) + ' ' + pt[1].toFixed(1) + ' '; });
+      if (d) paths.push({ d: d.trim(), fill: 'none', stroke: l.color, width: 2.6, cap: 'round' });
+      if (ptsOn) pts.forEach(pt => { if (pt) paths.push({ d: `M${(pt[0] - 3.2).toFixed(1)} ${pt[1].toFixed(1)}a3.2 3.2 0 1 0 6.4 0a3.2 3.2 0 1 0 -6.4 0`, fill: l.color }); });
+      const lastPt = [...pts].reverse().find((p): p is readonly [number, number] => !!p);
+      if (lastPt) texts.push({ x: lastPt[0] + 8, y: lastPt[1] + labSize * 0.34, text: endLabel(l), cut: 'bold', size: labSize, color: l.color, anchor: 'start' });
+    }
     return { texts, rects, paths, box };
   }
   // Säulen bzw. Gewinne/Verluste

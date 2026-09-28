@@ -51,12 +51,13 @@ export function PanelDiagramm() {
   const src = spec.source;
   const ds = src ? doc.datasets.find(d => d.id === src.dataset) || null : null;
   const M = chartModel(doc);
+  const isPartyLike = src?.kind === 'partei' || (src?.kind === 'linie' && src.mode === 'partei');
   const usable = doc.datasets.filter(d => defaultSource(doc, d, spec.type));
   const setType = (type: ChartType) => setChart(c => {
     let s = c.source;
     const d0 = s ? doc.datasets.find(d => d.id === s!.dataset) : null;
-    // Balken zeigen Gebiete bzw. eine Tabelle, Säulen und Gewinne/Verluste ein Parteiergebnis
-    if (d0 && ((type === 'balken') !== (s!.kind !== 'partei') || (type === 'gewinne' && s!.kind === 'partei' && !s!.cmp))) s = defaultSource(doc, d0, type) || s;
+    // Balken zeigen Gebiete bzw. eine Tabelle, Säulen und Gewinne/Verluste ein Parteiergebnis, Linie eine eigene Quelle mit Zeitachse
+    if (d0 && ((type === 'balken') !== (s!.kind !== 'partei') || (type === 'gewinne' && s!.kind === 'partei' && !s!.cmp) || (type === 'linie') !== (s!.kind === 'linie'))) s = defaultSource(doc, d0, type) || s;
     return { ...c, type, source: s };
   });
   if (!doc.datasets.length) return <Section title="Diagramm">
@@ -68,8 +69,8 @@ export function PanelDiagramm() {
   </Section>;
   return <>
     <Section title="Art">
-      <Seg full items={[['saeulen', 'Säulen'], ['gewinne', 'Gewinne/Verluste'], ['balken', 'Balken']]} value={spec.type} onChange={setType} />
-      <p className="hint">{spec.type === 'saeulen' ? 'Ergebnis je Partei, nach Größe, „Sonstige“ am Ende. Vergleich als schmale helle Säule.' : spec.type === 'gewinne' ? 'Veränderung je Partei in Prozentpunkten, gleiche Reihenfolge wie das Ergebnis.' : 'Werte je Gebiet oder Zeile, waagerecht und sortiert – gut für lange Namen.'}</p>
+      <Seg full items={[['saeulen', 'Säulen'], ['gewinne', 'Gewinne/Verluste'], ['balken', 'Balken'], ['linie', 'Linie']]} value={spec.type} onChange={setType} />
+      <p className="hint">{spec.type === 'saeulen' ? 'Ergebnis je Partei, nach Größe, „Sonstige“ am Ende. Vergleich als schmale helle Säule.' : spec.type === 'gewinne' ? 'Veränderung je Partei in Prozentpunkten, gleiche Reihenfolge wie das Ergebnis.' : spec.type === 'balken' ? 'Werte je Gebiet oder Zeile, waagerecht und sortiert – gut für lange Namen.' : 'Verlauf über die Zeit; mehrere Merkmale eines Datensatzes mit Zeitachse als eigene Linien.'}</p>
     </Section>
     <Section title="Daten">
       <Field label="Datensatz"><select value={ds?.id || ''} onChange={e => { const d = doc.datasets.find(x => x.id === e.target.value); if (d) setSource(defaultSource(doc, d, spec.type)); }} aria-label="Datensatz">
@@ -79,15 +80,16 @@ export function PanelDiagramm() {
       {src?.kind === 'partei' && ds && <ParteiOptions doc={doc} ds={ds} src={src} />}
       {src?.kind === 'gebiete' && ds && <GebieteOptions ds={ds} src={src} />}
       {src?.kind === 'tabelle' && ds && <TabelleOptions ds={ds} src={src} type={spec.type} />}
+      {src?.kind === 'linie' && ds && <LinieOptions doc={doc} ds={ds} src={src} />}
       {M.empty && src && <Note kind="warn">{M.empty}</Note>}
     </Section>
     <Section title="Darstellung">
       {spec.type === 'saeulen' && M.hasCmp && <Check checked={spec.showCmp} onChange={v => setChart(c => ({ ...c, showCmp: v }))}>Vergleich als schmale Säule daneben</Check>}
       {spec.type === 'saeulen' && M.hasCmp && spec.showCmp && <Check checked={spec.keyVisible} onChange={v => setChart(c => ({ ...c, keyVisible: v }))}>Zeichenerklärung ({M.curLabel} · {M.cmpLabel})</Check>}
-      {src?.kind === 'partei' && <Field label="Sonstige unter"><div className="row-btns"><NumInput min={0} max={20} step={0.5} value={spec.minShare} onChange={n => setChart(c => ({ ...c, minShare: n }))} ariaLabel="Schwelle für Sonstige in Prozent" /><span className="hint">%</span></div></Field>}
+      {isPartyLike && <Field label="Sonstige unter"><div className="row-btns"><NumInput min={0} max={20} step={0.5} value={spec.minShare} onChange={n => setChart(c => ({ ...c, minShare: n }))} ariaLabel="Schwelle für Sonstige in Prozent" /><span className="hint">%</span></div></Field>}
       <Field label="Nachkommastellen"><Seg items={[['0', '0'], ['1', '1'], ['2', '2']]} value={String(spec.decimals) as '1'} onChange={v => setChart(c => ({ ...c, decimals: +v }))} /></Field>
-      {(src?.kind !== 'partei') && <Field label="Farbe"><div className="swatch-grid">{HUES.map(h => <button key={h} className={'swatch-btn' + (spec.color === h ? ' on' : '')} style={{ background: h }} onClick={() => setChart(c => ({ ...c, color: h }))} aria-label={'Farbton ' + h} />)}<ColorField value={spec.color || HUES[0]} onChange={hex => setChart(c => ({ ...c, color: hex }))} ariaLabel="Eigene Farbe" /></div></Field>}
-      {(src?.kind !== 'partei') && M.bars.length > 1 && <Field label="Farbe und Name je Balken">
+      {!isPartyLike && !(src?.kind === 'linie' && src.mode === 'werte' && src.columns.length > 1) && <Field label="Farbe"><div className="swatch-grid">{HUES.map(h => <button key={h} className={'swatch-btn' + (spec.color === h ? ' on' : '')} style={{ background: h }} onClick={() => setChart(c => ({ ...c, color: h }))} aria-label={'Farbton ' + h} />)}<ColorField value={spec.color || HUES[0]} onChange={hex => setChart(c => ({ ...c, color: hex }))} ariaLabel="Eigene Farbe" /></div></Field>}
+      {!isPartyLike && M.bars.length > 1 && <Field label={spec.type === 'linie' ? 'Farbe und Name je Linie' : 'Farbe und Name je Balken'}>
         <div className="ptable">{M.bars.map(b => (
           <div key={b.key} className="prow">
             <ColorField value={b.color} onChange={hex => setBarColor(b.key, hex)} ariaLabel={'Farbe ' + b.label} />
@@ -152,5 +154,27 @@ function TabelleOptions({ ds, src, type }: { ds: Dataset; src: Extract<ChartSour
       <option value="">– keiner –</option>{nc.filter(c => c.id !== src.column).map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></Field>
     {type === 'gewinne' && !src.cmp && <p className="hint">Gewinne und Verluste rechnen „Werte“ minus „Vergleich“.</p>}
     <button className="btn small" onClick={() => setUI({ tableEdit: ds.id })}><Icon.daten /> Tabelle bearbeiten …</button>
+  </>;
+}
+function LinieOptions({ doc, ds, src }: { doc: Doc; ds: Dataset; src: Extract<ChartSource, { kind: 'linie' }> }) {
+  const groups = partyGroups(ds), nc = numCols(ds);
+  const setMode = (mode: 'partei' | 'werte') => {
+    if (mode === 'partei') { const g = groups[0]; if (g) setSource({ kind: 'linie', dataset: ds.id, mode: 'partei', group: g.id, scope: src.scope }); }
+    else { const c = nc[0]; if (c) setSource({ kind: 'linie', dataset: ds.id, mode: 'werte', columns: [c.id], scope: src.scope }); }
+  };
+  return <>
+    {groups.length > 0 && nc.length > 0 && <Field label="Art der Reihen"><Seg items={[['partei', 'Parteien'], ['werte', 'Zahlenspalten']] as ['partei' | 'werte', string][]} value={src.mode} onChange={setMode} /></Field>}
+    {src.mode === 'partei' && groups.length > 1 && <Field label="Stimmen"><select value={src.group} onChange={e => setSource({ ...src, group: e.target.value })}>{groups.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}</select></Field>}
+    {src.mode === 'werte' && <Field label="Spalten (mehrere möglich)">
+      <div className="ptable">{nc.map(c => (
+        <div key={c.id} className="prow">
+          <Check checked={src.columns.includes(c.id)} onChange={on => setSource({ ...src, columns: on ? [...src.columns, c.id] : src.columns.filter(x => x !== c.id) })}>{c.label}</Check>
+        </div>
+      ))}</div>
+      {!src.columns.length && <p className="hint">Mindestens eine Spalte wählen.</p>}
+      {src.columns.length > 1 && <p className="hint">Mehrere Spalten bekommen zunächst automatisch verschiedene Farben, einzeln anpassbar unten bei „Farbe und Name je Linie“.</p>}
+    </Field>}
+    <ScopeField ds={ds} scope={src.scope} onChange={s => setSource({ ...src, scope: s })} />
+    {ds.time && <p className="hint">Zeigt den Verlauf über {ds.time.label === 'Jahr' ? 'die Jahre' : 'alle Zeitpunkte'} des Datensatzes ({periodText(ds.time.periods[0])}–{periodText(ds.time.periods[ds.time.periods.length - 1])}).</p>}
   </>;
 }
