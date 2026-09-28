@@ -319,7 +319,7 @@ function ChartFrameProps({ doc }: { doc: Doc }) {
     <Head t="Diagramm" sub={CHART_LABEL[spec.type]} />
     <Section title="Darstellung">
       <Field label="Schriftgröße Werte (px)"><NumInput min={10} max={60} value={spec.valueSize ?? 28} onChange={n => setC({ valueSize: n }, 'chart-valsize')} ariaLabel="Schriftgröße der Wertbeschriftung" /></Field>
-      <Field label="Abstand zwischen Balken (%)"><NumInput min={0} max={80} step={5} value={Math.round((spec.gap ?? 0) * 100)} onChange={n => setC({ gap: n / 100 }, 'chart-gap')} ariaLabel="Abstand zwischen den Balken bzw. Säulen" /></Field>
+      <Field label="Abstand zwischen Balken (%)"><NumInput min={-30} max={80} step={5} value={Math.round((spec.gap ?? 0) * 100)} onChange={n => setC({ gap: n / 100 }, 'chart-gap')} ariaLabel="Abstand zwischen den Balken bzw. Säulen, negativ für enger als bisher" /></Field>
       {isBalken && <>
         <Check checked={spec.gridOn ?? true} onChange={on => setC({ gridOn: on })}>Rasterlinien anzeigen</Check>
         <Field label="Schriftgröße Achse (px)"><NumInput min={8} max={40} value={spec.axisSize ?? 16} onChange={n => setC({ axisSize: n }, 'chart-axsize')} ariaLabel="Schriftgröße der Achsenbeschriftung" /></Field>

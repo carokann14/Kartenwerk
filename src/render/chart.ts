@@ -161,7 +161,7 @@ export function chartPrims(doc: Doc, v: Variant): Prims {
   }
   const dec = spec.decimals, n = M.bars.length;
   const valSize = Math.round((spec.valueSize ?? 28) * ts), nameSize = Math.round(24 * ts), smallSize = Math.round(18 * ts);
-  const gapMul = Math.max(0.15, 1 - (spec.gap ?? 0));
+  const gapMul = Math.min(1.3, Math.max(0.15, 1 - (spec.gap ?? 0)));
   // Zeichenerklärung (etwa „2025 · 2021“), nur bei Vergleich
   let top = F.y;
   const showCmp = M.type === 'saeulen' && spec.showCmp && M.hasCmp;
@@ -180,7 +180,7 @@ export function chartPrims(doc: Doc, v: Variant): Prims {
     const nameW = Math.min(F.w * 0.42, Math.max(...M.bars.map(b => measureW(b.label, 'text', nameSize))) + 12);
     const x0 = F.x + nameW, valW = Math.max(...M.bars.map(b => measureW(fmt(b.value, dec) + M.unit, 'bold', valSize))) + 10;
     const width = F.w - nameW - valW, tickH = Math.round((spec.axisGap ?? 20) * ts), axisSize = Math.round((spec.axisSize ?? 16) * ts);
-    const rowH = Math.min((F.y + F.h - top - tickH) / n, 96 * ts), bh = Math.min(rowH * 0.62 * gapMul, 52 * ts);
+    const rowH = Math.min((F.y + F.h - top - tickH) / n, 96 * ts), bh = Math.min(rowH * 0.62, 52 * ts) * gapMul;
     const max = Math.max(...M.bars.map(b => b.value), 0), min = Math.min(...M.bars.map(b => b.value), 0), span = max - min || 1;
     const X = (val: number) => x0 + (val - min) / span * width;
     // Hilfslinien mit runden Schritten

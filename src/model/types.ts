@@ -85,7 +85,7 @@ export interface ChartSpec {
   // Darstellung (m7-5): alle ungesetzt = bisheriges, fest verdrahtetes Verhalten (Bestand & neue Diagramme bleiben unverändert)
   valueSize?: number;    // Schriftgröße der Wertbeschriftung an den Balken/Säulen (px bei ts=1); ungesetzt = 28
   gridOn?: boolean;      // Rasterlinien anzeigen (nur Balken; Säulen/Gewinne haben nur die Grundlinie); ungesetzt = an
-  gap?: number;          // zusätzlicher Abstand zwischen den Balken/Säulen, 0 (eng, bisherige Breite) bis 0.85 (viel Abstand); ungesetzt = 0
+  gap?: number;          // zusätzlicher Abstand zwischen den Balken/Säulen, von -0,3 (enger/breiter als bisher) über 0 (bisherige Breite) bis 0,85 (viel Abstand); ungesetzt = 0
   axisSize?: number;     // Schriftgröße der Achsenbeschriftung (nur Balken, px bei ts=1); ungesetzt = 16
   axisGap?: number;      // Abstand der Achsenbeschriftung zu den Balken (nur Balken, px bei ts=1); ungesetzt = 20
 }
