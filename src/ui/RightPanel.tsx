@@ -6,7 +6,7 @@ import { areaRowIndex, groupMetrics } from '../data/derive';
 import { GEO, areaContext, areaTitle } from '../geo/geo';
 import { removeOverlay, updateOverlay } from '../model/overlays';
 import { LABEL_PRESETS, PRESETS } from '../model/defaults';
-import { addGuide, clearGuides, refitAfterInset, refitFrame, setFokus, relayoutActive, removeGuide, removeVariant, resizeVariant, resetSourceText, setGuide, setGuidesVisible, setOverride, setSourceText, setTextScale } from '../model/actions';
+import { addCustomColor, addGuide, clearGuides, refitAfterInset, refitFrame, setFokus, relayoutActive, removeGuide, removeVariant, resizeVariant, resetSourceText, setGuide, setGuidesVisible, setOverride, setSourceText, setTextScale } from '../model/actions';
 import { getUI, setUI, update, useStore } from '../model/store';
 import type { ChartSpec, Doc, Sel } from '../model/types';
 import { defaultChart } from '../render/chart';
@@ -77,11 +77,14 @@ function OverrideUI({ doc, ids }: { doc: Doc; ids: string[] }) {
   const ov = keys.map(k => doc.overrides[k]).filter(Boolean);
   const cur = ov.length === ids.length && new Set(ov).size === 1 ? ov[0] : null;
   const pal = [...new Set(['Union', 'SPD', 'AfD', 'GRÜNE', 'FDP', 'LINKE', 'BSW', 'FW'].map(p => partyColor(doc, p)).concat(['#16181B', '#6B7078', '#B8B3A7', '#FFFFFF']))];
+  // eigene, zuletzt über den Farbwähler gewählte Farben (siehe addCustomColor) – ohne Dopplungen zu den festen Farben oben
+  const custom = (doc.customColors || []).filter(c => !pal.includes(c));
   return (
     <Section title="Manuell einfärben" aside="überschreibt die Datenregel">
       <div className="swatch-grid">
         {pal.map(c => <button key={c} className={'swatch-btn' + (cur === c ? ' on' : '')} style={{ background: c }} onClick={() => setOverride(ids, c)} aria-label={'Farbe ' + c} />)}
-        <ColorField value={cur || '#888888'} onChange={c => setOverride(ids, c)} ariaLabel="Eigene Farbe" />
+        {custom.map(c => <button key={c} className={'swatch-btn' + (cur === c ? ' on' : '')} style={{ background: c }} onClick={() => setOverride(ids, c)} aria-label={'Eigene Farbe ' + c} />)}
+        <ColorField custom value={cur || '#888888'} onChange={c => setOverride(ids, c)} onCommit={addCustomColor} ariaLabel="Eigene Farbe wählen" title="Eigene Farbe wählen" />
       </div>
       {ov.length ? <div className="override-note"><span className="chip warn">{ov.length} überschrieben</span><button className="btn small" onClick={() => setOverride(ids, null)}>Zurücksetzen</button></div>
         : <p className="hint">Bleibt beim Ersetzen der Daten erhalten, weil sie an Kennung und Gebietsstand hängt.</p>}

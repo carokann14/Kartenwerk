@@ -40,6 +40,7 @@ export function defaultDoc(geoSet = 'btw-wk-2025'): Doc {
     color: { mode: 'none' },
     partyColors: { ...DEFAULT_PARTY_COLORS },
     overrides: {},
+    customColors: [],
     fokus: { kind: 'de' }, umfeld: 'parent', umfeldStyle: 'fill', fokusOutline: false,
     layers: { wkFill: true, wkLines: true, wkLabels: false, krLines: true, landLines: true, neighbors: true, lakes: true, hatches: true, laender: true },
     style: {
@@ -90,6 +91,7 @@ export function normalizeDoc(d: Doc): Doc {
   x.layers = { ...defaultDoc(x.geoSet).layers, ...(x.layers || {}) };
   x.style = { ...defaultDoc(x.geoSet).style, ...(x.style || {}) };
   x.categoryColors ||= {};
+  x.customColors ||= [];
   if (!Array.isArray(x.hatches)) { x.hatches = [NODATA_HATCH()]; x.hatchRules = [{ id: 'r-nodata', hatch: 'h-nodata', source: 'nodata' }]; }
   x.hatchAssign ||= {};
   x.hatchRules ||= [];

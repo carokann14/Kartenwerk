@@ -117,19 +117,29 @@ function ColorPopover({ value, onChange }: { value: string; onChange: (hex: stri
     </div>
   );
 }
-export function ColorField({ value, onChange, ariaLabel, title }: { value: string; onChange: (hex: string) => void; ariaLabel?: string; title?: string }) {
+/** `onCommit`: feuert einmal beim Schließen (nicht bei jeder Änderung während des Ziehens) mit der zuletzt gewählten Farbe –
+ *  zum Merken einer eigenen Farbe, ohne bei jedem Zwischenschritt aufzurufen. `custom`: zeigt statt der aktuellen Farbe
+ *  ein festes „eigene Farbe wählen“-Symbol (Farbrad + Pipette), damit dieses Feld nicht wie ein weiterer Farb-Vorschlag
+ *  aussieht, wenn es zusammen mit festen Farbfeldern steht (z. B. „Manuell einfärben“). */
+export function ColorField({ value, onChange, onCommit, ariaLabel, title, custom }: { value: string; onChange: (hex: string) => void; onCommit?: (hex: string) => void; ariaLabel?: string; title?: string; custom?: boolean }) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
+  const valueRef = React.useRef(value);
+  valueRef.current = value;
+  const close = () => { setOpen(false); if (onCommit) onCommit(valueRef.current); };
   React.useEffect(() => {
     if (!open) return;
-    const h = (e: PointerEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const h = (e: PointerEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) close(); };
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
     document.addEventListener('pointerdown', h); document.addEventListener('keydown', k);
     return () => { document.removeEventListener('pointerdown', h); document.removeEventListener('keydown', k); };
   }, [open]);
   return (
     <div className="color-anchor" ref={ref}>
-      <button type="button" className="color-swatch" style={{ background: value }} onClick={() => setOpen(o => !o)} aria-label={ariaLabel} title={title} aria-haspopup="dialog" aria-expanded={open} />
+      <button type="button" className={'color-swatch' + (custom ? ' color-swatch-custom' : '')} style={custom ? undefined : { background: value }}
+        onClick={() => (open ? close() : setOpen(true))} aria-label={ariaLabel} title={title} aria-haspopup="dialog" aria-expanded={open}>
+        {custom && <Icon.pipette size={13} />}
+      </button>
       {open && <ColorPopover value={value} onChange={onChange} />}
     </div>
   );

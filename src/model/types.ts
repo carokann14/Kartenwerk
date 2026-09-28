@@ -111,6 +111,7 @@ export interface Doc {
   texts: { title: TextEl; subtitle: TextEl; source: SourceEl };
   legend: LegendSettings;
   categoryColors: Record<string, string>;   // Farbe je Kategorie (keine Partei), gilt im Projekt
+  customColors?: string[];                  // zuletzt selbst gewählte Farben (Farbwähler „Manuell einfärben“ u. ä.), neueste zuerst, gilt im Projekt
   hatches: HatchStyle[];
   hatchAssign: Record<string, string>;      // "<geoSet>:<id>" → Schraffur-ID, "" = ausdrücklich keine
   hatchRules: HatchRule[];

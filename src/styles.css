@@ -184,6 +184,10 @@ input[type="color"] { width: 28px; height: 24px; padding: 0 2px; border: 1px sol
 .color-anchor { position: relative; display: inline-block; }
 .color-swatch { width: 28px; height: 24px; padding: 0; border: 1px solid var(--line); border-radius: 5px; background-clip: padding-box; cursor: pointer; }
 .color-swatch:hover { border-color: var(--muted); }
+/* Farbwähler-Auslöser neben festen Farbfeldern (z. B. „Manuell einfärben“): eigenes Symbol statt einer Flächenfarbe,
+   damit er nicht wie ein weiterer Farbvorschlag aussieht, sondern klar als „eigene Farbe wählen“ erkennbar ist. */
+.color-swatch-custom { background: conic-gradient(from 200deg, #E63946, #F2C744, #4CAF50, #2F5D8A, #8A5A2F, #E63946); display: grid; place-items: center; color: #fff; }
+.color-swatch-custom svg { filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.6)); }
 .color-pop {
   position: absolute; top: calc(100% + 4px); left: 0; z-index: 60; width: 220px;
   background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow-lg);

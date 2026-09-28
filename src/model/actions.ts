@@ -343,6 +343,13 @@ export function setTextScale(ts: number) {
 export function setOverride(ids: string[], color: string | null) {
   update(d => { for (const id of ids) { const k = d.geoSet + ':' + id; if (color) d.overrides[k] = color; else delete d.overrides[k]; } }, { key: color ? 'ov-' + ids.join(',') : '' });
 }
+/** Eigene, im Farbwähler ausgewählte Farbe in der Farbleiste merken (neueste zuerst, keine Dopplungen, begrenzte Länge) –
+ *  damit sie sich beim nächsten Mal per Klick statt erneut über den Farbwähler wiederverwenden lässt. Kein Rückgängig-Schritt,
+ *  da es sich nur um eine gemerkte Auswahl handelt, nicht um eine sichtbare Änderung an der Grafik. */
+export function addCustomColor(hex: string) {
+  const h = hex.toUpperCase();
+  update(d => { d.customColors = [h, ...(d.customColors || []).filter(c => c.toUpperCase() !== h)].slice(0, 10); }, { history: false });
+}
 
 // ---------- Quellenzeile ----------
 /** Unten verankerte Quellenzeile: wächst oder schrumpft der Text, bleibt die Unterkante stehen (je Variante). */
