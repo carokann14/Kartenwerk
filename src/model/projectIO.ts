@@ -19,7 +19,7 @@ export async function saveProjectFile() {
 export async function openProjectFile(file: File) {
   try {
     const d = deserialize(await file.text());
-    const missing = [d.geoSet, ...d.datasets.map(x => x.geoSet), ...(d.overlays || []).map(o => o.geoSet), ...(d.regions || []).map(r => r.base)].filter(id => !isVirtualGeo(id) && !geoEntry(id));
+    const missing = [d.geoSet, ...d.datasets.map(x => x.geoSet), ...(d.overlays || []).map(o => o.geoSet), ...(d.regions || []).map(r => r.base)].filter(id => !!id && !isVirtualGeo(id) && !geoEntry(id));   // eigene Tabellen ohne Gebietsstand (geoSet leer) sind kein fehlender Stand
     if (missing.length) throw new Error('Gebietsstand fehlt in dieser Version: ' + [...new Set(missing)].join(', '));
     await openDoc(d);
     toast('Projekt geöffnet: ' + d.name);
