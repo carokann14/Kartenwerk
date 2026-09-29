@@ -405,7 +405,8 @@ export function chartPrims(doc: Doc, v: Variant): Prims {
     }
     M.bars.forEach((b, k) => {
       const y = top + k * rowH + (rowH - bh) / 2, cy = y + bh / 2;
-      texts.push({ x: F.x + nameW - 12, y: cy + nameSize * 0.34, text: fit(b.label, nameW - 14, nameSize), cut: 'text', size: nameSize, color: ink, anchor: 'end' });
+      const nl = barNameLines(b.label, nameW - 14, nameSize, rowH);
+      nl.forEach((t, j) => texts.push({ x: F.x + nameW - 12, y: cy + nameSize * 0.34 + (j - (nl.length - 1) / 2) * nameSize * 1.1, text: t, cut: 'text', size: nameSize, color: ink, anchor: 'end' }));
       const d = b.value >= 0 ? hBarD(X(0), y, X(b.value), bh) : hBarD(X(0), y, X(b.value), bh);
       if (d) paths.push({ d, fill: b.color });
       texts.push({ x: X(Math.max(0, b.value)) + 8, y: cy + valSize * 0.34, text: fmt(b.value, dec) + M.unit, cut: 'bold', size: valSize, color: ink, anchor: 'start' });
@@ -510,6 +511,24 @@ export function linieAxis(vals: number[], spec: Pick<ChartSpec, 'axisZero' | 'ax
 function niceStep(raw: number) {
   const p = Math.pow(10, Math.floor(Math.log10(raw || 1))), m = raw / p;
   return (m >= 5 ? 5 : m >= 2 ? 2 : 1) * p;
+}
+/** Name eines Balkens: passt er nicht in die Namensspalte, wird er (wenn die Zeile hoch genug ist) nach einem Bindestrich, Schrägstrich
+ *  oder Leerzeichen auf zwei Zeilen umbrochen („Mecklenburg-“ / „Vorpommern“), erst dann mit „…“ gekürzt. */
+export function barNameLines(label: string, avail: number, size: number, rowH: number): string[] {
+  if (measureW(label, 'text', size) <= avail) return [label];
+  if (rowH >= size * 2.15) {
+    let best = -1;
+    for (let i = 1; i < label.length - 1; i++) {
+      const c = label[i];
+      if (c !== '-' && c !== ' ' && c !== '/') continue;
+      if (measureW(label.slice(0, c === ' ' ? i : i + 1), 'text', size) <= avail) best = i;
+    }
+    if (best > 0) {
+      const sp = label[best] === ' ';
+      return [label.slice(0, sp ? best : best + 1), label.slice(best + 1)].map(t => fit(t, avail, size));
+    }
+  }
+  return [fit(label, avail, size)];
 }
 /** Text kürzen, bis er passt */
 function fit(text: string, w: number, size: number) {

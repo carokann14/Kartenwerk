@@ -1,7 +1,7 @@
 // M8 · Linie: synthetische Daten (keine Fixtures nötig) – Parteien über die Zeit, Zahlenspalten über die Zeit,
 // Sonstige-Bündelung, Raten-Mittelung vs. Summierung, Vorschläge.
 import { defaultDoc } from '../src/model/defaults';
-import { chartModel, chartPrims, defaultChart, linieAxis } from '../src/render/chart';
+import { barNameLines, chartModel, chartPrims, defaultChart, linieAxis } from '../src/render/chart';
 import { defaultSource, chartTexts } from '../src/render/chartSource';
 import { suggestFor } from '../src/model/suggest';
 import { GEO } from '../src/geo/geo';
@@ -193,6 +193,15 @@ const doc: Doc = { ...doc0, datasets: [ds] } as Doc;
   const l30 = xl({ ...d30, chart: { ...defaultChart('linie'), source: src } } as Doc), l3 = xl({ ...doc, chart: { ...defaultChart('linie'), source: { ...src, dataset: ds.id } } } as Doc);
   ok(l30.length >= 4 && l30.length < 30 && l30[l30.length - 1] === '2029', `30 Jahre: ${l30.length} Beschriftungen, letzte ${l30[l30.length - 1]} (${l30.join(' ')})`);
   ok(l3.join() === '2015,2020,2025', `3 Jahre: alle beschriftet (${l3.join(' ')})`);
+}
+
+// ---------- Balkenbeschriftung: lange Namen brechen um statt gekürzt zu werden ----------
+{
+  const long = barNameLines('Mecklenburg-Vorpommern', 200, 24, 60);
+  ok(long.length === 2 && long[0] === 'Mecklenburg-' && long[1] === 'Vorpommern', `langer Name mit Bindestrich: ${long.join(' / ')}`);
+  ok(barNameLines('Bad Tölz-Wolfratshausen', 200, 24, 60).join('|') === 'Bad Tölz-|Wolfratshausen', 'Umbruch nach dem letzten passenden Bindestrich');
+  ok(barNameLines('Mecklenburg-Vorpommern', 200, 24, 30).length === 1 && barNameLines('Mecklenburg-Vorpommern', 200, 24, 30)[0].endsWith('…'), 'niedrige Zeile: wie bisher gekürzt');
+  ok(barNameLines('Bremen', 200, 24, 60).join() === 'Bremen', 'kurzer Name unverändert');
 }
 
 console.log(process.exitCode ? '\nFEHLGESCHLAGEN' : '\nAlle Linie-Tests bestanden.');
