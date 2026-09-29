@@ -81,6 +81,8 @@ export type ChartSource =
   | { kind: 'sitze'; from: 'tabelle'; dataset: string; column: string; calc: SeatCalc | null }
   /** Sitzverteilung (M9): Projektion aus einem Wahlergebnis (Parteien als Spalten), Anteile über den Ausschnitt summiert */
   | { kind: 'sitze'; from: 'wahl'; dataset: string; group: string; scope: ChartScope; period?: string | null; calc: SeatCalc };
+/** Einstellung eines Textes im Halbkreis: Schriftgröße (px bei ts = 1) und Versatz (px bei ts = 1) gegenüber der Vorgabe; ungesetzt = Vorgabe */
+export interface SeatTextTweak { size?: number; dx?: number; dy?: number }
 export interface ChartSpec {
   type: ChartType;
   source: ChartSource | null;
@@ -104,6 +106,7 @@ export interface ChartSpec {
   coalition?: string[];            // hervorgehobene Parteien (Schlüssel wie Bar.key); leer/ungesetzt = keine Koalition
   seatOrder?: string[];            // eigene Reihenfolge von links nach rechts (Schlüssel); fehlende nach politischer Ordnung
   seatEdit?: Record<string, number>;   // Sitze von Hand je Partei (Schlüssel wie Bar.key); überschreibt Tabelle bzw. Rechner, ungesetzt = wie berechnet
+  seatText?: { majority?: SeatTextTweak; total?: SeatTextTweak; sub?: SeatTextTweak };   // Texte im Halbkreis einzeln: „Mehrheit: 80“, große Zahl, Zeile darunter („Sitze“)
   legendEl?: boolean;              // Beschriftung der Parteien ist die Legende der Grafik (eigenes Element); ältere Projekte zeichneten sie unter den Halbkreis
 }
 export interface GraphicMeta { id: string; name: string; kind: GraphicKind }

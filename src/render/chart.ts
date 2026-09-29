@@ -229,15 +229,23 @@ function chartModelRaw(doc: Doc): ChartModel {
 }
 
 // ---------- Sitzverteilung (M9) ----------
+/** Größe des Halbkreises in einem Rahmen der Breite w und höchstens der Höhe hMax: Radius R der äußeren Punktreihe (Mitten der Punkte), Punktradius
+ *  rdot·R (Punkte ragen darüber hinaus), Höhe majH über den Punkten für die Mehrheitsmarke, benötigte Gesamthöhe h. Für Zeichnen und Layout gleich. */
+export function seatSize(S: SeatModel, spec: ChartSpec, ts: number, w: number, hMax: number) {
+  const rdot = spec.seatStyle === 'ring' ? 0 : seatLayout(S.total, 0.4).r;
+  const majSz = Math.round((spec.seatText?.majority?.size ?? (spec.valueSize ?? 24) * 0.8) * ts), gap = Math.round(6 * ts);
+  const majH = spec.majorityOn !== false ? Math.round(majSz * 2.1) : 0;
+  const R = Math.max(20, Math.min(w / (2 * (1 + rdot)), (hMax - majH - gap) / (1 + 2 * rdot)));
+  return { R, rdot, majH, majSz, gap, h: majH + gap + R * (1 + 2 * rdot) };
+}
 /** Halbkreis (Punkte oder Ring), Mehrheitsmarke, Zahl in der Mitte. Die Parteien mit Sitzen stehen in der Legende (eigenes Element, legendPrims). */
 function seatPrims(S: SeatModel, spec: ChartSpec, doc: Doc, F: { x: number; y: number; w: number; h: number }, ts: number, out: Prims & { paths: PathPrim[] }): Prims {
   const { texts, rects, paths } = out;
   const ink = doc.style.ink, soft = doc.style.inkSoft;
-  const lab = Math.round((spec.valueSize ?? 24) * ts), gap = Math.round(6 * ts);
+  const lab = Math.round((spec.valueSize ?? 24) * ts), tw = spec.seatText || {};
   const coal = S.coalition, dim = (g: SeatGroup) => (coal && !coal.keys.includes(g.key) ? mixWhite(g.color, 0.72) : g.color);
-  const majH = spec.majorityOn !== false ? Math.round(lab * 1.7) : 0;
-  const R = Math.max(20, Math.min(F.w / 2, F.h - majH - gap));
-  const cx = F.x + F.w / 2, cy = F.y + majH + R;
+  const G = seatSize(S, spec, ts, F.w, F.h), R = G.R, majH = G.majH, rdot = G.rdot * R;
+  const cx = F.x + F.w / 2, cy = F.y + majH + rdot + R;   // über den Punkten bleibt Platz für die Mehrheitsmarke
   const P = (a: number, r: number) => [cx + r * R * Math.cos(a), cy - r * R * Math.sin(a)] as const;
   const f = (n: number) => n.toFixed(1);
   let inner: number;
@@ -267,16 +275,18 @@ function seatPrims(S: SeatModel, spec: ChartSpec, doc: Doc, F: { x: number; y: n
       if (d) paths.push({ d, fill: dim(g) });
     }
   }
-  // Mehrheitsmarke oben in der Mitte
+  // Mehrheitsmarke oben in der Mitte: Linie bis über die Punkte, Text darüber (Größe und Lage einzeln einstellbar)
   if (majH) {
-    const top = cy - R - Math.round(6 * ts);
+    const top = cy - R - rdot - Math.round(8 * ts), m = tw.majority;
     paths.push({ d: `M${f(cx)} ${f(cy - R * inner + 2)}V${f(top)}`, fill: 'none', stroke: ink, width: Math.max(1.2, 1.6 * ts), dash: `${f(5 * ts)} ${f(4 * ts)}` });
-    texts.push({ x: cx, y: top - Math.round(lab * 0.35), text: `Mehrheit: ${S.majority}`, cut: 'text', size: Math.round(lab * 0.8), color: soft, anchor: 'middle' });
+    texts.push({ x: cx + (m?.dx || 0) * ts, y: top - Math.round(G.majSz * 0.44) + (m?.dy || 0) * ts, text: `Mehrheit: ${S.majority}`, cut: 'text', size: G.majSz, color: soft, anchor: 'middle', part: 'majority' });
   }
-  // Zahl in der Mitte: alle Sitze bzw. Sitze der Koalition
-  const big = Math.round(Math.min(lab * 2.6, R * inner * 0.62)), sub = Math.round(Math.min(lab * 0.85, R * inner * 0.22));
-  texts.push({ x: cx, y: cy - sub * 1.5, text: String(coal ? coal.seats : S.total), cut: 'display', size: big, color: ink, anchor: 'middle' });
-  texts.push({ x: cx, y: cy - 2, text: coal ? `von ${S.total} Sitzen · ${coal.reached ? 'Mehrheit' : `${S.majority - coal.seats} fehlen`}` : 'Sitze', cut: 'text', size: sub, color: soft, anchor: 'middle' });
+  // Zahl in der Mitte: alle Sitze bzw. Sitze der Koalition; darunter eine Zeile. Beide einzeln in Größe und Lage einstellbar.
+  const big = tw.total?.size != null ? Math.round(tw.total.size * ts) : Math.round(Math.min(lab * 2.6, R * inner * 0.62));
+  const sub = tw.sub?.size != null ? Math.round(tw.sub.size * ts) : Math.round(Math.min(lab * 0.85, R * inner * 0.22));
+  const tt = tw.total, ss = tw.sub;
+  texts.push({ x: cx + (tt?.dx || 0) * ts, y: cy - Math.round(Math.min(lab * 0.85, R * inner * 0.22)) * 1.5 + (tt?.dy || 0) * ts, text: String(coal ? coal.seats : S.total), cut: 'display', size: big, color: ink, anchor: 'middle', part: 'total' });
+  texts.push({ x: cx + (ss?.dx || 0) * ts, y: cy - 2 + (ss?.dy || 0) * ts, text: coal ? `von ${S.total} Sitzen · ${coal.reached ? 'Mehrheit' : `${S.majority - coal.seats} fehlen`}` : 'Sitze', cut: 'text', size: sub, color: soft, anchor: 'middle', part: 'sub' });
   return out;
 }
 function seatModel(doc: Doc, spec: ChartSpec, src: Extract<NonNullable<ChartSpec['source']>, { kind: 'sitze' }>, ds0: Dataset, base: ChartModel): ChartModel {

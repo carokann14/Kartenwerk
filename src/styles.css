@@ -833,3 +833,6 @@ button.build:hover:not(:disabled) { border-color: var(--accent); }
 .seat-edit .grow { flex: 1; min-width: 0; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .seat-edit input[type="number"] { width: 64px; height: 24px; font-size: 12.5px; padding: 0 6px; text-align: right; }
 .seat-edit .prow.edited input[type="number"] { border-color: var(--accent, #2F5D8A); font-weight: 600; }
+.seat-text-row { display: flex; align-items: flex-end; gap: 6px; }
+.seat-text-row label { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--muted); flex: 1; min-width: 0; }
+.seat-text-row input[type="number"] { width: 100%; min-width: 0; height: 26px; font-size: 12.5px; padding: 0 6px; }

@@ -314,6 +314,34 @@ function GraphicProps({ doc }: { doc: Doc }) {
 /** Eigenschaften des Diagramm-Rahmens: Feinschliff der Darstellung (m7-5), unabhängig vom Schritt „Diagramm“
  *  (Art, Daten, Farben je Balken). Alle Felder bleiben ungesetzt, bis sie von Hand geändert werden – bestehende
  *  wie neue Diagramme sehen dadurch unverändert aus, solange niemand daran dreht. */
+/** Texte im Halbkreis der Sitzverteilung einzeln: Schriftgröße und Versatz; Ziehen auf der Fläche setzt den Versatz ebenfalls */
+function SeatTexts({ spec }: { spec: ChartSpec }) {
+  const base = spec.valueSize ?? 24, tw = spec.seatText || {};
+  const parts = [
+    { id: 'majority', label: 'Mehrheit', def: Math.round(base * 0.8), off: spec.majorityOn === false },
+    { id: 'total', label: 'Zahl in der Mitte', def: Math.round(base * 2.6), off: false },
+    { id: 'sub', label: 'Zeile darunter', def: Math.round(base * 0.85), off: false },
+  ] as const;
+  const set = (id: 'majority' | 'total' | 'sub', patch: Partial<NonNullable<ChartSpec['seatText']>['majority']>, key: string) => update(d => {
+    if (!d.chart) return; const st = (d.chart.seatText ||= {}); st[id] = { ...(st[id] || {}), ...patch };
+  }, { key });
+  const reset = (id: 'majority' | 'total' | 'sub') => update(d => { if (!d.chart?.seatText) return; delete d.chart.seatText[id]; if (!Object.keys(d.chart.seatText).length) delete d.chart.seatText; });
+  return <Section title="Texte im Halbkreis">
+    {parts.map(p => {
+      const t = tw[p.id], changed = !!t && (t.size != null || !!t.dx || !!t.dy);
+      return <Field key={p.id} label={p.label} stack>
+        <div className="seat-text-row">
+          <label>Größe<NumInput min={8} max={200} value={t?.size ?? p.def} onChange={n => set(p.id, { size: n }, 'seat-' + p.id + '-s')} ariaLabel={`Schriftgröße ${p.label}`} /></label>
+          <label>X<NumInput min={-2000} max={2000} value={t?.dx ?? 0} onChange={n => set(p.id, { dx: n }, 'seat-' + p.id + '-x')} ariaLabel={`Versatz nach rechts ${p.label}`} /></label>
+          <label>Y<NumInput min={-2000} max={2000} value={t?.dy ?? 0} onChange={n => set(p.id, { dy: n }, 'seat-' + p.id + '-y')} ariaLabel={`Versatz nach unten ${p.label}`} /></label>
+          <button className="btn icon ghost small" disabled={!changed} onClick={() => reset(p.id)} aria-label={`${p.label} zurücksetzen`} title="Zurück auf Vorgabe">↺</button>
+        </div>
+        {p.off && <p className="hint">Die Mehrheitsmarke ist ausgeschaltet.</p>}
+      </Field>;
+    })}
+    <p className="hint">Größe in px, X und Y verschieben den Text (nach rechts bzw. unten). Die Texte lassen sich auch auf der Fläche anfassen und ziehen.</p>
+  </Section>;
+}
 function ChartFrameProps({ doc }: { doc: Doc }) {
   const spec = doc.chart || defaultChart();
   const isBalken = spec.type === 'balken', isLinie = spec.type === 'linie', isSitze = spec.type === 'sitze';
@@ -321,7 +349,7 @@ function ChartFrameProps({ doc }: { doc: Doc }) {
   return <>
     <Head t="Diagramm" sub={CHART_LABEL[spec.type]} />
     <Section title="Darstellung">
-      <Field label={isLinie ? 'Schriftgröße Werte/Endbeschriftung (px)' : isSitze ? 'Schriftgröße Mitte und Mehrheit (px)' : 'Schriftgröße Werte (px)'}><NumInput min={10} max={60} value={spec.valueSize ?? (isLinie || isSitze ? 24 : 28)} onChange={n => setC({ valueSize: n }, 'chart-valsize')} ariaLabel="Schriftgröße der Wertbeschriftung" /></Field>
+      {!isSitze && <Field label={isLinie ? 'Schriftgröße Werte/Endbeschriftung (px)' : 'Schriftgröße Werte (px)'}><NumInput min={10} max={60} value={spec.valueSize ?? (isLinie ? 24 : 28)} onChange={n => setC({ valueSize: n }, 'chart-valsize')} ariaLabel="Schriftgröße der Wertbeschriftung" /></Field>}
       {isSitze && <Field label="Form"><Seg items={[['punkte', 'Punkte'], ['ring', 'Halbring']] as ['punkte' | 'ring', string][]} value={spec.seatStyle || 'punkte'} onChange={v => setC({ seatStyle: v })} /></Field>}
       {isSitze && <Check checked={spec.majorityOn ?? true} onChange={on => setC({ majorityOn: on })}>Mehrheitsmarke</Check>}
       {!isLinie && !isSitze && <Field label="Abstand zwischen Balken (%)"><NumInput min={-30} max={80} step={5} value={Math.round((spec.gap ?? 0) * 100)} onChange={n => setC({ gap: n / 100 }, 'chart-gap')} ariaLabel="Abstand zwischen den Balken bzw. Säulen, negativ für enger als bisher" /></Field>}
@@ -330,6 +358,7 @@ function ChartFrameProps({ doc }: { doc: Doc }) {
       {(isBalken || isLinie) && <Field label="Schriftgröße Achse (px)"><NumInput min={8} max={40} value={spec.axisSize ?? 16} onChange={n => setC({ axisSize: n }, 'chart-axsize')} ariaLabel="Schriftgröße der Achsenbeschriftung" /></Field>}
       {isBalken && <Field label="Abstand Achse (px)"><NumInput min={0} max={60} value={spec.axisGap ?? 20} onChange={n => setC({ axisGap: n }, 'chart-axgap')} ariaLabel="Abstand der Achsenbeschriftung zu den Balken" /></Field>}
     </Section>
+    {isSitze && <SeatTexts spec={spec} />}
     <p className="hint">{isSitze ? 'Daten, Sitze, Koalition und Reihenfolge der Parteien stehen im Schritt „Diagramm“; die Parteien mit Sitzen stehen in der Legende.' : `Art, Daten und Farben je ${isLinie ? 'Linie' : 'Balken'} stehen im Schritt „Diagramm“.`}</p>
   </>;
 }

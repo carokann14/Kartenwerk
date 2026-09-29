@@ -18,7 +18,7 @@ import { bubbleLegendValues, bubbleSet, circleD } from './bubbles';
 import { FrameId, frameSets, geoOf, jointOf, laenderCtx } from './scene';
 import { logoRect } from '../model/logo';
 
-export interface TextPrim { x: number; y: number; text: string; cut: Cut; size: number; color: string; anchor: 'start' | 'middle' | 'end'; halo?: boolean; runs?: RunPrim[] }
+export interface TextPrim { x: number; y: number; text: string; cut: Cut; size: number; color: string; anchor: 'start' | 'middle' | 'end'; halo?: boolean; runs?: RunPrim[]; part?: string }   // part: verschiebbarer Teil eines Diagramms (Sitzverteilung: 'majority' | 'total' | 'sub')
 export interface RectPrim { x: number; y: number; w: number; h: number; fill: string }
 export interface PathPrim { d: string; fill: string; stroke?: string; width?: number; dash?: string; cap?: 'round' | 'butt' }
 export interface Prims { texts: TextPrim[]; rects: RectPrim[]; paths?: PathPrim[]; box: { x: number; y: number; w: number; h: number } }

@@ -152,7 +152,12 @@ function ChartView() {
     <rect className="frame-hit" data-frame-hit="main" x={F.x} y={F.y} width={F.w} height={F.h} fill="#FFFFFF" fillOpacity={0} />
     {p.rects.map((r, k) => <rect key={'r' + k} x={+r.x.toFixed(1)} y={+r.y.toFixed(1)} width={+r.w.toFixed(1)} height={+r.h.toFixed(1)} fill={r.fill} />)}
     {(p.paths || []).map((q, k) => <path key={'p' + k} d={q.d} fill={q.fill} stroke={q.stroke} strokeWidth={q.width} />)}
-    {p.texts.map((tx, k) => textEl(tx, 't' + k))}
+    {p.texts.map((tx, k) => tx.part
+      ? <g key={'t' + k} data-seatpart={tx.part} style={{ cursor: 'move' }}>
+        <rect x={+(tx.x - measureW(tx.text, tx.cut, tx.size) / 2 - 4).toFixed(1)} y={+(tx.y - tx.size * 0.86).toFixed(1)} width={+(measureW(tx.text, tx.cut, tx.size) + 8).toFixed(1)} height={+(tx.size * 1.15).toFixed(1)} fill="#FFFFFF" fillOpacity={0} />
+        {textEl(tx)}
+      </g>
+      : textEl(tx, 't' + k))}
   </g>;
 }
 function Elements() {
@@ -498,6 +503,11 @@ export function Canvas() {
       const id = (t.closest('[data-el]') as SVGElement).dataset.el as 'title', L = activeVariant(d).L[id];
       setUI({ sel: { kind: 'el', id } });
       drag.current = { ...base, type: 'el', id, ox: L.x, oy: L.y };
+    } else if (t.closest('[data-seatpart]')) {
+      // Text im Halbkreis der Sitzverteilung (Mehrheit, Zahl, Zeile darunter): einzeln verschieben
+      const part = (t.closest('[data-seatpart]') as SVGElement).dataset.seatpart as 'majority' | 'total' | 'sub', tw = d.chart?.seatText?.[part];
+      setUI({ sel: { kind: 'frame', id: 'main' } });
+      drag.current = { ...base, type: 'seatpart', part, ox: tw?.dx || 0, oy: tw?.dy || 0 };
     } else if (areaI != null) {
       drag.current = { ...base, type: 'area', i: areaI };
     } else if (t.closest('g.frame')) {
@@ -524,6 +534,11 @@ export function Canvas() {
     switch (dg.type) {
       case 'view': setUI({ view: { ...getUI().view, x: (dg.ox as number) + dxs, y: (dg.oy as number) + dys } }); break;
       case 'map': { const id = dg.id as FrameId; const d = getDoc(); if (activeVariant(d).locked[id]) break; update(dd => { const V = dd.variants[dd.active].L[id].view; V.cx = (dg.ocx as number) - dx / V.k; V.cy = (dg.ocy as number) - dy / V.k; }, { history: false }); break; }
+      case 'seatpart': {
+        const ts = activeVariant(getDoc()).ts, part = dg.part as 'majority' | 'total' | 'sub';
+        update(dd => { if (!dd.chart) return; const st = (dd.chart.seatText ||= {}); const p = (st[part] ||= {}); p.dx = Math.round((dg.ox as number) + dx / ts); p.dy = Math.round((dg.oy as number) + dy / ts); }, { history: false });
+        break;
+      }
       case 'el': update(dd => { const L = dd.variants[dd.active].L[dg.id as 'title']; L.x = Math.round((dg.ox as number) + dx); L.y = Math.round((dg.oy as number) + dy); }, { history: false }); break;
       case 'frame': {
         // An den Hilfslinien einrasten: linke/rechte Kante und Mitte gegen senkrechte, obere/untere Kante und Mitte gegen waagerechte Linien.

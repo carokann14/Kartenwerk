@@ -7,7 +7,7 @@ for (const f of fs.readdirSync('public/katalog')) assets['katalog/' + f] = f.end
 (globalThis as unknown as { window: unknown }).window = { __KW_ASSETS__: assets };
 const { loadGeo, ensureGeo } = await import('../src/geo/geo');
 const { sainteLague, seatLayout } = await import('../src/render/seats');
-const { chartModel, chartPrims, defaultChart } = await import('../src/render/chart');
+const { chartModel, chartPrims, defaultChart, seatSize } = await import('../src/render/chart');
 const { defaultSource, chartTexts } = await import('../src/render/chartSource');
 const { defaultDoc } = await import('../src/model/defaults');
 const { legendModel } = await import('../src/render/legend');
@@ -216,5 +216,46 @@ const spec = { ...defaultChart('sitze'), source: src };
 {
   const sug = suggestFor(doc0, bt.id);
   ok(sug[0]?.icon === 'sitze', `Tabelle mit Sitzen → zuerst Sitzverteilung: ${sug.map(x => x.label).join(' | ')}`);
+}
+// ---------- Texte im Halbkreis: Größe und Lage einzeln ----------
+{
+  const dotTop = (P: ReturnType<typeof chartPrims>) => Math.min(...(P.paths || []).filter(p => p.fill !== 'none').flatMap(p => [...p.d.matchAll(/M([\d.-]+) ([\d.-]+)a([\d.-]+)/g)].map(m => +m[2] - +m[3])));
+  const mk = (chart: typeof spec) => ({ ...doc0, chart } as Doc);
+  const v = { L: { main: { x: 100, y: 200, w: 880, h: 800 } }, ts: 1 } as never;
+  const part = (P: ReturnType<typeof chartPrims>, k: string) => P.texts.filter(t => (t as { part?: string }).part === k);
+  const P0 = chartPrims(mk(spec), v);
+  ok(['majority', 'total', 'sub'].every(k => part(P0, k).length === 1), 'drei Texte mit Teil-Kennung: Mehrheit, Zahl, Zeile darunter');
+  // Mehrheit: über den Punkten, nicht darin
+  const m0 = part(P0, 'majority')[0], top0 = dotTop(P0);
+  ok(m0.y + m0.size * 0.3 < top0, `Mehrheit liegt über den Punkten (Grundlinie ${m0.y.toFixed(0)}, Punkte ab ${top0.toFixed(0)})`);
+  // einzelne Größe
+  const P1 = chartPrims(mk({ ...spec, seatText: { majority: { size: 40 } } }), v);
+  ok(part(P1, 'majority')[0].size === 40 && part(P1, 'total')[0].size === part(P0, 'total')[0].size && part(P1, 'sub')[0].size === part(P0, 'sub')[0].size, 'Größe der Mehrheit ändert Zahl und Zeile nicht');
+  const P2 = chartPrims(mk({ ...spec, seatText: { total: { size: 90 }, sub: { size: 30 } } }), v);
+  ok(part(P2, 'total')[0].size === 90 && part(P2, 'sub')[0].size === 30 && part(P2, 'majority')[0].size === m0.size, 'Zahl und Zeile darunter einzeln einstellbar, Mehrheit bleibt');
+  // Versatz
+  const P3 = chartPrims(mk({ ...spec, seatText: { majority: { dx: 30, dy: -12 } } }), v);
+  const m3 = part(P3, 'majority')[0];
+  ok(m3.x === m0.x + 30 && m3.y === m0.y - 12 && part(P3, 'total')[0].x === part(P0, 'total')[0].x && part(P3, 'sub')[0].y === part(P0, 'sub')[0].y, 'Versatz gilt nur für die Mehrheit');
+  const P4 = chartPrims(mk({ ...spec }), { L: { main: { x: 100, y: 200, w: 880, h: 800 } }, ts: 2 } as never);
+  const P5 = chartPrims(mk({ ...spec, seatText: { total: { dx: 10, dy: 5 } } }), { L: { main: { x: 100, y: 200, w: 880, h: 800 } }, ts: 2 } as never);
+  ok(part(P5, 'total')[0].x === part(P4, 'total')[0].x + 20 && part(P5, 'total')[0].y === part(P4, 'total')[0].y + 10, 'Versatz wird mit der Skalierung (ts) mitgerechnet');
+  // Kein Überlappen für 158 und 630 Sitze, auch als Ring
+  for (const n of [158, 630]) for (const style of ['dots', 'ring'] as const) {
+    const t = tableDataset('T', ['Partei', 'Sitze'], [['CDU/CSU', String(Math.round(n * 0.4))], ['SPD', String(Math.round(n * 0.3))], ['AfD', String(n - Math.round(n * 0.4) - Math.round(n * 0.3))]]);
+    const d = { ...defaultDoc('vg-lan-2026'), datasets: [t] } as Doc;
+    const sp = { ...defaultChart('sitze'), source: defaultSource(d, t, 'sitze')!, seatStyle: style };
+    const P = chartPrims({ ...d, chart: sp } as Doc, v), m = part(P, 'majority')[0];
+    const xs = (P.paths || []).filter(p => p.fill !== 'none').flatMap(p => [...p.d.matchAll(/M([\d.-]+) ([\d.-]+)a([\d.-]+)/g)].map(q => [+q[1] - 0, +q[3]]));
+    const inFrame = P.texts.every(tt => tt.y > 200 - 1 && tt.y < 1000 + 1);
+    ok(inFrame && (style === 'ring' || m.y + m.size * 0.3 < dotTop(P)), `${n} Sitze (${style}): Mehrheit über den Punkten, alles im Rahmen`);
+    void xs;
+  }
+  // Mehrheit aus: kein Platz reserviert, Zahl und Zeile bleiben
+  const Pn = chartPrims(mk({ ...spec, majorityOn: false }), v);
+  ok(part(Pn, 'majority').length === 0 && part(Pn, 'total').length === 1 && dotTop(Pn) < top0, 'Mehrheit aus: kein Text, Halbkreis nutzt den Platz');
+  // seatSize passt zum Layout
+  const S = chartModel(mk(spec)).seats!, G = seatSize(S, spec, 1, 880, 800);
+  ok(G.h <= 800.5 && G.majH > 0 && G.R > 100, `seatSize: Höhe ${G.h.toFixed(0)} ≤ 800, Radius ${G.R.toFixed(0)}`);
 }
 console.log(process.exitCode ? '\nFEHLGESCHLAGEN' : '\nAlle Sitzverteilungs-Tests bestanden.');

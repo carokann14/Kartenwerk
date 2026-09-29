@@ -4,7 +4,7 @@ import { clamp, uid } from '../lib/util';
 import type { BBox } from '../lib/util';
 import { GEO, bboxOfIds } from '../geo/geo';
 import { legendPrims, textBlock } from '../render/elements';
-import { chartModel } from '../render/chart';
+import { chartModel, seatSize } from '../render/chart';
 import { fokusBBox, insetBBox } from '../render/scene';
 import { PRESET_GUIDES, PRESETS } from './defaults';
 import { PRESET_LOGO_BOX, defaultLogoBox, logoRatio } from './logo';
@@ -90,9 +90,9 @@ export function makeLayout(doc: Doc, W: number, H: number, ts: number, guides?: 
     // Sitzverteilung: die Legende ist ein eigenes Element und steht mittig unter dem Halbkreis; Halbkreis und Legende teilen sich die Fläche
     const sl = doc.chart?.type === 'sitze' ? legendPrims(doc, { x: 0, y: 0 }, tw, ts) : null;
     if (sl) {
-      const gapL = Math.round(20 * s), avail = L.main.h, lab = Math.round((doc.chart!.valueSize ?? 24) * ts), majH = doc.chart!.majorityOn !== false ? Math.round(lab * 1.7) : 0, pad = Math.round(6 * ts);
-      const R = Math.max(20, Math.min(tw / 2, avail - sl.box.h - gapL - majH - pad));
-      const mainH = Math.min(avail, Math.round(majH + R + pad)), off = Math.max(0, Math.round((avail - mainH - gapL - sl.box.h) * 0.35));   // etwas über der Mitte der freien Fläche
+      const gapL = Math.round(20 * s), avail = L.main.h;
+      const G = seatSize(chartModel(doc).seats!, doc.chart!, ts, tw, avail - sl.box.h - gapL);
+      const mainH = Math.min(avail, Math.max(200, Math.ceil(G.h))), off = Math.max(0, Math.round((avail - mainH - gapL - sl.box.h) * 0.35));   // etwas über der Mitte der freien Fläche
       L.main.y += off; L.main.h = mainH;
       L.legend = { x: mL + Math.round((tw - sl.box.w) / 2), y: L.main.y + L.main.h + gapL, w: 0 };
     }
