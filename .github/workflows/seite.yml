@@ -43,6 +43,7 @@ jobs:
       - name: Kennzahlen von regionalstatistik.de laden
         id: daten
         if: github.event_name == 'schedule' || inputs.daten
+        continue-on-error: true   # ist regionalstatistik.de nicht erreichbar, wird die Seite trotzdem gebaut (mit dem vorhandenen Katalog)
         env:
           REGIONALSTATISTIK_TOKEN: ${{ secrets.REGIONALSTATISTIK_TOKEN }}
           REGIONALSTATISTIK_USERNAME: ${{ secrets.REGIONALSTATISTIK_USERNAME }}
@@ -51,6 +52,10 @@ jobs:
           npm run katalog:laden
           KATALOG_STRICT=1 npm run katalog
           if git diff --quiet -- public/katalog; then echo "neu=false" >> "$GITHUB_OUTPUT"; echo "Keine neuen Zahlen."; else echo "neu=true" >> "$GITHUB_OUTPUT"; git diff --stat -- public/katalog; fi
+
+      - name: Hinweis, falls das Laden der Daten fehlgeschlagen ist
+        if: steps.daten.outcome == 'failure'
+        run: echo "::warning title=Kennzahlen nicht aktualisiert::Das Laden von regionalstatistik.de ist fehlgeschlagen (Einzelheiten im Schritt davor). Die Seite wird mit dem vorhandenen Katalog gebaut; der nächste Lauf versucht es erneut."
 
       - name: Prüfen (Typen und Tests)
         run: npm run typecheck && npm test

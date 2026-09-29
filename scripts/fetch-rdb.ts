@@ -23,13 +23,14 @@ if (!token && !(user && pw)) die('Zugangsdaten fehlen: Repo-Secret REGIONALSTATI
 // Mit Token: Token als username, password leer (Beispiel von Destatis: 'username': TOKEN, 'password': "")
 const auth: Record<string, string> = token ? { username: token.trim(), password: '' } : { username: user!.trim(), password: pw! };
 
-async function post(method: string, params: Record<string, string>) {
+async function post(method: string, params: Record<string, string>, opt: { timeout?: number; tries?: number } = {}) {
+  const timeout = opt.timeout ?? 180_000, tries = opt.tries ?? 3;
   for (let attempt = 1; ; attempt++) {
     try {
-      const r = await fetch(`${BASE}/${method}`, { method: 'POST', headers: { ...auth, 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ language: 'de', ...params }), signal: AbortSignal.timeout(180_000) });
+      const r = await fetch(`${BASE}/${method}`, { method: 'POST', headers: { ...auth, 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ language: 'de', ...params }), signal: AbortSignal.timeout(timeout) });
       return { status: r.status, type: r.headers.get('content-type') || '', buf: Buffer.from(await r.arrayBuffer()) };
     } catch (e) {
-      if (attempt >= 3) throw e;
+      if (attempt >= tries) throw e;
       console.warn(`   ${method}: ${(e as Error).message} – neuer Versuch in ${attempt * 20} s`);
       await new Promise(res => setTimeout(res, attempt * 20_000));
     }
@@ -54,7 +55,7 @@ function status(text: string): { code: number; content: string } | null {
 // Anmeldung prüfen (zeigt früh, ob die Server von hier erreichbar sind und die Zugangsdaten stimmen)
 {
   let r;
-  try { r = await post('helloworld/logincheck', {}); }
+  try { r = await post('helloworld/logincheck', {}, { timeout: 45_000, tries: 2 }); }   // ist der Server nicht erreichbar, nach gut 1,5 Minuten aufgeben statt nach 10
   catch (e) { die(`regionalstatistik.de nicht erreichbar (${BASE}): ${(e as Error).message}${(e as { cause?: Error }).cause ? ' – ' + (e as { cause: Error }).cause.message : ''}`); }
   const t = asText(r!.buf).trim().slice(0, 300);
   note(`Anmeldung mit ${token ? 'Token' : 'Benutzername/Passwort'}: HTTP ${r!.status} (${r!.type || 'ohne Typ'}): ${t}`);
