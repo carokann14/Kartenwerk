@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { TABLES } from './katalog-defs';
+import { FETCH, TABLES } from './katalog-defs';
 
 const BASE = process.env.REGIONALSTATISTIK_URL || 'https://www.regionalstatistik.de/genesisws/rest/2020';
 const OUT = process.env.RDB || 'data-src/rdb';
@@ -61,26 +61,32 @@ function status(text: string): { code: number; content: string } | null {
   if (r!.status !== 200 || !/erfolgreich|success/i.test(t)) die(`Anmeldung bei regionalstatistik.de fehlgeschlagen (HTTP ${r!.status}): ${t} – Zugangsdaten im Repo-Secret prüfen.`);
 }
 fs.mkdirSync(OUT, { recursive: true });
+const warn = (m: string) => { console.warn(m); if (GH) console.log(`::warning title=Katalog laden::${esc(m)}`); };
 for (const table of TABLES) {
+  // Neue Tabellen sind „optional“: Fehler werden gemeldet, die Action läuft mit dem vorigen Stand weiter
+  const F = FETCH[table], fail = (m: string): never => { if (F.optional) throw new Error(m); return die(m); };
+  try {
   let header = '';
   const rows = new Set<string>();
-  for (let from = FIRST; from <= LAST; from += STEP) {
-    const to = Math.min(LAST, from + STEP - 1);
+  const first = Math.max(FIRST, F.from ?? FIRST), step = process.env.RDB_STEP ? STEP : F.step ?? STEP;
+  for (let from = first; from <= LAST; from += step) {
+    const to = Math.min(LAST, from + step - 1);
     const r = await post('data/tablefile', { name: table, area: 'all', compress: 'false', transpose: 'false', startyear: String(from), endyear: String(to), format: 'ffcsv' });
     const text = asText(r.buf), st = status(text);
     if (st) { console.log(`   ${table} ${from}–${to}: keine Daten (${st.code}: ${st.content})`); continue; }
-    if (r.status !== 200) die(`${table} ${from}–${to}: HTTP ${r.status}`);
+    if (r.status !== 200) fail(`${table} ${from}–${to}: HTTP ${r.status}`);
     const lines = text.split(/\r?\n/).filter(Boolean);
-    if (!lines[0]?.includes('statistics_code')) die(`${table} ${from}–${to}: unerwartete Antwort: ${text.slice(0, 200)}`);
+    if (!lines[0]?.includes('statistics_code')) fail(`${table} ${from}–${to}: unerwartete Antwort: ${text.slice(0, 200)}`);
     header ||= lines[0];
-    if (lines[0] !== header) die(`${table}: Spalten der Jahresblöcke weichen voneinander ab`);
+    if (lines[0] !== header) fail(`${table}: Spalten der Jahresblöcke weichen voneinander ab`);
     for (const l of lines.slice(1)) rows.add(l);
     console.log(`   ${table} ${from}–${to}: ${lines.length - 1} Zeilen`);
     await new Promise(res => setTimeout(res, 1500));   // freundlich zur Schnittstelle
   }
-  if (!rows.size) die(`${table}: keine Daten erhalten`);
+  if (!rows.size) fail(`${table}: keine Daten erhalten`);
   note(`${table}: ${rows.size} Zeilen geladen`);
   const file = path.join(OUT, `${table}_api.csv`);
   fs.writeFileSync(file, header + '\n' + [...rows].join('\n') + '\n');
   console.log(`${file}: ${rows.size} Zeilen`);
+  } catch (e) { if (!F.optional) throw e; warn(`${table}: übersprungen – ${(e as Error).message}; der Katalog behält den vorigen Stand.`); }
 }

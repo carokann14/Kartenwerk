@@ -43,7 +43,7 @@ export function KatalogDialog() {
                 <button key={e.id} className="kat-entry" disabled={!!busy} onClick={() => take(e)}>
                   <Icon.katalog size={20} />
                   <span><b>{busy === e.id ? 'Wird geladen …' : e.label}</b><span className="hint">{e.hint}</span>
-                    <span className="kat-meta"><span className="chip">{katalogSpan(e)}</span><span className="chip">{level === 'krs' ? `${e.levels.krs ? 'Kreise · ' : ''}Länder · Deutschland` : 'Länder · Deutschland'}</span><span className="kat-src">Tabelle {e.table} · {KB(e.bytes)}</span></span></span>
+                    <span className="kat-meta"><span className="chip">{katalogSpan(e)}</span>{e.note && <span className="chip" title={e.note}>Anteile berechnet</span>}<span className="chip">{level === 'krs' ? `${e.levels.krs ? 'Kreise · ' : ''}Länder · Deutschland` : 'Länder · Deutschland'}</span><span className="kat-src">Tabelle {e.table} · {KB(e.bytes)}</span></span></span>
                 </button>))}
             </section>)}
           {idx && <p className="hint">Quelle: Statistische Ämter des Bundes und der Länder, Regionaldatenbank Deutschland, Datenlizenz Deutschland – Namensnennung – 2.0. Stand des Katalogs: {idx.built.split('-').reverse().join('.')}. Frühere Kreise werden wie beim Import auf den heutigen Zuschnitt zusammengelegt.</p>}

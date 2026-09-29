@@ -9,7 +9,7 @@ import { periodText } from './time';
 import type { Dataset } from './types';
 
 export interface KatalogEntry {
-  id: string; thema: string; label: string; hint: string; table: string; title: string; file: string;
+  id: string; thema: string; label: string; hint: string; note?: string; table: string; title: string; file: string;
   timeLabel: string; periods: string[]; columns: string[]; levels: { de: number; lan: number; krs: number };
   source: string; retrieved: string; bytes: number;
 }

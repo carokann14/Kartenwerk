@@ -420,20 +420,22 @@ export function chartPrims(doc: Doc, v: Variant): Prims {
     const endLabel = (l: (typeof lines)[number]) => { const last = [...l.points].reverse().find(p => p.value != null); const v = last ? `${fmt(last.value!, dec)}${M.unit}` : ''; return lines.length === 1 ? v : `${l.label} ${v}`.trim(); };
     const endW = Math.max(0, ...lines.map(l => measureW(endLabel(l), 'bold', labSize)));
     const allVals = lines.flatMap(l => l.points.map(p => p.value)).filter((x): x is number => x != null);
-    const maxV = Math.max(0, ...allVals), minV = Math.min(0, ...allVals);
-    const step = niceStep((maxV - minV) / 4 || 1);
-    const niceMax = Math.ceil(maxV / step) * step, niceMin = Math.floor(minV / step) * step;
-    const yLabW = Math.max(measureW(fmt(niceMin, step < 1 ? 1 : 0), 'text', axisSize), measureW(fmt(niceMax, step < 1 ? 1 : 0), 'text', axisSize));
+    const ax = linieAxis(allVals, spec), { niceMin, niceMax, step, dec: axDec } = ax;
+    const yLabW = Math.max(measureW(fmt(niceMin, axDec), 'text', axisSize), measureW(fmt(niceMax, axDec), 'text', axisSize));
     const plotLeft = F.x + yLabW + 10, plotRight = F.x + F.w - endW - 16, plotTop = top + 6, plotBottom = F.y + F.h - axisSize * 1.9;
     const span = (niceMax - niceMin) || 1;
     const X = (i: number) => plotLeft + (periods.length > 1 ? i / (periods.length - 1) : 0.5) * (plotRight - plotLeft);
-    const Y = (val: number) => plotBottom - (val - niceMin) / span * (plotBottom - plotTop);
-    for (let t = niceMin; t <= niceMax + 1e-9; t += step) {
-      const y = Y(t);
+    const Y = (val: number) => plotBottom - (Math.min(niceMax, Math.max(niceMin, val)) - niceMin) / span * (plotBottom - plotTop);   // Werte außerhalb eigener Grenzen liegen am Rand
+    for (let k = Math.ceil(niceMin / step - 1e-9); k <= Math.floor(niceMax / step + 1e-9); k++) {
+      const t = k * step, y = Y(t);
       if (gridOn) paths.push({ d: `M${plotLeft.toFixed(1)} ${y.toFixed(1)}H${plotRight.toFixed(1)}`, fill: 'none', stroke: Math.abs(t) < 1e-9 ? '#9A968E' : '#E4E0D8', width: Math.abs(t) < 1e-9 ? 1.2 : 1 });
-      texts.push({ x: plotLeft - 8, y: y + axisSize * 0.32, text: fmt(t, step < 1 ? 1 : 0), cut: 'text', size: axisSize, color: soft, anchor: 'end' });
+      texts.push({ x: plotLeft - 8, y: y + axisSize * 0.32, text: fmt(t, axDec), cut: 'text', size: axisSize, color: soft, anchor: 'end' });
     }
-    periods.forEach((p, i) => texts.push({ x: X(i), y: plotBottom + axisSize * 1.4, text: (periodText(p).match(/\d{4}/) || [periodText(p)])[0], cut: 'text', size: axisSize, color: soft, anchor: 'middle' }));
+    // Zeitachse: bei vielen Zeitpunkten nur jede k-te Beschriftung, damit sie sich nicht überlagern; der letzte Zeitpunkt bleibt immer
+    const pLabel = (p: string) => (periodText(p).match(/\d{4}/) || [periodText(p)])[0];
+    const stepX = periods.length > 1 ? (plotRight - plotLeft) / (periods.length - 1) : plotRight - plotLeft;
+    const skipK = Math.max(1, Math.ceil((Math.max(0, ...periods.map(p => measureW(pLabel(p), 'text', axisSize))) + axisSize * 0.7) / Math.max(1, stepX)));
+    periods.forEach((p, i) => { if ((periods.length - 1 - i) % skipK === 0) texts.push({ x: X(i), y: plotBottom + axisSize * 1.4, text: pLabel(p), cut: 'text', size: axisSize, color: soft, anchor: 'middle' }); });
     const ends: { x: number; y: number; l: (typeof lines)[number] }[] = [];
     for (const l of lines) {
       const pts = l.points.map((p, i) => (p.value != null ? [X(i), Y(p.value)] as const : null));
@@ -485,6 +487,25 @@ export function chartPrims(doc: Doc, v: Variant): Prims {
   });
   paths.push({ d: `M${F.x.toFixed(1)} ${y0.toFixed(1)}H${(F.x + F.w).toFixed(1)}`, fill: 'none', stroke: ink, width: 1.4 });
   return { texts, rects, paths, box };
+}
+/** Achse der Linie: bisher immer von der 0 bis zum runden Höchstwert; mit axisZero = false folgt sie dem Wertebereich,
+ *  eigene Grenzen (axisMin/axisMax) überschreiben die jeweilige automatische Grenze (nur wenn min < max). Die Rasterlinien
+ *  liegen immer auf runden Vielfachen der Schrittweite. */
+export function linieAxis(vals: number[], spec: Pick<ChartSpec, 'axisZero' | 'axisMin' | 'axisMax'>) {
+  const zero = spec.axisZero !== false;
+  let lo = vals.length ? Math.min(...vals) : 0, hi = vals.length ? Math.max(...vals) : 1;
+  if (zero) { lo = Math.min(0, lo); hi = Math.max(0, hi); }
+  if (hi - lo < 1e-9) { const pad = Math.abs(hi) * 0.1 || 1; lo -= pad; hi += pad; }
+  let step = niceStep((hi - lo) / 4 || 1);
+  let niceMin = Math.floor(lo / step + 1e-9) * step, niceMax = Math.ceil(hi / step - 1e-9) * step;
+  const mn = spec.axisMin, mx = spec.axisMax;
+  const own = (mn != null && isFinite(mn)) || (mx != null && isFinite(mx));
+  if (own) {
+    const a = mn != null && isFinite(mn) ? mn : niceMin, b = mx != null && isFinite(mx) ? mx : niceMax;
+    if (a < b) { niceMin = a; niceMax = b; step = niceStep((b - a) / 4); }
+  }
+  const dec = step < 0.1 ? 2 : step < 1 ? 1 : 0;
+  return { niceMin, niceMax, step, dec };
 }
 function niceStep(raw: number) {
   const p = Math.pow(10, Math.floor(Math.log10(raw || 1))), m = raw / p;

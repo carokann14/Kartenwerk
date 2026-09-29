@@ -100,6 +100,9 @@ export interface ChartSpec {
   axisSize?: number;     // Schriftgröße der Achsenbeschriftung (Balken und Linie, px bei ts=1); ungesetzt = 16
   axisGap?: number;      // Abstand der Achsenbeschriftung zu den Balken (nur Balken, px bei ts=1); ungesetzt = 20
   pointsOn?: boolean;    // Linie: Punkte an den Messwerten zeigen; ungesetzt = an
+  axisZero?: boolean;    // Linie: Achse enthält immer die 0; ungesetzt = an (bisheriges Verhalten), aus = Achse folgt dem Wertebereich
+  axisMin?: number;      // Linie: eigener unterer Achsenwert (überschreibt die automatische Grenze); ungesetzt = automatisch
+  axisMax?: number;      // Linie: eigener oberer Achsenwert; ungesetzt = automatisch
   // Sitzverteilung (M9)
   seatStyle?: 'punkte' | 'ring';   // ein Punkt je Sitz bzw. Halbring mit Bogen je Partei; ungesetzt = Punkte
   majorityOn?: boolean;            // Mehrheitsmarke; ungesetzt = an

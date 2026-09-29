@@ -82,6 +82,8 @@ Die Dateien in `public/katalog/` sind verkleinerte Auszüge (nur Deutschland, L�
 |---|---|---|
 | `public/katalog/12411-01-01-4_bevoelkerung.csv` | Bevölkerung nach Geschlecht (Tabelle 12411-01-01-4) | © Statistische Ämter des Bundes und der Länder, Regionaldatenbank Deutschland, Datenlizenz Deutschland – Namensnennung – Version 2.0 |
 | `public/katalog/13211-02-05-4_arbeitslosigkeit.csv` | Arbeitslose und Arbeitslosenquoten, Jahresdurchschnitt (Tabelle 13211-02-05-4; Quelle der Werte: Statistik der Bundesagentur für Arbeit) | ebenso |
+| `public/katalog/12411-02-03-4_altersgruppen.csv` | Bevölkerung unter 18, 18 bis unter 65 und ab 65 Jahren (Tabelle 12411-02-03-4, Geschlecht insgesamt, ab 2011). Die Zahlen sind Summen der amtlichen Altersgruppen; die **Anteile** in Prozent hat Kartenwerk berechnet (Altersgruppe ÷ Bevölkerung insgesamt) und in der Spaltenbezeichnung als „berechnet“ gekennzeichnet (`scripts/katalog-derive.ts`) – es sind keine amtlichen Werte. | ebenso; Anteile: eigene Berechnung auf Grundlage der Daten der Statistischen Ämter |
+| `public/katalog/82000-07-01-4_einkommen.csv` | Verfügbares Einkommen der privaten Haushalte insgesamt und je Einwohner (Tabelle 82000-07-01-4, Volkswirtschaftliche Gesamtrechnungen der Länder) | ebenso |
 | `public/katalog/14111-01-04-4_wahlbeteiligung.csv`, `…_bundestagswahlen.csv` | Bundestagswahlen: Wahlberechtigte, Wahlbeteiligung, Zweitstimmen (Tabelle 14111-01-04-4) | ebenso |
 
 ## Schriften

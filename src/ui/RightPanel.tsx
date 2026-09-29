@@ -14,7 +14,7 @@ import { ColorModel, colorModel, legendTitleAuto, partyColor } from '../render/c
 import { activeVariant, autoSourceText, layoutLabels, missingMarks, sourceIsManual } from '../render/elements';
 import { isChart } from '../model/graphicKeys';
 import { INSET_DEFS, fokusLabel, geoOf, insetLabel, isRegional, krLinesLabel, laenderSetFor, overlayName } from '../render/scene';
-import { Check, ColorField, Field, Icon, Note, NumInput, RichTextArea, Section, Seg } from './common';
+import { Check, ColorField, Field, Icon, Note, NumInput, OptNum, RichTextArea, Section, Seg } from './common';
 import { AreaHatch, HatchList, HatchProps, LegendProps } from './annotationsUI';
 import { AnnProps, ArrowIcon, MarkerIcon } from './elementsUI';
 import { BubbleSection } from './panels/Blasen';
@@ -355,6 +355,9 @@ function ChartFrameProps({ doc }: { doc: Doc }) {
       {!isLinie && !isSitze && <Field label="Abstand zwischen Balken (%)"><NumInput min={-30} max={80} step={5} value={Math.round((spec.gap ?? 0) * 100)} onChange={n => setC({ gap: n / 100 }, 'chart-gap')} ariaLabel="Abstand zwischen den Balken bzw. Säulen, negativ für enger als bisher" /></Field>}
       {(isBalken || isLinie) && <Check checked={spec.gridOn ?? true} onChange={on => setC({ gridOn: on })}>Rasterlinien anzeigen</Check>}
       {isLinie && <Check checked={spec.pointsOn ?? true} onChange={on => setC({ pointsOn: on })}>Punkte an den Werten zeigen</Check>}
+      {isLinie && <Check checked={spec.axisZero ?? true} onChange={on => setC({ axisZero: on })}>Achse bei 0 beginnen</Check>}
+      {isLinie && <Field label="Achse unten (Wert)"><OptNum value={spec.axisMin} onChange={n => setC({ axisMin: n }, 'chart-axmin')} ariaLabel="Eigener unterer Achsenwert, leer für automatisch" placeholder="automatisch" /></Field>}
+      {isLinie && <Field label="Achse oben (Wert)"><OptNum value={spec.axisMax} onChange={n => setC({ axisMax: n }, 'chart-axmax')} ariaLabel="Eigener oberer Achsenwert, leer für automatisch" placeholder="automatisch" /></Field>}
       {(isBalken || isLinie) && <Field label="Schriftgröße Achse (px)"><NumInput min={8} max={40} value={spec.axisSize ?? 16} onChange={n => setC({ axisSize: n }, 'chart-axsize')} ariaLabel="Schriftgröße der Achsenbeschriftung" /></Field>}
       {isBalken && <Field label="Abstand Achse (px)"><NumInput min={0} max={60} value={spec.axisGap ?? 20} onChange={n => setC({ axisGap: n }, 'chart-axgap')} ariaLabel="Abstand der Achsenbeschriftung zu den Balken" /></Field>}
     </Section>

@@ -147,6 +147,16 @@ const spec = { ...defaultChart('sitze'), source: src };
   ok(r2 && r2.color === '#123456', 'Farbe und Name je Partei aus dem Diagramm');
   const dl3 = legendOf(spec, { legend: { ...dl.legend, labels: { 'k:SPD': 'SPD!' } } } as never);
   ok(legendModel(dl3)!.rows.find(r => r.auto === 'SPD')!.label === 'SPD!', 'eigener Legendentext');
+  // Koalition: Parteien außerhalb erscheinen auch in der Legende blass (wie im Halbkreis)
+  const dlc = legendOf({ ...spec, coalition: ['SPD', 'Grüne'] } as never);
+  const Mc = legendModel(dlc)!;
+  ok(Mc.rows.filter(r => r.dim).map(r => r.auto).sort().join() === 'AfD,CDU/CSU,Die Linke,SSW' && !Mc.rows.find(r => r.auto === 'SPD')!.dim, `Legende: Nicht-Koalition markiert (${Mc.rows.filter(r => r.dim).map(r => r.auto).join(', ')})`);
+  const lpc = legendPrims(dlc, { x: 0, y: 0 }, 880, 1)!;
+  const spdCol = Mc.rows.find(r => r.auto === 'SPD')!.color, afdCol = Mc.rows.find(r => r.auto === 'AfD')!.color;
+  ok(lpc.rects.some(r => r.fill === spdCol) && !lpc.rects.some(r => r.fill === afdCol), 'Koalitionspartei in voller Farbe, AfD-Kästchen aufgehellt');
+  const ink = dlc.style.ink;
+  ok(lpc.texts.find(t => /^SPD/.test(t.text))!.color === ink && lpc.texts.find(t => /^AfD/.test(t.text))!.color !== ink, 'Text der Nicht-Koalition grau');
+  ok(legendModel(dl)!.rows.every(r => !r.dim), 'ohne Koalition nichts blass');
   // Projektion: Hinweis als Fußzeile
   const um = tableDataset('Umfrage', ['Partei', 'Prozent'], [['CDU/CSU', '27'], ['AfD', '25'], ['SPD', '15'], ['Grüne', '11'], ['Linke', '10'], ['BSW', '4'], ['FDP', '3']]);
   const d = { ...defaultDoc('vg-lan-2026'), datasets: [um] } as Doc;

@@ -1,5 +1,5 @@
 {
- "built": "2026-09-28",
+ "built": "2026-09-29",
  "entries": [
   {
    "id": "bevoelkerung",
@@ -142,6 +142,62 @@
    "source": "14111-01-04-4_api.csv",
    "retrieved": "2026-09-28",
    "bytes": 695018
+  },
+  {
+   "id": "altersgruppen",
+   "thema": "Bevölkerung",
+   "label": "Altersgruppen",
+   "hint": "Bevölkerung unter 18, von 18 bis unter 65 und ab 65 Jahren am 31.12.: Zahl und Anteil an der Bevölkerung (Anteile von Kartenwerk berechnet)",
+   "note": "Die Anteile stehen nicht in der amtlichen Tabelle: Kartenwerk zählt die Altersgruppen zusammen und teilt durch die Bevölkerung insgesamt.",
+   "table": "12411-02-03-4",
+   "title": "Bevölkerung nach Geschlecht und Altersgruppen",
+   "file": "12411-02-03-4_altersgruppen.csv",
+   "timeLabel": "Stichtag",
+   "periods": [
+    "2025-12-31"
+   ],
+   "columns": [
+    "Bevölkerung",
+    "Bevölkerung · unter 18 Jahre",
+    "Bevölkerung · 18 bis unter 65 Jahre",
+    "Bevölkerung · 65 Jahre und älter",
+    "Anteil an der Bevölkerung, berechnet (%) · unter 18 Jahre",
+    "Anteil an der Bevölkerung, berechnet (%) · 18 bis unter 65 Jahre",
+    "Anteil an der Bevölkerung, berechnet (%) · 65 Jahre und älter"
+   ],
+   "levels": {
+    "de": 1,
+    "lan": 16,
+    "krs": 400
+   },
+   "source": "12411-02-03-4_bevölkerung_nach_altersgruppen_flat.csv",
+   "retrieved": "2026-09-29",
+   "bytes": 345562
+  },
+  {
+   "id": "einkommen",
+   "thema": "Wirtschaft",
+   "label": "Verfügbares Einkommen",
+   "hint": "Verfügbares Einkommen der privaten Haushalte insgesamt und je Einwohner, jährlich",
+   "table": "82000-07-01-4",
+   "title": "Verfügbares Einkommen der privaten Haushalte",
+   "file": "82000-07-01-4_einkommen.csv",
+   "timeLabel": "Jahr",
+   "periods": [
+    "2023"
+   ],
+   "columns": [
+    "Verfügbares Einkommen der privaten Haushalte (Tsd. EUR)",
+    "Verfügbares Einkommen je Einwohner (EUR/EW)"
+   ],
+   "levels": {
+    "de": 1,
+    "lan": 16,
+    "krs": 475
+   },
+   "source": "82000-07-01-4_verfügbares_einkommen_flat.csv",
+   "retrieved": "2026-09-29",
+   "bytes": 104095
   },
   {
    "id": "bundestagswahlen",

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { produce, Draft, freeze } from 'immer';
 import type { Doc, Sel } from './types';
+import { restackUnmoved } from './layout';
 import type { Dataset } from '../data/types';
 import { syncRegions } from '../geo/regions';
 import { syncUserGeo } from '../geo/userGeo';
@@ -44,8 +45,9 @@ const get = () => useStore.getState();
 /** Dokument ändern. history=false für Zwischenschritte (z. B. beim Ziehen), key fasst schnelle Änderungen zusammen. */
 export function update(recipe: (d: Draft<Doc>) => void, opts: { history?: boolean; key?: string } = {}) {
   const s = get(); if (!s.doc) return;
-  const next = produce(s.doc, recipe);
+  let next = produce(s.doc, recipe);
   if (next === s.doc) return;
+  next = restackUnmoved(s.doc, next);   // Titel/Unterzeile/Schrift/Logo geändert → nicht von Hand bewegte Elemente rücken nach
   syncDoc(next);   // importierte Geodaten und eigene Einteilungen vor dem Zeichnen als Gebietsstände bereitstellen
   const now = Date.now();
   const coalesce = opts.key && opts.key === s.lastKey && now - s.lastAt < 1200;

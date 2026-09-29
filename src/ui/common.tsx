@@ -81,6 +81,13 @@ export function NumInput({ value, onChange, min, max, step, id, ariaLabel }: { v
   const commit = (s: string) => { const v = parseFloat(s.replace(',', '.')); if (isFinite(v)) onChange(Math.min(max ?? Infinity, Math.max(min ?? -Infinity, v))); };
   return <input id={id} aria-label={ariaLabel} type="number" value={txt} min={min} max={max} step={step} onChange={e => { setTxt(e.target.value); commit(e.target.value); }} />;
 }
+/** Zahlenfeld, das leer sein darf (leer = automatisch); übergibt undefined, sobald das Feld geleert wird. */
+export function OptNum({ value, onChange, step, ariaLabel, placeholder = 'auto' }: { value: number | undefined; onChange: (v: number | undefined) => void; step?: number; ariaLabel?: string; placeholder?: string }) {
+  const [txt, setTxt] = React.useState(value == null ? '' : String(value));
+  React.useEffect(() => { setTxt(value == null ? '' : String(value)); }, [value]);
+  const commit = (s: string) => { if (s.trim() === '') { onChange(undefined); return; } const v = parseFloat(s.replace(',', '.')); if (isFinite(v)) onChange(v); };
+  return <input aria-label={ariaLabel} type="number" value={txt} step={step} placeholder={placeholder} onChange={e => { setTxt(e.target.value); commit(e.target.value); }} />;
+}
 export const ratioIcon = (w: number, h: number) => { const s = 14 / Math.max(w, h); return <span className="ratio-ico"><i style={{ width: (w * s).toFixed(1) + 'px', height: (h * s).toFixed(1) + 'px' }} /></span>; };
 
 /** Farbwähler: Sättigung/Hellwert-Fläche, Farbton-Regler, Hex-Feld mit Pipette. Ersetzt <input type="color"> überall im Editor. */

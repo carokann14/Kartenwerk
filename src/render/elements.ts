@@ -130,7 +130,7 @@ export function legendPrims(doc: Doc, P: { x: number; y: number; w?: number } = 
       maxX = Math.max(maxX, x + w); return;
     }
     if (e.kind === 'marker' && e.marker) { const m = e.marker, sz = Math.min(w, h) * (m.shape === 'pin' ? 0.62 : 0.86); paths.push({ d: markerD(m, ax + w / 2, m.shape === 'pin' ? ay + h * 0.98 : ay + h / 2, sz), fill: m.fill, ...(m.strokeW > 0 && m.stroke.toUpperCase() !== '#FFFFFF' ? { stroke: m.stroke, width: Math.min(1, m.strokeW) } : {}) }); maxX = Math.max(maxX, x + w); return; }
-    const fill = e.kind === 'nodata' ? e.color : e.kind === 'hatch' ? (e.bg || '#FFFFFF') : e.color;
+    const fill = e.kind === 'nodata' ? e.color : e.kind === 'hatch' ? (e.bg || '#FFFFFF') : e.dim ? mixWhite(e.color, 0.72) : e.color;   // dim: nicht in der Koalition (Sitzverteilung)
     R(x, yy, w, h, fill);
     if (e.hatch && (e.kind === 'hatch' || e.kind === 'nodata')) {
       const d = hatchPathD(e.hatch, [rectRing(ax, ay, w, h)]);
@@ -174,7 +174,7 @@ export function legendPrims(doc: Doc, P: { x: number; y: number; w?: number } = 
   /** Einfache Einträge untereinander, nebeneinander oder im Raster */
   const list = (items: LegEntry[], sw: number, size: number, color: string, or: 'vertical' | 'horizontal' | 'grid') => {
     arrange(items.length, or, i => sw + base * 0.5 + measureW(lbl(items[i]), 'text', size), (i, x, yy) => {
-      const e = items[i]; swatch(e, x, yy, sw, sw); T(x + sw + base * 0.5, yy + sw / 2 + capOffset('text', size), lbl(e), 'text', size, color);
+      const e = items[i]; swatch(e, x, yy, sw, sw); T(x + sw + base * 0.5, yy + sw / 2 + capOffset('text', size), lbl(e), 'text', size, e.dim ? mixWhite(soft, 0.35) : color);
     }, sw);
   };
   /** Aus Farbe + Text gebaute Einträge für Klassen-Legenden (kein LegEntry aus dem Modell, aber gleich behandelbar) */

@@ -1,7 +1,7 @@
 // M8 · Linie: synthetische Daten (keine Fixtures nötig) – Parteien über die Zeit, Zahlenspalten über die Zeit,
 // Sonstige-Bündelung, Raten-Mittelung vs. Summierung, Vorschläge.
 import { defaultDoc } from '../src/model/defaults';
-import { chartModel, defaultChart } from '../src/render/chart';
+import { chartModel, chartPrims, defaultChart, linieAxis } from '../src/render/chart';
 import { defaultSource, chartTexts } from '../src/render/chartSource';
 import { suggestFor } from '../src/model/suggest';
 import { GEO } from '../src/geo/geo';
@@ -152,6 +152,47 @@ const doc: Doc = { ...doc0, datasets: [ds] } as Doc;
   const linie = sugs.find(s => s.icon === 'linie');
   ok(!!linie, `Linien-Vorschlag vorhanden: ${sugs.map(s => s.label).join(' | ')}`);
   delete (GEO as Record<string, unknown>)['test-geo'];
+}
+
+// ---------- Achse: bei 0 beginnen (Standard), Wertebereich, eigene Grenzen ----------
+{
+  const vals = [5.0, 6.0, 7.5, 8.0];
+  const a0 = linieAxis(vals, {});
+  ok(a0.niceMin === 0 && a0.niceMax >= 8, `Standard: Achse beginnt bei 0 (${a0.niceMin}–${a0.niceMax})`);
+  const a1 = linieAxis(vals, { axisZero: false });
+  ok(a1.niceMin === 5 && a1.niceMax === 8 && a1.step === 0.5, `ohne 0: Achse folgt den Werten (${a1.niceMin}–${a1.niceMax}, Schritt ${a1.step})`);
+  const a2 = linieAxis(vals, { axisMin: 4, axisMax: 10 });
+  ok(a2.niceMin === 4 && a2.niceMax === 10, `eigene Grenzen 4–10 (${a2.niceMin}–${a2.niceMax})`);
+  const a3 = linieAxis(vals, { axisZero: false, axisMax: 12 });
+  ok(a3.niceMin === 5 && a3.niceMax === 12, `nur obere Grenze eigen, untere automatisch (${a3.niceMin}–${a3.niceMax})`);
+  const a4 = linieAxis(vals, { axisMin: 9, axisMax: 3 });
+  ok(a4.niceMin === 0 && a4.niceMax >= 8, 'min ≥ max wird ignoriert (Automatik)');
+  const a5 = linieAxis([6, 6, 6], { axisZero: false });
+  ok(a5.niceMin < 6 && a5.niceMax > 6, `gleiche Werte: Achse bekommt Spielraum (${a5.niceMin}–${a5.niceMax})`);
+  const a6 = linieAxis([], {});
+  ok(isFinite(a6.niceMin) && isFinite(a6.niceMax) && a6.niceMax > a6.niceMin, 'keine Werte: gültige Achse');
+  // gezeichnet: y-Beschriftungen der Achse
+  const src = { kind: 'linie' as const, dataset: ds.id, mode: 'werte' as const, columns: ['gueltig'], scope: { kind: 'alle' as const } };
+  const v = { L: { main: { x: 100, y: 200, w: 880, h: 800 } }, ts: 1 } as never;
+  const yTicks = (patch: object) => chartPrims({ ...doc, chart: { ...defaultChart('linie'), source: src, ...patch } } as Doc, v).texts.filter(t => t.anchor === 'end' && /^[\d.,]+$/.test(t.text)).map(t => t.text);
+  const t0 = yTicks({}), t1 = yTicks({ axisZero: false }), t2 = yTicks({ axisMin: 1000, axisMax: 1600 });
+  ok(t0.includes('0'), `Standard zeigt 0 an der Achse: ${t0.join(' ')}`);
+  ok(!t1.includes('0') && t1.length >= 3, `ohne 0-Bedingung fehlt die 0: ${t1.join(' ')}`);
+  ok(t2.length >= 3 && t2[0].replace(/\D/g, '') === '1000' && t2[t2.length - 1].replace(/\D/g, '') === '1600', `eigene Grenzen 1000–1600 gezeichnet: ${t2.join(' ')}`);
+}
+
+// ---------- Zeitachse: viele Zeitpunkte → Beschriftung dünnt sich aus, letzter Zeitpunkt bleibt ----------
+{
+  const years = Array.from({ length: 30 }, (_, i) => String(2000 + i));
+  const byPeriod = Object.fromEntries(years.map(y => [y, ds.time!.byPeriod['2025']]));
+  const ds30: Dataset = { ...ds, id: 'ds30', time: { label: 'Jahr', periods: years, byPeriod } };
+  const d30 = { ...doc, datasets: [ds30] } as Doc;
+  const src = { kind: 'linie' as const, dataset: 'ds30', mode: 'werte' as const, columns: ['gueltig'], scope: { kind: 'alle' as const } };
+  const v = { L: { main: { x: 100, y: 200, w: 880, h: 800 } }, ts: 1 } as never;
+  const xl = (d: Doc) => chartPrims(d, v).texts.filter(t => t.anchor === 'middle' && /^\d{4}$/.test(t.text)).map(t => t.text);
+  const l30 = xl({ ...d30, chart: { ...defaultChart('linie'), source: src } } as Doc), l3 = xl({ ...doc, chart: { ...defaultChart('linie'), source: { ...src, dataset: ds.id } } } as Doc);
+  ok(l30.length >= 4 && l30.length < 30 && l30[l30.length - 1] === '2029', `30 Jahre: ${l30.length} Beschriftungen, letzte ${l30[l30.length - 1]} (${l30.join(' ')})`);
+  ok(l3.join() === '2015,2020,2025', `3 Jahre: alle beschriftet (${l3.join(' ')})`);
 }
 
 console.log(process.exitCode ? '\nFEHLGESCHLAGEN' : '\nAlle Linie-Tests bestanden.');

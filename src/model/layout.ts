@@ -1,5 +1,5 @@
 // Layout der Formatvarianten und Einpassen der Kartenausschnitte
-import { current, Draft } from 'immer';
+import { current, Draft, produce } from 'immer';
 import { clamp, uid } from '../lib/util';
 import type { BBox } from '../lib/util';
 import { GEO, bboxOfIds } from '../geo/geo';
@@ -166,3 +166,44 @@ export function ensureSeatLegend(d: Draft<Doc>): void {
   if (initSeatLegend(probe, true)) { d.chart = probe.chart as never; d.legend = probe.legend as never; d.variants = probe.variants as never; }
 }
 export function relayout(doc: Doc, v: Variant) { v.L = makeLayout(doc, v.w, v.h, v.ts, v.guides); fitMain(doc, v); fitInset(doc, v); }
+
+// ---------- Automatisch nachrücken ----------
+// Ändert sich etwas, das die Höhe von Titel, Unterzeile oder Quelle bestimmt (Text, Größe, Sichtbarkeit, Schrift, Logo),
+// rücken alle Elemente nach, die von Hand noch nicht bewegt wurden. Als „nicht bewegt“ gilt ein Element, das noch genau an der
+// Stelle steht, an die das Standard-Layout es vor der Änderung gesetzt hätte; ein Element an anderer Stelle bleibt, wo es ist.
+const STACK_KEYS = ['title', 'subtitle', 'source', 'legend', 'main', 'inset', 'logo'] as const;
+type AnyBox = { x: number; y: number; w?: number; h?: number };
+const near = (a: number | undefined, b: number | undefined) => Math.abs((a ?? 0) - (b ?? 0)) <= 1.5;
+const sameBox = (a: AnyBox, b: AnyBox) => near(a.x, b.x) && near(a.y, b.y) && near(a.w, b.w) && near(a.h, b.h);
+export function restackUnmoved(prev: Doc, next: Doc): Doc {
+  if (prev.texts === next.texts && prev.style === next.style && prev.logo === next.logo) return next;
+  if (prev.page !== next.page || prev.geoSet !== next.geoSet || prev.variants.length !== next.variants.length || prev.variants.length === 0) return next;
+  let fixes: { i: number; L: Layout }[];
+  try {
+    fixes = [];
+    next.variants.forEach((v, i) => {
+      const pv = prev.variants[i];
+      if (!pv || pv.id !== v.id || pv.w !== v.w || pv.h !== v.h || pv.ts !== v.ts) return;
+      const oldL = makeLayout(prev, v.w, v.h, v.ts, v.guides), newL = makeLayout(next, v.w, v.h, v.ts, v.guides);
+      const L: Layout = { ...v.L }; let moved = false, refitMain = false, refitInset = false;
+      for (const k of STACK_KEYS) {
+        const cur = v.L[k] as AnyBox, was = oldL[k] as AnyBox, now = newL[k] as AnyBox;
+        if (!sameBox(cur, was) || sameBox(was, now)) continue;   // von Hand bewegt oder unverändert
+        const frame = k === 'main' || k === 'inset';
+        (L as unknown as Record<string, AnyBox>)[k] = frame ? { ...cur, x: now.x, y: now.y, w: now.w, h: now.h } : { ...cur, x: now.x, y: now.y, w: now.w };
+        moved = true;
+        if (k === 'main' && !(near(was.w, now.w) && near(was.h, now.h))) refitMain = true;
+        if (k === 'inset' && !(near(was.w, now.w) && near(was.h, now.h))) refitInset = true;
+      }
+      if (!moved) return;
+      const nv: Variant = { ...v, L: { ...L, main: { ...L.main }, inset: { ...L.inset } } };
+      // Legende oder Inset in der Karte verschoben → Platz in der Karte neu berechnen
+      const r0 = mainReserve(prev, { ...v, L: v.L }), r1 = mainReserve(next, nv);
+      if (Math.abs(r0.right - r1.right) > 1 || Math.abs(r0.bottom - r1.bottom) > 1) refitMain = true;
+      if (refitMain && !v.locked.main) fitMain(next, nv);
+      if (refitInset && !v.locked.inset) fitInset(next, nv);
+      fixes.push({ i, L: nv.L });
+    });
+  } catch { return next; }   // Layout nicht berechenbar (z. B. Gebiete noch nicht geladen): nichts verschieben
+  return fixes.length ? produce(next, d => { for (const f of fixes) d.variants[f.i].L = f.L as never; }) : next;
+}

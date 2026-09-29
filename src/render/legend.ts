@@ -13,6 +13,7 @@ export interface LegEntry {
   key: string; label: string; auto: string; color: string; count: number | null;
   kind: 'fill' | 'hatch' | 'line' | 'nodata' | 'marker'; hatch: HatchStyle | null; bg: string | null; marker?: MarkerEl;
   hidden: boolean; target: ColorTarget; removable: boolean; dash?: boolean;
+  dim?: boolean;   // Sitzverteilung: Partei nicht in der Koalition → blass (wie im Halbkreis)
 }
 export interface LegModel {
   main: 'matrix' | 'list' | 'bar' | null;
@@ -38,7 +39,7 @@ function seatLegend(doc: Doc): LegModel | null {
   const S = chartModel(doc).seats; if (!S) return null;
   const L = doc.legend, hidden = new Set(L.hidden);
   const lab = (key: string, auto: string) => L.labels[key] ?? auto;
-  const rows: LegEntry[] = S.groups.map(g => { const k = 'k:' + g.key; return { key: k, label: lab(k, g.label), auto: g.label, color: g.color, count: g.seats, kind: 'fill' as const, hatch: null, bg: null, hidden: hidden.has(k), target: { type: 'bar' as const, key: g.key }, removable: false }; });
+  const rows: LegEntry[] = S.groups.map(g => { const k = 'k:' + g.key; return { key: k, label: lab(k, g.label), auto: g.label, color: g.color, count: g.seats, kind: 'fill' as const, hatch: null, bg: null, hidden: hidden.has(k), target: { type: 'bar' as const, key: g.key }, removable: false, dim: !!S.coalition && !S.coalition.keys.includes(g.key) }; });
   const more: LegEntry[] = L.extra.map(x => { const hs = x.kind === 'hatch' ? doc.hatches.find(h => h.id === x.hatch) || null : null; return { key: 'x:' + x.id, label: x.label, auto: x.label, color: x.color, count: null, kind: x.kind, hatch: hs, bg: hs?.bg ?? null, hidden: hidden.has('x:' + x.id), target: { type: 'extra' as const, id: x.id }, removable: true }; });
   const note = seatNote(S), caption = note || L.caption ? { key: 'caption' as const, auto: note, text: L.caption ?? note, hidden: hidden.has('caption') } : null;
   return { main: 'list', title: L.title, titleAuto: '', rows, more, caption, ovNote: null };

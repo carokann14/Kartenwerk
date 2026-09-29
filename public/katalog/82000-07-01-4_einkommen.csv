@@ -1,0 +1,1015 @@
+﻿statistics_code;statistics_label;time_code;time_label;time;1_variable_code;1_variable_label;1_variable_attribute_code;1_variable_attribute_label;value;value_unit;value_variable_code;value_variable_label
+82000;VGR der Länder;JAHR;Jahr;2023;DINSG;Deutschland;DG;Deutschland;2404603000;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;DINSG;;DG;;28452;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;DLAND;;01;Schleswig-Holstein;86994227;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;DLAND;;01;;29395;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;DLAND;;02;Hamburg;56312475;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;DLAND;;02;;29620;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;DLAND;;03;Niedersachsen;224450264;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;DLAND;;03;;27536;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;DLAND;;04;Bremen;17928289;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;DLAND;;04;;26048;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;DLAND;;05;Nordrhein-Westfalen;504153853;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;DLAND;;05;;27754;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;DLAND;;06;Hessen;184661318;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;DLAND;;06;;28826;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;DLAND;;07;Rheinland-Pfalz;116689048;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;DLAND;;07;;28005;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;DLAND;;08;Baden-Württemberg;342028194;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;DLAND;;08;;30242;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;DLAND;;09;Bayern;422502287;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;DLAND;;09;;31525;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;DLAND;;10;Saarland;25998994;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;DLAND;;10;;26168;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;DLAND;;11;Berlin;98774495;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;DLAND;;11;;26209;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;DLAND;;12;Brandenburg;68145963;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;DLAND;;12;;26440;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;DLAND;;13;Mecklenburg-Vorpommern;41245290;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;DLAND;;13;;25321;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;DLAND;;14;Sachsen;105244958;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;DLAND;;14;;25746;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;DLAND;;15;Sachsen-Anhalt;54794863;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;DLAND;;15;;25094;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;DLAND;;16;Thüringen;54678455;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;DLAND;;16;;25736;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;01001;Flensburg, kreisfreie Stadt;2196173;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;01001;;23714;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;01002;Kiel, kreisfreie Stadt;6221706;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;01002;;25058;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;01003;Lübeck, kreisfreie Stadt, Hansestadt;5600411;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;01003;;25623;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;01004;Neumünster, kreisfreie Stadt;1964345;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;01004;;24602;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;01051;Dithmarschen, Kreis;3947286;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;01051;;29141;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;01053;Herzogtum Lauenburg, Kreis;6090920;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;01053;;29817;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;01054;Nordfriesland, Kreis;5641545;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;01054;;33279;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;01055;Ostholstein, Kreis;6214993;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;01055;;30474;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;01056;Pinneberg, Kreis;10131464;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;01056;;31360;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;01057;Plön, Kreis;3955540;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;01057;;30122;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;01058;Rendsburg-Eckernförde, Kreis;8666748;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;01058;;31017;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;01059;Schleswig-Flensburg, Kreis;5792384;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;01059;;28089;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;01060;Segeberg, Kreis;8553540;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;01060;;29899;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;01061;Steinburg, Kreis;3851123;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;01061;;29011;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;01062;Stormarn, Kreis;8166049;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;01062;;32912;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;02000;Hamburg, kreisfreie Stadt, Freie und Hansestadt;56312475;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;02000;;29620;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03101;Braunschweig, kreisfreie Stadt;7000597;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03101;;27787;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03102;Salzgitter, kreisfreie Stadt;2482773;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03102;;23692;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03103;Wolfsburg, kreisfreie Stadt;3576400;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03103;;28248;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03151;Gifhorn, Landkreis;5170144;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03151;;28650;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03152;Göttingen, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03152;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03153;Goslar, Landkreis;3634798;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03153;;27009;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03154;Helmstedt, Landkreis;2597791;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03154;;28146;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03155;Northeim, Landkreis;3626829;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03155;;27249;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03156;Osterode am Harz, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03156;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03157;Peine, Landkreis;3771927;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03157;;27126;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03158;Wolfenbüttel, Landkreis;3346943;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03158;;27743;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03159;Göttingen, Landkreis;8603497;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03159;;26174;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03241;Region Hannover, Landkreis;31526939;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03241;;26814;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03241001;Hannover, Landeshauptstadt;.;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03241001;;.;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03251;Diepholz, Landkreis;6641944;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03251;;29741;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03252;Hameln-Pyrmont, Landkreis;4104910;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03252;;27274;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03254;Hildesheim, Landkreis;7413787;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03254;;26623;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03255;Holzminden, Landkreis;1912908;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03255;;27015;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03256;Nienburg (Weser), Landkreis;3258528;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03256;;26347;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03257;Schaumburg, Landkreis;4407057;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03257;;27527;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03351;Celle, Landkreis;4715239;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03351;;25883;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03352;Cuxhaven, Landkreis;5674205;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03352;;28142;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03353;Harburg, Landkreis;8456214;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03353;;32183;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03354;Lüchow-Dannenberg, Landkreis;1245818;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03354;;25325;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03355;Lüneburg, Landkreis;5120769;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03355;;27208;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03356;Osterholz, Landkreis;3379063;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03356;;29000;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03357;Rotenburg (Wümme), Landkreis;4916250;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03357;;29258;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03358;Heidekreis;3781222;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03358;;26203;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03359;Stade, Landkreis;6125171;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03359;;29045;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03360;Uelzen, Landkreis;2528158;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03360;;26689;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03361;Verden, Landkreis;4155370;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03361;;29443;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03401;Delmenhorst, kreisfreie Stadt;1862366;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03401;;23670;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03402;Emden, kreisfreie Stadt;1173536;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03402;;23194;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03403;Oldenburg (Oldb), kreisfreie Stadt;4574147;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03403;;26329;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03404;Osnabrück, kreisfreie Stadt;4720553;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03404;;28239;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03405;Wilhelmshaven, kreisfreie Stadt;1733792;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03405;;22763;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03451;Ammerland, Landkreis;3652993;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03451;;28388;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03452;Aurich, Landkreis;5063876;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03452;;26328;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03453;Cloppenburg, Landkreis;4835705;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03453;;27147;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03454;Emsland, Landkreis;9584832;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03454;;28260;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03455;Friesland, Landkreis;2719669;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03455;;27074;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03456;Grafschaft Bentheim, Landkreis;3803016;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03456;;26856;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03457;Leer, Landkreis;4396303;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03457;;25246;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03458;Oldenburg, Landkreis;3987591;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03458;;29699;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03459;Osnabrück, Landkreis;10701240;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03459;;29220;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03460;Vechta, Landkreis;4466131;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03460;;30312;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03461;Wesermarsch, Landkreis;2448336;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03461;;27305;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;03462;Wittmund, Landkreis;1550927;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;03462;;26567;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;04011;Bremen, kreisfreie Stadt;15402319;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;04011;;26870;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;04012;Bremerhaven, kreisfreie Stadt;2525969;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;04012;;21951;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05111;Düsseldorf, kreisfreie Stadt;20444962;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05111;;32446;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05112;Duisburg, kreisfreie Stadt;10613290;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05112;;21102;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05113;Essen, kreisfreie Stadt;15150314;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05113;;25872;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05114;Krefeld, kreisfreie Stadt;6098071;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05114;;26689;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05116;Mönchengladbach, kreisfreie Stadt;6847204;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05116;;25482;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05117;Mülheim an der Ruhr, kreisfreie Stadt;4942542;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05117;;28598;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05119;Oberhausen, kreisfreie Stadt;4882057;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05119;;23142;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05120;Remscheid, kreisfreie Stadt;3029783;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05120;;26862;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05122;Solingen, kreisfreie Stadt;4610130;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05122;;28618;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05124;Wuppertal, kreisfreie Stadt;9081663;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05124;;25304;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05154;Kleve, Kreis;8306698;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05154;;25927;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05158;Mettmann, Kreis;15189097;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05158;;30997;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05162;Rhein-Kreis Neuss;14352247;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05162;;31337;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05166;Viersen, Kreis;8843640;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05166;;29295;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05170;Wesel, Kreis;12911057;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05170;;27666;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05313;Aachen, Stadt (alt);-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05313;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05314;Bonn, kreisfreie Stadt;9774355;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05314;;29079;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05315;Köln, kreisfreie Stadt;31240649;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05315;;28764;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05316;Leverkusen, kreisfreie Stadt;4435840;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05316;;26709;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05334;Städteregion Aachen, Kreis;14412720;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05334;;25577;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05334002;Aachen, kreisfreie Stadt;.;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05334002;;.;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05354;Aachen, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05354;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05358;Düren, Kreis;7286427;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05358;;26813;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05362;Rhein-Erft-Kreis;13527725;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05362;;28209;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05366;Euskirchen, Kreis;5406956;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05366;;27234;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05370;Heinsberg, Kreis;6797934;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05370;;25922;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05374;Oberbergischer Kreis;8066134;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05374;;29271;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05378;Rheinisch-Bergischer Kreis;9337492;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05378;;32592;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05382;Rhein-Sieg-Kreis;18341801;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05382;;30096;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05512;Bottrop, kreisfreie Stadt;3091464;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05512;;26108;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05513;Gelsenkirchen, kreisfreie Stadt;5325261;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05513;;20138;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05515;Münster, kreisfreie Stadt;9386201;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05515;;29156;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05554;Borken, Kreis;11141264;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05554;;29292;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05558;Coesfeld, Kreis;6956303;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05558;;30858;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05562;Recklinghausen, Kreis;15930310;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05562;;25686;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05566;Steinfurt, Kreis;12945923;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05566;;28277;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05570;Warendorf, Kreis;8493775;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05570;;30037;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05711;Bielefeld, kreisfreie Stadt;9156963;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05711;;27062;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05754;Gütersloh, Kreis;11470609;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05754;;30825;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05758;Herford, Kreis;7309787;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05758;;28853;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05762;Höxter, Kreis;3966552;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05762;;27963;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05766;Lippe, Kreis;9862210;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05766;;28163;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05770;Minden-Lübbecke, Kreis;8969048;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05770;;28375;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05774;Paderborn, Kreis;8616006;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05774;;27389;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05911;Bochum, kreisfreie Stadt;9091550;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05911;;24836;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05913;Dortmund, kreisfreie Stadt;14384474;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05913;;24200;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05914;Hagen, kreisfreie Stadt;4554912;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05914;;23956;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05915;Hamm, kreisfreie Stadt;4202565;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05915;;23244;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05916;Herne, kreisfreie Stadt;3456469;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05916;;21927;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05954;Ennepe-Ruhr-Kreis;9823073;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05954;;30218;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05958;Hochsauerlandkreis;8016667;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05958;;30632;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05962;Märkischer Kreis;12099631;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05962;;29550;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05966;Olpe, Kreis;4465907;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05966;;33232;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05970;Siegen-Wittgenstein, Kreis;7934028;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05970;;28655;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05974;Soest, Kreis;8914299;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05974;;29096;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;05978;Unna, Kreis;10657814;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;05978;;26701;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06411;Darmstadt, kreisfreie Stadt, Wissenschaftsstadt;4469054;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06411;;27331;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06412;Frankfurt am Main, kreisfreie Stadt;22800460;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06412;;29442;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06413;Offenbach am Main, kreisfreie Stadt;3077196;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06413;;22823;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06414;Wiesbaden, kreisfreie Stadt, Landeshauptstadt;9608305;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06414;;33796;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06415;Hanau, kreisfreie Stadt;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06415;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06431;Bergstraße, Landkreis;8215819;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06431;;29794;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06432;Darmstadt-Dieburg, Landkreis;9082464;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06432;;30150;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06433;Groß-Gerau, Landkreis;7333036;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06433;;26095;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06434;Hochtaunuskreis;9309576;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06434;;38714;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06435;Main-Kinzig-Kreis;12609839;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06435;;29161;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06436;Main-Taunus-Kreis;8186163;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06436;;33707;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06437;Odenwaldkreis;2640251;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06437;;27113;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06438;Offenbach, Landkreis;10730310;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06438;;29536;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06439;Rheingau-Taunus-Kreis;5921142;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06439;;31202;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06440;Wetteraukreis;9446930;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06440;;29714;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06531;Gießen, Landkreis;7110573;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06531;;25443;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06532;Lahn-Dill-Kreis;6916600;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06532;;26820;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06533;Limburg-Weilburg, Landkreis;4849492;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06533;;27666;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06534;Marburg-Biedenkopf, Landkreis;6501011;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06534;;25997;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06535;Vogelsbergkreis;2878851;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06535;;26952;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06611;Kassel, kreisfreie Stadt, documenta-Stadt;4972123;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06611;;24320;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06631;Fulda, Landkreis;6394041;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06631;;28034;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06632;Hersfeld-Rotenburg, Landkreis;3250756;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06632;;26765;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06633;Kassel, Landkreis;6580211;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06633;;27314;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06634;Schwalm-Eder-Kreis;4905918;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06634;;26801;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06635;Waldeck-Frankenberg, Landkreis;4305975;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06635;;27052;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;06636;Werra-Meißner-Kreis;2565223;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;06636;;25598;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07111;Koblenz, kreisfreie Stadt;3052160;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07111;;26475;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07131;Ahrweiler, Landkreis;3680773;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07131;;28655;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07132;Altenkirchen (Westerwald), Landkreis;3454153;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07132;;26230;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07133;Bad Kreuznach, Landkreis;4232270;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07133;;26193;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07134;Birkenfeld, Landkreis;2076574;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07134;;25374;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07135;Cochem-Zell, Landkreis;1655759;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07135;;26421;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07137;Mayen-Koblenz, Landkreis;5898134;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07137;;26981;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07138;Neuwied, Landkreis;6721749;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07138;;35794;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07140;Rhein-Hunsrück-Kreis;3016715;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07140;;28488;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07141;Rhein-Lahn-Kreis;3327788;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07141;;26710;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07143;Westerwaldkreis;5934787;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07143;;28740;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07211;Trier, kreisfreie Stadt;2938390;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07211;;26127;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07231;Bernkastel-Wittlich, Landkreis;3099611;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07231;;26932;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07232;Eifelkreis Bitburg-Prüm;2808749;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07232;;26997;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07233;Vulkaneifel, Landkreis;1658390;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07233;;26817;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07235;Trier-Saarburg, Landkreis;4404852;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07235;;28633;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07311;Frankenthal (Pfalz), kreisfreie Stadt;1250562;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07311;;25477;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07312;Kaiserslautern, kreisfreie Stadt;2293850;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07312;;22631;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07313;Landau in der Pfalz, kreisfreie Stadt;1257585;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07313;;26213;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07314;Ludwigshafen am Rhein, kreisfreie Stadt;4078824;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07314;;23283;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07315;Mainz, kreisfreie Stadt;6020247;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07315;;27153;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07316;Neustadt an der Weinstraße, kreisfreie Stadt;1700746;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07316;;31524;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07317;Pirmasens, kreisfreie Stadt;939145;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07317;;23011;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07318;Speyer, kreisfreie Stadt;1490138;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07318;;29055;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07319;Worms, kreisfreie Stadt;2098719;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07319;;24654;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07320;Zweibrücken, kreisfreie Stadt;849699;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07320;;24576;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07331;Alzey-Worms, Landkreis;3677917;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07331;;27657;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07332;Bad Dürkheim, Landkreis;4270257;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07332;;31719;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07333;Donnersbergkreis;1993312;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07333;;26177;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07334;Germersheim, Landkreis;3604150;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07334;;27483;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07335;Kaiserslautern, Landkreis;2755853;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07335;;25428;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07336;Kusel, Landkreis;1793013;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07336;;25147;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07337;Südliche Weinstraße, Landkreis;3242891;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07337;;28759;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07338;Rhein-Pfalz-Kreis;4989061;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07338;;31954;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07339;Mainz-Bingen, Landkreis;7788870;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07339;;36208;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;07340;Südwestpfalz, Landkreis;2633353;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;07340;;27747;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08111;Stuttgart, Stadtkreis;19875606;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08111;;31390;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08115;Böblingen, Landkreis;12437581;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08115;;31100;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08116;Esslingen, Landkreis;16824691;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08116;;31076;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08117;Göppingen, Landkreis;7890268;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08117;;30026;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08118;Ludwigsburg, Landkreis;17547974;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08118;;31769;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08119;Rems-Murr-Kreis, Landkreis;13304315;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08119;;30699;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08121;Heilbronn, Stadtkreis;5251989;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08121;;40646;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08125;Heilbronn, Landkreis;10719659;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08125;;30254;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08126;Hohenlohekreis, Landkreis;3488595;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08126;;30223;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08127;Schwäbisch Hall, Landkreis;5993658;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08127;;29413;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08128;Main-Tauber-Kreis, Landkreis;3891153;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08128;;28811;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08135;Heidenheim, Landkreis;3818032;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08135;;28229;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08136;Ostalbkreis, Landkreis;9748537;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08136;;30461;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08211;Baden-Baden, Stadtkreis;2011071;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08211;;35144;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08212;Karlsruhe, Stadtkreis;8805821;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08212;;28467;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08215;Karlsruhe, Landkreis;13706253;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08215;;30090;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08216;Rastatt, Landkreis;6706175;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08216;;28505;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08221;Heidelberg, Stadtkreis;5002761;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08221;;30764;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08222;Mannheim, Stadtkreis;8491278;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08222;;26853;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08225;Neckar-Odenwald-Kreis, Landkreis;4097832;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08225;;28109;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08226;Rhein-Neckar-Kreis, Landkreis;17429920;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08226;;31349;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08231;Pforzheim, Stadtkreis;3444654;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08231;;26823;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08235;Calw, Landkreis;4767196;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08235;;29185;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08236;Enzkreis, Landkreis;6285963;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08236;;30969;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08237;Freudenstadt, Landkreis;3702790;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08237;;30507;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08311;Freiburg im Breisgau, Stadtkreis;6428107;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08311;;27158;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08315;Breisgau-Hochschwarzwald, Landkreis;8265123;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08315;;30491;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08316;Emmendingen, Landkreis;4971364;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08316;;28955;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08317;Ortenaukreis, Landkreis;12573028;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08317;;28373;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08325;Rottweil, Landkreis;4295689;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08325;;30086;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08326;Schwarzwald-Baar-Kreis, Landkreis;6320017;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08326;;28993;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08327;Tuttlingen, Landkreis;4602777;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08327;;31632;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08335;Konstanz, Landkreis;8722747;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08335;;29733;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08336;Lörrach, Landkreis;7449099;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08336;;31838;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08337;Waldshut, Landkreis;5108052;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08337;;29369;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08415;Reutlingen, Landkreis;8783345;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08415;;30012;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08416;Tübingen, Landkreis;6876171;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08416;;29420;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08417;Zollernalbkreis, Landkreis;5925277;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08417;;30626;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08421;Ulm, Stadtkreis;4267997;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08421;;32974;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08425;Alb-Donau-Kreis, Landkreis;5999487;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08425;;29529;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08426;Biberach, Landkreis;6312480;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08426;;30442;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08435;Bodenseekreis, Landkreis;7252160;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08435;;32455;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08436;Ravensburg, Landkreis;8800211;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08436;;30135;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;08437;Sigmaringen, Landkreis;3831292;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;08437;;28559;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09161;Ingolstadt, kreisfreie Stadt;4057884;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09161;;28643;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09162;München, kreisfreie Stadt;57721567;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09162;;38190;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09163;Rosenheim, kreisfreie Stadt;1828540;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09163;;28219;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09171;Altötting, Landkreis;3340480;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09171;;29269;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09172;Berchtesgadener Land, Landkreis;3157674;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09172;;29240;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09173;Bad Tölz-Wolfratshausen, Landkreis;4294840;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09173;;33076;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09174;Dachau, Landkreis;5071604;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09174;;32222;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09175;Ebersberg, Landkreis;5158464;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09175;;35045;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09176;Eichstätt, Landkreis;4071219;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09176;;29918;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09177;Erding, Landkreis;4519084;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09177;;31800;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09178;Freising, Landkreis;5634857;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09178;;30400;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09179;Fürstenfeldbruck, Landkreis;7308225;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09179;;32880;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09180;Garmisch-Partenkirchen, Landkreis;2878051;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09180;;32413;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09181;Landsberg am Lech, Landkreis;4051373;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09181;;32759;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09182;Miesbach, Landkreis;4131851;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09182;;40748;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09183;Mühldorf a.Inn, Landkreis;3624569;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09183;;30128;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09184;München, Landkreis;13962268;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09184;;39090;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09185;Neuburg-Schrobenhausen, Landkreis;2933968;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09185;;29184;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09186;Pfaffenhofen a.d.Ilm, Landkreis;4128231;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09186;;31151;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09187;Rosenheim, Landkreis;8855914;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09187;;33085;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09188;Starnberg, Landkreis;6184920;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09188;;44520;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09189;Traunstein, Landkreis;5686589;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09189;;31371;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09190;Weilheim-Schongau, Landkreis;4428183;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09190;;31902;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09261;Landshut, kreisfreie Stadt;2367734;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09261;;31417;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09262;Passau, kreisfreie Stadt;1430177;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09262;;26409;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09263;Straubing, kreisfreie Stadt;1358944;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09263;;27470;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09271;Deggendorf, Landkreis;3865297;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09271;;31521;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09272;Freyung-Grafenau, Landkreis;2190555;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09272;;27573;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09273;Kelheim, Landkreis;3710017;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09273;;29417;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09274;Landshut, Landkreis;5061255;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09274;;30639;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09275;Passau, Landkreis;5505070;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09275;;27886;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09276;Regen, Landkreis;2165841;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09276;;27771;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09277;Rottal-Inn, Landkreis;3662769;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09277;;29379;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09278;Straubing-Bogen, Landkreis;3053118;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09278;;29361;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09279;Dingolfing-Landau, Landkreis;2984185;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09279;;29578;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09361;Amberg, kreisfreie Stadt;1155811;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09361;;27129;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09362;Regensburg, kreisfreie Stadt;4653750;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09362;;29370;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09363;Weiden i.d.OPf., kreisfreie Stadt;1169720;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09363;;27127;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09371;Amberg-Sulzbach, Landkreis;3005832;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09371;;28716;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09372;Cham, Landkreis;3770053;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09372;;28874;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09373;Neumarkt i.d.OPf., Landkreis;4251778;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09373;;30658;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09374;Neustadt a.d.Waldnaab, Landkreis;2694522;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09374;;28016;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09375;Regensburg, Landkreis;5998138;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09375;;30109;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09376;Schwandorf, Landkreis;4280186;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09376;;28159;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09377;Tirschenreuth, Landkreis;2246330;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09377;;31130;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09461;Bamberg, kreisfreie Stadt;2227355;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09461;;27752;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09462;Bayreuth, kreisfreie Stadt;2035888;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09462;;27252;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09463;Coburg, kreisfreie Stadt;1288875;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09463;;30694;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09464;Hof, kreisfreie Stadt;1193797;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09464;;25503;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09471;Bamberg, Landkreis;4340453;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09471;;29038;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09472;Bayreuth, Landkreis;3018940;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09472;;28814;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09473;Coburg, Landkreis;2562713;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09473;;29395;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09474;Forchheim, Landkreis;3643669;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09474;;30791;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09475;Hof, Landkreis;2613665;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09475;;27669;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09476;Kronach, Landkreis;1988434;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09476;;29972;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09477;Kulmbach, Landkreis;2128834;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09477;;29647;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09478;Lichtenfels, Landkreis;1887056;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09478;;27980;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09479;Wunsiedel i.Fichtelgebirge, Landkreis;2388813;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09479;;33183;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09561;Ansbach, kreisfreie Stadt;1141717;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09561;;27013;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09562;Erlangen, kreisfreie Stadt;3528885;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09562;;30114;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09563;Fürth, kreisfreie Stadt;4273042;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09563;;32437;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09564;Nürnberg, kreisfreie Stadt;14268636;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09564;;27201;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09565;Schwabach, kreisfreie Stadt;1342272;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09565;;32497;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09571;Ansbach, Landkreis;5641397;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09571;;29838;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09572;Erlangen-Höchstadt, Landkreis;5245619;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09572;;37136;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09573;Fürth, Landkreis;3895103;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09573;;32493;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09574;Nürnberger Land, Landkreis;5601171;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09574;;32414;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09575;Neustadt a.d.Aisch-Bad Windsheim, Landkreis;3009295;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09575;;29081;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09576;Roth, Landkreis;4077316;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09576;;31572;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09577;Weißenburg-Gunzenhausen, Landkreis;2735916;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09577;;28148;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09661;Aschaffenburg, kreisfreie Stadt;2168801;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09661;;29840;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09662;Schweinfurt, kreisfreie Stadt;1430704;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09662;;26074;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09663;Würzburg, kreisfreie Stadt;3750042;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09663;;29291;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09671;Aschaffenburg, Landkreis;5430527;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09671;;30680;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09672;Bad Kissingen, Landkreis;3060595;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09672;;29223;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09673;Rhön-Grabfeld, Landkreis;2875625;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09673;;35747;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09674;Haßberge, Landkreis;2468702;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09674;;28983;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09675;Kitzingen, Landkreis;2777086;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09675;;29691;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09676;Miltenberg, Landkreis;3832605;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09676;;29459;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09677;Main-Spessart, Landkreis;3758931;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09677;;29508;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09678;Schweinfurt, Landkreis;3369252;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09678;;28834;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09679;Würzburg, Landkreis;5035302;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09679;;30401;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09761;Augsburg, kreisfreie Stadt;7711945;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09761;;25528;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09762;Kaufbeuren, kreisfreie Stadt;1292728;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09762;;28049;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09763;Kempten (Allgäu), kreisfreie Stadt;1984207;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09763;;28191;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09764;Memmingen, kreisfreie Stadt;1405594;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09764;;30544;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09771;Aichach-Friedberg, Landkreis;4420719;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09771;;32041;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09772;Augsburg, Landkreis;8177146;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09772;;31156;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09773;Dillingen a.d.Donau, Landkreis;3046270;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09773;;30577;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09774;Günzburg, Landkreis;4019421;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09774;;30743;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09775;Neu-Ulm, Landkreis;5489203;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09775;;30241;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09776;Lindau (Bodensee), Landkreis;2614949;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09776;;31305;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09777;Ostallgäu, Landkreis;4448900;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09777;;30505;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09778;Unterallgäu, Landkreis;4788273;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09778;;31720;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09779;Donau-Ries, Landkreis;4481521;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09779;;32580;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;09780;Oberallgäu, Landkreis;4972955;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;09780;;31226;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;10041;Saarbrücken, Regionalverband;8301745;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;10041;;25033;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;10041100;Saarbrücken, Landeshauptstadt;.;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;10041100;;.;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;10042;Merzig-Wadern, Landkreis;2476683;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;10042;;23728;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;10043;Neunkirchen, Landkreis;3421765;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;10043;;25856;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;10044;Saarlouis, Landkreis;5255774;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;10044;;26836;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;10045;Saarpfalz-Kreis;4073297;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;10045;;28608;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;10046;St. Wendel, Landkreis;2469731;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;10046;;28399;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;11000;Berlin, kreisfreie Stadt;98774495;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;11000;;26209;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;11001001;Berlin-Mitte;.;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;11001001;;.;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;11002002;Berlin-Friedrichshain-Kreuzberg;.;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;11002002;;.;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;11003003;Berlin-Pankow;.;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;11003003;;.;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;11004004;Berlin-Charlottenburg-Wilmersdorf;.;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;11004004;;.;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;11005005;Berlin-Spandau;.;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;11005005;;.;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;11006006;Berlin-Steglitz-Zehlendorf;.;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;11006006;;.;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;11007007;Berlin-Tempelhof-Schöneberg;.;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;11007007;;.;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;11008008;Berlin-Neukölln;.;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;11008008;;.;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;11009009;Berlin-Treptow-Köpenick;.;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;11009009;;.;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;11010010;Berlin-Marzahn-Hellersdorf;.;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;11010010;;.;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;11011011;Berlin-Lichtenberg;.;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;11011011;;.;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;11012012;Berlin-Reinickendorf;.;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;11012012;;.;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12051;Brandenburg an der Havel, kreisfreie Stadt;1717051;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12051;;23277;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12052;Cottbus, kreisfreie Stadt;2438365;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12052;;24442;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12053;Frankfurt (Oder), kreisfreie Stadt;1314193;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12053;;22456;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12054;Potsdam, kreisfreie Stadt;5091758;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12054;;27311;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12060;Barnim, Landkreis;5230175;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12060;;27177;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12061;Dahme-Spreewald, Landkreis;4864272;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12061;;27083;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12062;Elbe-Elster, Landkreis;2480363;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12062;;24701;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12063;Havelland, Landkreis;4523025;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12063;;26615;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12064;Märkisch-Oderland, Landkreis;5353363;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12064;;26673;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12065;Oberhavel, Landkreis;6116159;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12065;;27966;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12066;Oberspreewald-Lausitz, Landkreis;2712574;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12066;;25139;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12067;Oder-Spree, Landkreis;4809810;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12067;;26329;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12068;Ostprignitz-Ruppin, Landkreis;2505351;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12068;;25079;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12069;Potsdam-Mittelmark, Landkreis;6598887;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12069;;29585;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12070;Prignitz, Landkreis;1908845;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12070;;25136;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12071;Spree-Neiße, Landkreis;2977671;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12071;;26532;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12072;Teltow-Fläming, Landkreis;4631196;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12072;;26082;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;12073;Uckermark, Landkreis;2872905;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;12073;;24383;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13001;Greifswald, Hansestadt, kreisfreie Stadt;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13001;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13002;Neubrandenburg, Stadt,  kreisfreie Stadt;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13002;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13003;Rostock, kreisfreie Stadt;5044146;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13003;;23979;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13004;Schwerin, kreisfreie Stadt;2401310;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13004;;24338;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13005;Stralsund, Hansestadt,  kreisfreie Stadt;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13005;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13006;Wismar, Hansestadt,  kreisfreie Stadt;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13006;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13051;Bad Doberan, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13051;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13052;Landkreis Demmin;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13052;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13053;Güstrow, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13053;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13054;Landkreis Ludwigslust;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13054;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13055;Mecklenburg-Strelitz, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13055;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13056;Landkreis Müritz;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13056;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13057;Nordvorpommern, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13057;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13058;Landkreis Nordwestmecklenburg;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13058;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13059;Ostvorpommern, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13059;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13060;Landkreis Parchim;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13060;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13061;Rügen, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13061;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13062;Landkreis Uecker-Randow;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13062;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13071;Mecklenburgische Seenplatte, Landkreis;6505013;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13071;;25073;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13072;Landkreis Rostock;5923586;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13072;;26789;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13073;Vorpommern-Rügen, Landkreis;5741043;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13073;;25212;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13074;Nordwestmecklenburg, Landkreis;4072480;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13074;;25414;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13075;Vorpommern-Greifswald, Landkreis;5717854;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13075;;24099;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;13076;Ludwigslust-Parchim, Landkreis;5839857;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;13076;;27275;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14161;Chemnitz, kreisfreie Stadt;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14161;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14166;Plauen, kreisfreie Stadt;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14166;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14167;Zwickau, kreisfreie Stadt;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14167;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14171;Annaberg, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14171;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14173;Chemnitzer Land, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14173;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14177;Freiberg, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14177;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14178;Vogtlandkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14178;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14181;Mittlerer Erzgebirgskreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14181;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14182;Mittweida, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14182;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14188;Stollberg, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14188;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14191;Aue-Schwarzenberg, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14191;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14193;Zwickauer Land, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14193;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14262;Dresden, kreisfreie Stadt;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14262;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14263;Görlitz, kreisfreie Stadt;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14263;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14264;Hoyerswerda, kreisfreie Stadt;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14264;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14272;Bautzen, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14272;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14280;Meißen, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14280;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14284;Niederschlesischer Oberlausitzkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14284;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14285;Riesa-Großenhain, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14285;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14286;Löbau-Zittau, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14286;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14287;Sächsische Schweiz, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14287;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14290;Weißeritzkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14290;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14292;Kamenz, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14292;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14365;Leipzig, kreisfreie Stadt;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14365;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14374;Delitzsch, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14374;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14375;Döbeln, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14375;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14379;Leipziger Land, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14379;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14383;Muldentalkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14383;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14389;Torgau-Oschatz, Landkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14389;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14511;Chemnitz, kreisfreie Stadt;6216620;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14511;;24904;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14521;Erzgebirgskreis;8481190;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14521;;25867;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14522;Mittelsachsen, Landkreis;7842792;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14522;;26101;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14523;Vogtlandkreis;5755857;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14523;;25891;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14524;Zwickau, Landkreis;8207501;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14524;;26435;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14612;Dresden, kreisfreie Stadt;14502630;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14612;;25679;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14625;Bautzen, Landkreis;7887945;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14625;;26549;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14626;Görlitz, Landkreis;6078261;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14626;;24403;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14627;Meißen, Landkreis;6593687;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14627;;27331;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14628;Sächsische Schweiz-Osterzgebirge, Landkreis;6562068;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14628;;26663;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14713;Leipzig, kreisfreie Stadt;14635635;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14713;;23683;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14729;Leipzig, Landkreis;7257905;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14729;;27808;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;14730;Nordsachsen, Landkreis;5222866;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;14730;;26146;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15001;Dessau-Roßlau, kreisfreie Stadt;2008807;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15001;;25214;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15002;Halle (Saale), kreisfreie Stadt;5533537;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15002;;22854;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15003;Magdeburg, kreisfreie Stadt, Landeshauptstadt;5815959;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15003;;24260;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15081;Altmarkkreis Salzwedel;2121926;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15081;;25829;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15082;Anhalt-Bitterfeld, Landkreis;3988142;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15082;;25412;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15083;Börde, Landkreis;4547816;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15083;;26566;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15084;Burgenlandkreis;4463316;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15084;;25189;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15085;Harz, Landkreis;5338385;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15085;;25470;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15086;Jerichower Land, Landkreis;2373906;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15086;;26352;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15087;Mansfeld-Südharz, Landkreis;3245684;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15087;;24672;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15088;Saalekreis;4827255;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15088;;26219;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15089;Salzlandkreis;4558924;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15089;;24552;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15090;Stendal, Landkreis;2743472;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15090;;24954;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15091;Wittenberg, Landkreis;3227733;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15091;;26121;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15101;Dessau, kreisfreie Stadt;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15101;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15151;Anhalt-Zerbst, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15151;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15153;Bernburg, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15153;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15154;Bitterfeld, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15154;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15159;Köthen, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15159;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15171;Wittenberg, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15171;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15202;Halle (Saale), kreisfreie Stadt;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15202;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15256;Burgenlandkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15256;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15260;Mansfelder Land, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15260;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15261;Merseburg-Querfurt, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15261;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15265;Saalkreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15265;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15266;Sangerhausen, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15266;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15268;Weißenfels, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15268;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15303;Magdeburg, kreisfreie Stadt;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15303;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15352;Aschersleben-Staßfurt, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15352;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15355;Bördekreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15355;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15357;Halberstadt, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15357;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15358;Jerichower Land, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15358;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15362;Ohrekreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15362;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15363;Stendal, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15363;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15364;Quedlinburg, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15364;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15367;Schönebeck, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15367;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15369;Wernigerode, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15369;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;15370;Altmarkkreis Salzwedel, Kreis;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;15370;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16051;Erfurt, kreisfreie Stadt;5442469;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16051;;25276;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16052;Gera, kreisfreie Stadt;2316064;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16052;;24576;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16053;Jena, kreisfreie Stadt;2881314;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16053;;25960;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16054;Suhl, kreisfreie Stadt;986863;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16054;;26673;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16055;Weimar, kreisfreie Stadt;1652449;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16055;;25184;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16056;Eisenach, kreisfreie Stadt;-;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16056;;-;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16061;Eichsfeld, Landkreis;2799566;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16061;;26595;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16062;Nordhausen, Landkreis;2022804;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16062;;24575;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16063;Wartburgkreis;4233427;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16063;;26593;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16064;Unstrut-Hainich-Kreis;2390173;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16064;;24664;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16065;Kyffhäuserkreis;1787731;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16065;;24338;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16066;Schmalkalden-Meiningen, Landkreis;3260675;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16066;;26379;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16067;Gotha, Landkreis;3426103;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16067;;25434;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16068;Sömmerda, Landkreis;1759071;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16068;;25299;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16069;Hildburghausen, Landkreis;1645749;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16069;;26705;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16070;Ilm-Kreis;2696707;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16070;;25256;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16071;Weimarer Land, Landkreis;2196258;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16071;;26449;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16072;Sonneberg, Landkreis;1471708;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16072;;25966;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16073;Saalfeld-Rudolstadt, Landkreis;2643211;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16073;;26101;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16074;Saale-Holzland-Kreis;2219762;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16074;;26603;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16075;Saale-Orla-Kreis;2040241;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16075;;25859;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16076;Greiz, Landkreis;2534197;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16076;;26406;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
+82000;;;;2023;KREISE;;16077;Altenburger Land, Landkreis;2271912;Tsd. EUR;EKM006;Verfügbares Einkommen der privaten Haushalte
+82000;;;;2023;KREISE;;16077;;25602;EUR/EW;EKM014;Verfügbares Einkommen je Einwohner
