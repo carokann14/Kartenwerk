@@ -61,6 +61,8 @@ function applyChartDefaults(base: Doc, d0: Doc, type: ChartType, dsId?: string, 
   const { chart } = chartState(d0, type, dsId);
   if (source) { chart.source = source; chart.type = type; }
   base.chart = chart; base.legend.visible = false; base.inset.visible = false; base.color = { mode: 'none' };
+  // Sitzverteilung: Beschriftung der Parteien als Legende (eigenes Element, unter dem Halbkreis); ohne Sitze erst, wenn Daten gewählt sind (initSeatLegend)
+  if (chart.type === 'sitze' && chartModel({ ...d0, chart } as Doc).seats) { chart.legendEl = true; base.legend.visible = true; base.legend.orientation = 'horizontal'; base.legend.size = chart.valueSize ?? 24; }
   const tx = chartTexts({ ...d0, chart } as Doc, chart);
   if (tx) { base.texts.title.text = tx.title; base.texts.subtitle.text = tx.subtitle; }
   else { base.texts.subtitle.text = 'Unterzeile: Was zeigt das Diagramm, welche Wahl, welcher Stand?'; }

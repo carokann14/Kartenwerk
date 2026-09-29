@@ -61,8 +61,8 @@ function Layers() {
       <Row lvl={2} s={{ kind: 'layer', id: 'water' }} icon={<Icon.layer />} name={<>Gewässer <small>Kontext</small></>} hidden={!L.lakes} extra={eye(L.lakes, on => update(d => { d.layers.lakes = on; }), 'Gewässer')} />
       <Row lvl={2} s={{ kind: 'layer', id: 'neighbors' }} icon={<Icon.layer />} name={<>Nachbarstaaten <small>Kontext</small></>} hidden={!L.neighbors} extra={eye(L.neighbors, on => update(d => { d.layers.neighbors = on; }), 'Nachbarstaaten')} />
       <Row lvl={1} s={{ kind: 'frame', id: 'inset' }} icon={<Icon.frame />} name={<>Inset „{insetLabel(doc)}“</>} hidden={!doc.inset.visible} extra={eye(doc.inset.visible, on => { update(d => { d.inset.visible = on; d.inset.autoHidden = false; }); refitAfterInset(); }, 'Inset')} />
-      <Row lvl={1} s={{ kind: 'el', id: 'legend' }} icon={<Icon.legend />} name="Legende" hidden={!doc.legend.visible} extra={eye(doc.legend.visible, on => update(d => { d.legend.visible = on; }), 'Legende')} />
       </>}
+      {(!chart || doc.chart?.type === 'sitze') && <Row lvl={1} s={{ kind: 'el', id: 'legend' }} icon={<Icon.legend />} name="Legende" hidden={!doc.legend.visible} extra={eye(doc.legend.visible, on => update(d => { d.legend.visible = on; }), 'Legende')} />}
       <Row lvl={1} s={{ kind: 'el', id: 'logo' }} icon={<Icon.image />} name={<>Logo{!doc.logo.asset && <small>keines geladen</small>}</>} hidden={!doc.logo.visible || !doc.logo.asset} extra={doc.logo.asset ? eye(doc.logo.visible, setLogoVisible, 'Logo') : null} />
       {doc.els.map(el => <Row key={el.id} lvl={1} s={{ kind: 'ann', id: el.id }} icon={el.type === 'marker' ? <MarkerIcon m={el} s={14} /> : el.type === 'arrow' ? <ArrowIcon /> : <Icon.text />} name={elName(el)} hidden={!!el.hidden} extra={eye(!el.hidden, on => update(d => { const x = d.els.find(q => q.id === el.id); if (x) x.hidden = !on; }), elName(el))} />)}
     </div>
@@ -321,7 +321,7 @@ function ChartFrameProps({ doc }: { doc: Doc }) {
   return <>
     <Head t="Diagramm" sub={CHART_LABEL[spec.type]} />
     <Section title="Darstellung">
-      <Field label={isLinie ? 'Schriftgröße Werte/Endbeschriftung (px)' : isSitze ? 'Schriftgröße Beschriftung (px)' : 'Schriftgröße Werte (px)'}><NumInput min={10} max={60} value={spec.valueSize ?? (isLinie || isSitze ? 24 : 28)} onChange={n => setC({ valueSize: n }, 'chart-valsize')} ariaLabel="Schriftgröße der Wertbeschriftung" /></Field>
+      <Field label={isLinie ? 'Schriftgröße Werte/Endbeschriftung (px)' : isSitze ? 'Schriftgröße Mitte und Mehrheit (px)' : 'Schriftgröße Werte (px)'}><NumInput min={10} max={60} value={spec.valueSize ?? (isLinie || isSitze ? 24 : 28)} onChange={n => setC({ valueSize: n }, 'chart-valsize')} ariaLabel="Schriftgröße der Wertbeschriftung" /></Field>
       {isSitze && <Field label="Form"><Seg items={[['punkte', 'Punkte'], ['ring', 'Halbring']] as ['punkte' | 'ring', string][]} value={spec.seatStyle || 'punkte'} onChange={v => setC({ seatStyle: v })} /></Field>}
       {isSitze && <Check checked={spec.majorityOn ?? true} onChange={on => setC({ majorityOn: on })}>Mehrheitsmarke</Check>}
       {!isLinie && !isSitze && <Field label="Abstand zwischen Balken (%)"><NumInput min={-30} max={80} step={5} value={Math.round((spec.gap ?? 0) * 100)} onChange={n => setC({ gap: n / 100 }, 'chart-gap')} ariaLabel="Abstand zwischen den Balken bzw. Säulen, negativ für enger als bisher" /></Field>}
@@ -330,7 +330,7 @@ function ChartFrameProps({ doc }: { doc: Doc }) {
       {(isBalken || isLinie) && <Field label="Schriftgröße Achse (px)"><NumInput min={8} max={40} value={spec.axisSize ?? 16} onChange={n => setC({ axisSize: n }, 'chart-axsize')} ariaLabel="Schriftgröße der Achsenbeschriftung" /></Field>}
       {isBalken && <Field label="Abstand Achse (px)"><NumInput min={0} max={60} value={spec.axisGap ?? 20} onChange={n => setC({ axisGap: n }, 'chart-axgap')} ariaLabel="Abstand der Achsenbeschriftung zu den Balken" /></Field>}
     </Section>
-    <p className="hint">{isSitze ? 'Daten, Koalition und Reihenfolge der Parteien stehen im Schritt „Diagramm“.' : `Art, Daten und Farben je ${isLinie ? 'Linie' : 'Balken'} stehen im Schritt „Diagramm“.`}</p>
+    <p className="hint">{isSitze ? 'Daten, Sitze, Koalition und Reihenfolge der Parteien stehen im Schritt „Diagramm“; die Parteien mit Sitzen stehen in der Legende.' : `Art, Daten und Farben je ${isLinie ? 'Linie' : 'Balken'} stehen im Schritt „Diagramm“.`}</p>
   </>;
 }
 

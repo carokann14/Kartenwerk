@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { areaRowIndex, colIndex } from '../data/derive';
 import { fmtNum } from '../lib/util';
 import { HATCH_PRESETS } from '../model/defaults';
+import { isChart } from '../model/graphicKeys';
 import {
   addColumnRule, addExtra, addHatch, assignHatch, clearAssignments, moveEntry, removeExtra, removeHatch, removeRule,
   resetLegendEdits, setEntryLabel, setNoDataHatch, toggleEntry, updateExtra, updateHatch, updateRule,
@@ -144,7 +145,7 @@ export function AreaHatch({ doc, ids }: { doc: Doc; ids: string[] }) {
 
 // ---------- Legende bearbeiten ----------
 function LegRow({ doc, e, section }: { doc: Doc; e: LegEntry; section: LegEntry[] }) {
-  const setColor = entryColorSetter(e.target);
+  const setColor = entryColorSetter(e.target), fixed = e.target?.type === 'bar';   // Sitzverteilung: Reihenfolge wie im Halbkreis
   const keys = section.map(x => x.key), k = keys.indexOf(e.key);
   const x = e.key.startsWith('x:') ? doc.legend.extra.find(q => 'x:' + q.id === e.key) : null;
   return (
@@ -154,8 +155,8 @@ function LegRow({ doc, e, section }: { doc: Doc; e: LegEntry; section: LegEntry[
         : <span className="leg-sw" />}
       <input type="text" value={x ? x.label : doc.legend.labels[e.key] ?? ''} placeholder={e.auto} onChange={ev => setEntryLabel(e.key, ev.target.value, x ? '' : e.auto)} aria-label={'Text für ' + e.auto} />
       <span className="leg-btns">
-        <button className="btn icon ghost small" disabled={k <= 0} onClick={() => moveEntry(keys, e.key, -1)} aria-label="nach oben" title="nach oben">↑</button>
-        <button className="btn icon ghost small" disabled={k >= keys.length - 1} onClick={() => moveEntry(keys, e.key, 1)} aria-label="nach unten" title="nach unten">↓</button>
+        {!fixed && <button className="btn icon ghost small" disabled={k <= 0} onClick={() => moveEntry(keys, e.key, -1)} aria-label="nach oben" title="nach oben">↑</button>}
+        {!fixed && <button className="btn icon ghost small" disabled={k >= keys.length - 1} onClick={() => moveEntry(keys, e.key, 1)} aria-label="nach unten" title="nach unten">↓</button>}
         <button className="btn icon ghost small" onClick={() => toggleEntry(e.key)} aria-label={e.hidden ? 'einblenden' : 'ausblenden'} title={e.hidden ? 'einblenden' : 'ausblenden'}>{e.hidden ? <Icon.eyeOff /> : <Icon.eye />}</button>
         {x && <button className="btn icon ghost small danger" onClick={() => removeExtra(x.id)} aria-label="Eintrag entfernen" title="Eintrag entfernen"><Icon.trash /></button>}
       </span>
@@ -169,13 +170,13 @@ function LegRow({ doc, e, section }: { doc: Doc; e: LegEntry; section: LegEntry[
 
 export function LegendProps({ doc }: { doc: Doc }) {
   const M = legendModel(doc), lg = doc.legend, v = activeVariant(doc);
-  const isMatrix = M?.main === 'matrix';
+  const isMatrix = M?.main === 'matrix', seats = isChart(doc) && doc.chart?.type === 'sitze';
   const hasScale = isMatrix || M?.main === 'bar';   // Klassen-Legende mit Zahlen (Anteil, Wert, Stärke, Veränderung), nicht Sieger/Kategorie
   return (
     <>
       <div className="rp-head"><h2>Eigenschaften</h2></div>
       <h3 className="props-title">Legende</h3>
-      <p className="props-sub">aus der Färbung erzeugt, Texte und Reihenfolge änderbar</p>
+      <p className="props-sub">{seats ? 'aus der Sitzverteilung erzeugt, Texte änderbar; die Reihenfolge folgt dem Halbkreis' : 'aus der Färbung erzeugt, Texte und Reihenfolge änderbar'}</p>
       <Field stack label="Titel" htmlFor="p-lt"><input type="text" id="p-lt" value={lg.title} placeholder={M?.titleAuto || ''} onChange={e => { const val = e.target.value; update(d => { d.legend.title = val; }, { key: 'lg-title' }); }} /></Field>
       {isMatrix && <Check checked={lg.simple} onChange={on => update(d => { d.legend.simple = on; })}>Ein Kasten je Partei, ohne Abstufung in der Legende</Check>}
       {isMatrix && lg.simple && <p className="hint">Die Karte zeigt weiterhin alle Abstufungen nach Stärke; nur die Legende wird auf einen Kasten je Partei vereinfacht.</p>}
@@ -185,14 +186,15 @@ export function LegendProps({ doc }: { doc: Doc }) {
       {M?.main === 'bar' && lg.orientation !== 'vertical' && <p className="hint">Bei „Neben“/„Raster“ bekommt jede Klasse eine eigene Bereichsbeschriftung statt der gemeinsamen Skala darunter.</p>}
       {lg.orientation === 'horizontal' && <Field label="Breite (px)"><NumInput min={0} max={v.w} value={Math.round(v.L.legend.w)} onChange={n => update(d => { d.variants[d.active].L.legend.w = n; }, { key: 'w-legend' })} ariaLabel="Breite der Legende, 0 = automatisch" /></Field>}
       {lg.orientation === 'horizontal' && <p className="hint">Bestimmt, wann bei „Neben“ eine neue Zeile beginnt; 0 = automatisch (richtet sich nach der Kartenbreite). Die Höhe folgt immer aus der Anzahl der Zeilen und lässt sich nicht einzeln setzen. Auch per Ziehgriff an der Legende selbst einstellbar, wenn sie ausgewählt ist.</p>}
-      <Check checked={lg.counts} onChange={on => update(d => { d.legend.counts = on; })}>Anzahl der Gebiete zeigen</Check>
+      <Check checked={lg.counts} onChange={on => update(d => { d.legend.counts = on; })}>{seats ? 'Zahl der Sitze zeigen' : 'Anzahl der Gebiete zeigen'}</Check>
       <Field label="Größe (px)"><NumInput min={9} max={40} value={lg.size} onChange={n => update(d => { d.legend.size = n; }, { key: 'lg-size' })} ariaLabel="Schriftgröße der Legende" /></Field>
       {hasScale && <Check checked={lg.unitOn} onChange={on => update(d => { d.legend.unitOn = on; if (on && !d.legend.unit) d.legend.unit = '%'; })}>Zeichen hinter den Werten zeigen (z. B. %)</Check>}
       {hasScale && lg.unitOn && <Field stack label="Zeichen" htmlFor="p-unit"><input type="text" id="p-unit" value={lg.unit} placeholder="%" maxLength={8} onChange={e => { const val = e.target.value; update(d => { d.legend.unit = val; }, { key: 'lg-unit' }); }} aria-label="Zeichen hinter den Werten, z. B. %, € oder $" /></Field>}
-      {!M && <Note>Die Legende erscheint, sobald eine Färbung mit Daten aktiv ist.</Note>}
+      {!M && <Note>{seats ? 'Die Legende erscheint, sobald die Sitzverteilung Daten hat.' : 'Die Legende erscheint, sobald eine Färbung mit Daten aktiv ist.'}</Note>}
       {M && M.rows.length > 0 && <Section title={M.main === 'matrix' ? 'Parteien' : 'Einträge'} aside="Farbe · Text · Reihenfolge">
         <div className="leg-list">{M.rows.map(e => <LegRow key={e.key} doc={doc} e={e} section={M.rows} />)}</div>
         {M.rows.some(e => e.target?.type === 'party') && <p className="hint">Parteifarben gelten im ganzen Projekt, auch für die Karte.</p>}
+        {seats && <p className="hint">Farbe und Text gelten für diese Sitzverteilung. Die Sitze ändern sich im Schritt „Diagramm“, die Reihenfolge dort per Ziehen.</p>}
       </Section>}
       {M && <Section title="Weitere Einträge">
         {M.more.length > 0 && <div className="leg-list">{M.more.map(e => <LegRow key={e.key} doc={doc} e={e} section={M.more} />)}</div>}

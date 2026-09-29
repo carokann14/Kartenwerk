@@ -103,6 +103,8 @@ export interface ChartSpec {
   majorityOn?: boolean;            // Mehrheitsmarke; ungesetzt = an
   coalition?: string[];            // hervorgehobene Parteien (Schlüssel wie Bar.key); leer/ungesetzt = keine Koalition
   seatOrder?: string[];            // eigene Reihenfolge von links nach rechts (Schlüssel); fehlende nach politischer Ordnung
+  seatEdit?: Record<string, number>;   // Sitze von Hand je Partei (Schlüssel wie Bar.key); überschreibt Tabelle bzw. Rechner, ungesetzt = wie berechnet
+  legendEl?: boolean;              // Beschriftung der Parteien ist die Legende der Grafik (eigenes Element); ältere Projekte zeichneten sie unter den Halbkreis
 }
 export interface GraphicMeta { id: string; name: string; kind: GraphicKind }
 export interface Doc {

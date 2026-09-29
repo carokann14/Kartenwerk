@@ -2,7 +2,7 @@
 import { current, Draft } from 'immer';
 import { getDoc, getUI, setDoc, setUI, toast, update } from './store';
 import { defaultDoc, normalizeDoc } from './defaults';
-import { fitInset, fitMain, makeVariant, relayout } from './layout';
+import { ensureSeatLegend, fitInset, fitMain, initSeatLegend, makeVariant, relayout } from './layout';
 import type { ChartSource, ColorRule, Doc, Fokus, Variant, View } from './types';
 import { isChart } from './graphicKeys';
 import { chartTexts, defaultSource, typeFor } from '../render/chartSource';
@@ -52,11 +52,23 @@ export function newProject(geoSet = 'btw-wk-2025', name = 'Neues Projekt') {
   d.variants = [v0];
   setDoc(d); setUI({ start: false, sel: { kind: 'graphic' }, mapMode: null, step: 'gebiete', panelOpen: true });
 }
+/** Projekte aus der Zeit, als die Parteien noch unter dem Halbkreis beschriftet wurden: jede Sitzverteilung bekommt ihre Legende als eigenes Element (Layout neu). */
+function migrateSeatLegends(d: Doc): Doc {
+  d.graphics.forEach((g, k) => {
+    if (g.kind !== 'chart') return;
+    const snap = k === d.page ? d : d.pageData[g.id]; if (!snap || snap.chart?.type !== 'sitze' || snap.chart.legendEl) return;
+    if (k === d.page) { initSeatLegend(d, true); return; }
+    const flat = JSON.parse(JSON.stringify({ ...d, ...snap, graphics: [g], page: 0, pageData: {} })) as Doc;
+    if (!initSeatLegend(flat, true)) return;
+    d.pageData[g.id] = { ...snap, chart: flat.chart, legend: flat.legend, variants: flat.variants };
+  });
+  return d;
+}
 export async function openDoc(d0: Doc) {
   await loadGeoSets([d0.geoSet, ...(d0.datasets || []).map(x => x.geoSet), ...(d0.overlays || []).map(o => o.geoSet), ...(d0.regions || []).map(r => r.base)]);
   syncUserGeo(d0); syncRegions(d0);
   if (!GEO[d0.geoSet]) throw new Error('Unbekannter Gebietsstand: ' + d0.geoSet);
-  const d = normalizeDoc(d0);
+  const d = migrateSeatLegends(normalizeDoc(d0));
   setDoc(d); setUI({ start: false, sel: { kind: 'graphic' }, mapMode: null });
 }
 export function setFokus(f: Fokus) {
@@ -186,6 +198,7 @@ export function addDataset(ds: Dataset, useIt = true) {
           d.chart.source = src as Draft<ChartSource>; d.chart.type = typeFor(src, d.chart.type);
           const tx = chartTexts(current(d) as Doc, current(d).chart!);
           if (tx && /^Titel der Grafik/.test(d.texts.title.text)) { d.texts.title.text = tx.title; d.texts.subtitle.text = tx.subtitle; }
+          ensureSeatLegend(d);
         }
       }
     });

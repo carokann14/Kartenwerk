@@ -1,8 +1,10 @@
 // Layout der Formatvarianten und Einpassen der Kartenausschnitte
+import { current, Draft } from 'immer';
 import { clamp, uid } from '../lib/util';
 import type { BBox } from '../lib/util';
 import { GEO, bboxOfIds } from '../geo/geo';
 import { legendPrims, textBlock } from '../render/elements';
+import { chartModel } from '../render/chart';
 import { fokusBBox, insetBBox } from '../render/scene';
 import { PRESET_GUIDES, PRESETS } from './defaults';
 import { PRESET_LOGO_BOX, defaultLogoBox, logoRatio } from './logo';
@@ -85,6 +87,15 @@ export function makeLayout(doc: Doc, W: number, H: number, ts: number, guides?: 
     L.main = { ...blank, x: mL, y, w: tw, h: Math.max(200, bottom - y) };
     L.inset = { ...blank, x: W - mR - 100, y, w: 100, h: 100 };
     L.legend = { x: mL, y, w: 0 };
+    // Sitzverteilung: die Legende ist ein eigenes Element und steht mittig unter dem Halbkreis; Halbkreis und Legende teilen sich die Fläche
+    const sl = doc.chart?.type === 'sitze' ? legendPrims(doc, { x: 0, y: 0 }, tw, ts) : null;
+    if (sl) {
+      const gapL = Math.round(20 * s), avail = L.main.h, lab = Math.round((doc.chart!.valueSize ?? 24) * ts), majH = doc.chart!.majorityOn !== false ? Math.round(lab * 1.7) : 0, pad = Math.round(6 * ts);
+      const R = Math.max(20, Math.min(tw / 2, avail - sl.box.h - gapL - majH - pad));
+      const mainH = Math.min(avail, Math.round(majH + R + pad)), off = Math.max(0, Math.round((avail - mainH - gapL - sl.box.h) * 0.35));   // etwas über der Mitte der freien Fläche
+      L.main.y += off; L.main.h = mainH;
+      L.legend = { x: mL + Math.round((tw - sl.box.w) / 2), y: L.main.y + L.main.h + gapL, w: 0 };
+    }
   } else if (tall) {
     const tw = W - mL - mR;
     L.title = { x: mL, y: mT, w: tw };
@@ -136,5 +147,22 @@ export function makeVariant(doc: Doc, preset: string, w?: number, h?: number, gu
   const v: Variant = { id: uid('v'), preset, w: W, h: H, ts, L: makeLayout(doc, W, H, ts, g), labelOffsets: {}, locked: { main: false, inset: false }, ann: {}, guides: g };
   fitMain(doc, v); fitInset(doc, v);
   return v;
+}
+/** Sitzverteilung: die Beschriftung der Parteien wird zur Legende (eigenes Element), sobald die Sitze bekannt sind – einmal je Grafik.
+ *  Für neue Grafiken (ohne Layout, relayoutVariants = false), für ältere Projekte und beim Wechsel der Art (Layout neu). */
+export function initSeatLegend(doc: Doc, relayoutVariants: boolean): boolean {
+  const c = doc.chart;
+  if (!isChart(doc) || !c || c.type !== 'sitze' || c.legendEl || !chartModel(doc).seats) return false;
+  c.legendEl = true;
+  doc.legend.visible = true; doc.legend.orientation = 'horizontal'; doc.legend.size = c.valueSize ?? 24;
+  if (relayoutVariants) doc.variants.forEach(v => relayout(doc, v));
+  return true;
+}
+/** Wie initSeatLegend für Änderungen im Store (Entwurf): überall dort aufrufen, wo einem Diagramm Daten oder die Art „Sitze“ zugewiesen werden. */
+export function ensureSeatLegend(d: Draft<Doc>): void {
+  if (d.chart?.type !== 'sitze' || d.chart.legendEl || !isChart(d as unknown as Doc)) return;
+  const cur = current(d) as unknown as Doc;
+  const probe = { ...cur, chart: { ...cur.chart! }, legend: { ...cur.legend }, variants: JSON.parse(JSON.stringify(cur.variants)) } as Doc;
+  if (initSeatLegend(probe, true)) { d.chart = probe.chart as never; d.legend = probe.legend as never; d.variants = probe.variants as never; }
 }
 export function relayout(doc: Doc, v: Variant) { v.L = makeLayout(doc, v.w, v.h, v.ts, v.guides); fitMain(doc, v); fitInset(doc, v); }

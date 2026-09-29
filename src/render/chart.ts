@@ -19,8 +19,11 @@ export interface LinePoint { period: string; value: number | null }
 export interface LineSeries { key: string; label: string; color: string; party: string | null; points: LinePoint[]; auto?: string }
 /** Partei in der Sitzverteilung (M9) */
 export interface SeatGroup { key: string; label: string; color: string; party: string | null; seats: number; share: number | null; auto?: string }
+/** Partei der Quelle, auch ohne Sitze (für die Eingabe von Hand); auto = Sitze ohne Handeingabe */
+export interface SeatParty { key: string; label: string; party: string | null; color: string; auto: number; seats: number }
 export interface SeatModel {
   groups: SeatGroup[];              // in Sitzordnung von links nach rechts (Koalition zuerst)
+  parties: SeatParty[];             // alle Parteien der Quelle: erst die mit Sitzen (wie groups), dann die übrigen
   total: number; majority: number;
   calc: SeatCalc | null;            // gesetzt = Projektion aus Anteilen
   below: { label: string; share: number }[];   // Projektion: an der Hürde gescheitert
@@ -100,7 +103,8 @@ export function chartModel(doc: Doc): ChartModel {
   if (m.seats) {
     const groups = m.seats.groups.map(g => ({ ...g, auto: g.label, color: bc?.[g.key] ?? g.color, label: bl?.[g.key] ?? g.label }));
     const bars: Bar[] = groups.map(g => ({ key: g.key, label: g.label, value: g.seats, cmp: null, color: g.color, party: g.party, auto: g.auto }));
-    return { ...m, seats: { ...m.seats, groups }, bars };
+    const parties = m.seats.parties.map(p => ({ ...p, color: bc?.[p.key] ?? p.color, label: bl?.[p.key] ?? p.label }));
+    return { ...m, seats: { ...m.seats, groups, parties }, bars };
   }
   if (m.lines && m.lines.length) {
     const lines = m.lines.map(l => ({ ...l, auto: l.label, color: bc?.[l.key] ?? l.color, label: bl?.[l.key] ?? l.label }));
@@ -225,23 +229,14 @@ function chartModelRaw(doc: Doc): ChartModel {
 }
 
 // ---------- Sitzverteilung (M9) ----------
-/** Halbkreis (Punkte oder Ring), Mehrheitsmarke, Zahl in der Mitte, Parteien mit Sitzen darunter */
+/** Halbkreis (Punkte oder Ring), Mehrheitsmarke, Zahl in der Mitte. Die Parteien mit Sitzen stehen in der Legende (eigenes Element, legendPrims). */
 function seatPrims(S: SeatModel, spec: ChartSpec, doc: Doc, F: { x: number; y: number; w: number; h: number }, ts: number, out: Prims & { paths: PathPrim[] }): Prims {
   const { texts, rects, paths } = out;
   const ink = doc.style.ink, soft = doc.style.inkSoft;
-  const lab = Math.round((spec.valueSize ?? 24) * ts), gap = Math.round(18 * ts);
+  const lab = Math.round((spec.valueSize ?? 24) * ts), gap = Math.round(6 * ts);
   const coal = S.coalition, dim = (g: SeatGroup) => (coal && !coal.keys.includes(g.key) ? mixWhite(g.color, 0.72) : g.color);
-  // Beschriftung unten: ■ Partei Sitze, in Zeilen umbrochen, zentriert
-  const sq = Math.round(lab * 0.72), itemGap = Math.round(lab * 1.1);
-  const items = S.groups.map(g => { const n = String(g.seats), wn = measureW(g.label, 'text', lab), ws = measureW(n, 'bold', lab); return { g, n, wn, ws, w: sq + 6 + wn + 6 + ws }; });
-  const lines: (typeof items)[] = [];
-  for (const it of items) { const L = lines[lines.length - 1]; if (L && L.reduce((a, x) => a + x.w + itemGap, 0) + it.w <= F.w) L.push(it); else lines.push([it]); }
-  const lineH = Math.round(lab * 1.55);
-  const note = S.calc && S.below.length ? `Unter ${fmtN(S.calc.threshold)} %: ${S.below.slice(0, 6).map(b => `${b.label} ${fmtN(b.share)} %`).join(', ')}` : '';
-  const noteSize = Math.round(lab * 0.78);
-  const legendH = lines.length * lineH + (note ? noteSize * 1.8 : 0);
   const majH = spec.majorityOn !== false ? Math.round(lab * 1.7) : 0;
-  const R = Math.max(20, Math.min(F.w / 2, F.h - legendH - majH - gap));
+  const R = Math.max(20, Math.min(F.w / 2, F.h - majH - gap));
   const cx = F.x + F.w / 2, cy = F.y + majH + R;
   const P = (a: number, r: number) => [cx + r * R * Math.cos(a), cy - r * R * Math.sin(a)] as const;
   const f = (n: number) => n.toFixed(1);
@@ -282,21 +277,6 @@ function seatPrims(S: SeatModel, spec: ChartSpec, doc: Doc, F: { x: number; y: n
   const big = Math.round(Math.min(lab * 2.6, R * inner * 0.62)), sub = Math.round(Math.min(lab * 0.85, R * inner * 0.22));
   texts.push({ x: cx, y: cy - sub * 1.5, text: String(coal ? coal.seats : S.total), cut: 'display', size: big, color: ink, anchor: 'middle' });
   texts.push({ x: cx, y: cy - 2, text: coal ? `von ${S.total} Sitzen · ${coal.reached ? 'Mehrheit' : `${S.majority - coal.seats} fehlen`}` : 'Sitze', cut: 'text', size: sub, color: soft, anchor: 'middle' });
-  // Beschriftung unten
-  let y = cy + gap + lab;
-  for (const L of lines) {
-    const w = L.reduce((a, x) => a + x.w, 0) + itemGap * (L.length - 1);
-    let x = cx - w / 2;
-    for (const it of L) {
-      rects.push({ x, y: y - sq + Math.round(lab * 0.08), w: sq, h: sq, fill: dim(it.g) });
-      const c = coal && !coal.keys.includes(it.g.key) ? soft : ink;
-      texts.push({ x: x + sq + 6, y, text: it.g.label, cut: 'text', size: lab, color: c, anchor: 'start' });
-      texts.push({ x: x + sq + 6 + it.wn + 6, y, text: it.n, cut: 'bold', size: lab, color: c, anchor: 'start' });
-      x += it.w + itemGap;
-    }
-    y += lineH;
-  }
-  if (note) texts.push({ x: cx, y: y - lineH + noteSize * 1.9, text: note, cut: 'text', size: noteSize, color: soft, anchor: 'middle' });
   return out;
 }
 function seatModel(doc: Doc, spec: ChartSpec, src: Extract<NonNullable<ChartSpec['source']>, { kind: 'sitze' }>, ds0: Dataset, base: ChartModel): ChartModel {
@@ -326,9 +306,13 @@ function seatModel(doc: Doc, spec: ChartSpec, src: Extract<NonNullable<ChartSpec
     seats = sainteLague(passed.map(x => ({ key: x.key, v: x.v })), Math.max(0, Math.round(calc.seats)));
     below = list.filter(x => !x.other && shareOf(x) < calc.threshold && shareOf(x) >= 0.5).sort((a, b) => b.v - a.v).map(x => ({ label: x.label, share: shareOf(x) }));
   } else for (const x of list) seats.set(x.key, Math.round(x.v));
+  // Sitze von Hand (Bedienfeld „Sitze“) überschreiben Tabelle bzw. Rechner; auto = Wert ohne Handeingabe
+  const auto = new Map(seats), edit = spec.seatEdit || {};
+  for (const x of list) { const n = edit[x.key]; if (typeof n === 'number' && isFinite(n) && n >= 0) seats.set(x.key, Math.round(n)); }
+  const colorFor = (x: P) => (x.party ? partyColor(doc, x.party) : x.other ? OTHER_GREY : doc.categoryColors[x.label] || spec.color);
   let groups: SeatGroup[] = list.filter(x => (seats.get(x.key) || 0) > 0).map(x => ({
     key: x.key, label: x.label, party: x.party, seats: seats.get(x.key)!, share: calc ? shareOf(x) : null,
-    color: x.party ? partyColor(doc, x.party) : x.other ? OTHER_GREY : doc.categoryColors[x.label] || spec.color,
+    color: colorFor(x),
   }));
   if (!groups.length) return { ...base, dataset: ds, empty: calc ? `Keine Partei über der ${fmtN(calc.threshold)}-%-Hürde.` : 'Keine Sitze.' };
   // Reihenfolge: eigene (seatOrder), sonst politisch links → rechts; eine Koalition steht links beisammen
@@ -343,8 +327,13 @@ function seatModel(doc: Doc, spec: ChartSpec, src: Extract<NonNullable<ChartSpec
     const cs = groups.filter(g => ck.includes(g.key)).reduce((a, g) => a + g.seats, 0);
     coalition = { keys: ck, seats: cs, reached: cs >= majority };
   }
-  return { ...base, dataset: ds, seats: { groups, total, majority, calc, below, coalition }, bars: [], unit: '' };
+  const at = new Map(groups.map((g, i) => [g.key, i]));
+  const parties: SeatParty[] = list.map(x => ({ key: x.key, label: x.label, party: x.party, color: colorFor(x), auto: auto.get(x.key) || 0, seats: seats.get(x.key) || 0 }))
+    .sort((a, b) => (at.get(a.key) ?? 1e6) - (at.get(b.key) ?? 1e6) || b.auto - a.auto);
+  return { ...base, dataset: ds, seats: { groups, parties, total, majority, calc, below, coalition }, bars: [], unit: '' };
 }
+/** Hinweis unter der Legende: bei der Projektion die an der Hürde gescheiterten Parteien */
+export const seatNote = (S: SeatModel) => (S.calc && S.below.length ? `Unter ${fmtN(S.calc.threshold)} %: ${S.below.slice(0, 6).map(b => `${b.label} ${fmtN(b.share)} %`).join(', ')}` : '');
 const fmtN = (v: number) => v.toLocaleString('de-DE', { maximumFractionDigits: 1 });
 
 // ---------- Zeichnen ----------

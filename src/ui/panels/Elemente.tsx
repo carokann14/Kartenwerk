@@ -27,7 +27,7 @@ export function PanelElemente() {
         {row('title', 'Titel', t.title.visible, v => update(d => { d.texts.title.visible = v; }))}
         {row('subtitle', 'Unterzeile', t.subtitle.visible, v => update(d => { d.texts.subtitle.visible = v; }))}
         {row('source', 'Quellenzeile', t.source.visible, v => update(d => { d.texts.source.visible = v; }), <small className="dim"> Pflicht</small>)}
-        {!chart && row('legend', 'Legende', doc.legend.visible, v => update(d => { d.legend.visible = v; }))}
+        {(!chart || doc.chart?.type === 'sitze') && row('legend', 'Legende', doc.legend.visible, v => update(d => { d.legend.visible = v; }))}
         <LogoRow doc={doc} />
         {!t.source.visible && <Note kind="warn">Ohne Quellenzeile fehlt der lizenzrechtlich nötige Quellenvermerk. Kopiere ihn dann im Schritt „Export“ in die Bildunterschrift.</Note>}
       </Section>

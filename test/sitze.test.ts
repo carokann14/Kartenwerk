@@ -5,17 +5,21 @@ const assets: Record<string, string> = {};
 for (const f of fs.readdirSync('public/data')) assets['data/' + f] = fs.readFileSync('public/data/' + f, 'utf8');
 for (const f of fs.readdirSync('public/katalog')) assets['katalog/' + f] = f.endsWith('.json') ? fs.readFileSync('public/katalog/' + f, 'utf8') : fs.readFileSync('public/katalog/' + f).toString('base64');
 (globalThis as unknown as { window: unknown }).window = { __KW_ASSETS__: assets };
-const { loadGeo } = await import('../src/geo/geo');
+const { loadGeo, ensureGeo } = await import('../src/geo/geo');
 const { sainteLague, seatLayout } = await import('../src/render/seats');
 const { chartModel, chartPrims, defaultChart } = await import('../src/render/chart');
 const { defaultSource, chartTexts } = await import('../src/render/chartSource');
 const { defaultDoc } = await import('../src/model/defaults');
+const { legendModel } = await import('../src/render/legend');
+const { legendPrims } = await import('../src/render/elements');
+const { makeVariant, initSeatLegend } = await import('../src/model/layout');
 const { suggestFor } = await import('../src/model/suggest');
 const { tableDataset } = await import('../src/ui/TableEditor');
 const { loadKatalog, importKatalog } = await import('../src/data/katalog');
 type Doc = ReturnType<typeof defaultDoc>;
 const ok = (c: boolean, m: string) => { console.log((c ? 'ok: ' : 'FEHLER: ') + m); if (!c) process.exitCode = 1; };
 await loadGeo();
+await ensureGeo(['vg-lan-2026']);
 
 // ---------- Sainte-Laguë ----------
 {
@@ -36,7 +40,7 @@ for (const n of [1, 3, 7, 20, 100, 138, 630, 736]) {
 
 // ---------- Tabelle mit Sitzen: Bundestag 2025 ----------
 const bt = tableDataset('Bundestag 2025: Sitze', ['Partei', 'Sitze'], [['CDU/CSU', '208'], ['AfD', '152'], ['SPD', '120'], ['Grüne', '85'], ['Die Linke', '64'], ['SSW', '1']]);
-const doc0 = { ...defaultDoc('vg-krs-2025'), datasets: [bt] } as Doc;
+const doc0 = { ...defaultDoc('vg-lan-2026'), datasets: [bt] } as Doc;
 const src = defaultSource(doc0, bt, 'sitze')!;
 ok(src.kind === 'sitze' && src.from === 'tabelle' && !src.calc, `Spalte „Sitze“ wird direkt übernommen: ${JSON.stringify(src)}`);
 const spec = { ...defaultChart('sitze'), source: src };
@@ -77,7 +81,7 @@ const spec = { ...defaultChart('sitze'), source: src };
   const dots = (P.paths || []).filter(p => p.fill !== 'none').reduce((a, p) => a + (p.d.match(/a/g) || []).length / 2, 0);
   ok(dots === 630, `Punkte: ${dots} Kreise in ${(P.paths || []).filter(p => p.fill !== 'none').length} Pfaden (einer je Partei)`);
   ok(P.texts.some(t => t.text === 'Mehrheit: 316') && P.texts.some(t => t.text === '630'), 'Mehrheitsmarke und Gesamtzahl');
-  ok(P.texts.filter(t => /^\d+$/.test(t.text)).length >= 6, 'Sitze je Partei in der Beschriftung');
+  ok(P.texts.filter(t => /^\d+$/.test(t.text)).length === 1 && P.rects.length === 0, 'unter dem Halbkreis keine Beschriftung mehr (steht in der Legende)');
   const inBox = P.texts.every(t => t.y >= 200 - 1 && t.y <= 1000 + 1) && P.rects.every(r => r.x >= 100 - 1 && r.x + r.w <= 980 + 1);
   ok(inBox, 'alles im Rahmen');
   const PR = chartPrims({ ...doc0, chart: { ...spec, seatStyle: 'ring' } } as Doc, v);
@@ -86,10 +90,95 @@ const spec = { ...defaultChart('sitze'), source: src };
   ok(PC.texts.some(t => t.text === '120') && PC.texts.some(t => /von 630 Sitzen · 196 fehlen/.test(t.text)), 'Mitte zeigt Koalitionssumme und Abstand zur Mehrheit');
 }
 
+// ---------- Sitze von Hand ----------
+{
+  const S0 = chartModel({ ...doc0, chart: spec } as Doc).seats!;
+  const ed = { ...spec, seatEdit: { SPD: 150, AfD: 0 } };
+  const M = chartModel({ ...doc0, chart: ed } as Doc), S = M.seats!;
+  const spd = S.groups.find(g => g.key === 'SPD')!;
+  ok(spd.seats === 150 && !S.groups.some(g => g.key === 'AfD'), `SPD 150 statt 120, AfD 0 → nicht im Halbkreis: ${S.groups.map(g => `${g.label} ${g.seats}`).join(', ')}`);
+  ok(S.total === 630 - 120 + 150 - 152 && S.majority === Math.floor(S.total / 2) + 1, `Summe ${S.total}, Mehrheit ab ${S.majority} folgen den Handwerten`);
+  const afd = S.parties.find(p => p.key === 'AfD')!, spdP = S.parties.find(p => p.key === 'SPD')!;
+  ok(afd.seats === 0 && afd.auto === 152 && spdP.seats === 150 && spdP.auto === 120 && S.parties.length === S0.parties.length, 'Parteiliste behält Parteien ohne Sitze samt berechnetem Wert (auto)');
+  ok(M.bars.length === S.groups.length, 'Farbe und Name je Partei nur für Parteien mit Sitzen');
+  const v = { L: { main: { x: 100, y: 200, w: 880, h: 800 } }, ts: 1 } as never;
+  const P = chartPrims({ ...doc0, chart: ed } as Doc, v);
+  const dots = (P.paths || []).filter(p => p.fill !== 'none').reduce((a, p) => a + (p.d.match(/a/g) || []).length / 2, 0);
+  ok(dots === S.total && P.texts.some(t => t.text === String(S.total)), `gezeichnet: ${dots} Punkte, Zahl in der Mitte ${S.total}`);
+  const same = chartModel({ ...doc0, chart: { ...spec, seatEdit: { SPD: 120 } } } as Doc).seats!;
+  ok(same.total === 630 && same.parties.every(p => p.seats === p.auto), 'Handwert gleich dem berechneten Wert ändert nichts');
+  const bad = chartModel({ ...doc0, chart: { ...spec, seatEdit: { SPD: -5, Grüne: NaN } } } as Doc).seats!;
+  ok(bad.total === 630, 'ungültige Handwerte (negativ, keine Zahl) werden ignoriert');
+  const tx = chartTexts({ ...doc0, chart: ed } as Doc, ed)!;
+  ok(/Mehrheit ab 255/.test(tx.subtitle), `Unterzeile mit neuer Summe: ${tx.subtitle}`);
+  const all0 = chartModel({ ...doc0, chart: { ...spec, seatEdit: Object.fromEntries(S0.parties.map(p => [p.key, 0])) } } as Doc);
+  ok(!all0.seats && !!all0.empty, `alle auf 0: keine Verteilung („${all0.empty}“)`);
+}
+// Handwerte über dem Rechner: auch eine Partei unter der Hürde bekommt Sitze
+{
+  const um = tableDataset('Umfrage', ['Partei', 'Prozent'], [['CDU/CSU', '27'], ['AfD', '25'], ['SPD', '15'], ['Grüne', '11'], ['Linke', '10'], ['BSW', '4'], ['FDP', '3']]);
+  const d = { ...defaultDoc('vg-lan-2026'), datasets: [um] } as Doc;
+  const s = defaultSource(d, um, 'sitze')!, sp = { ...defaultChart('sitze'), source: s };
+  const S0 = chartModel({ ...d, chart: sp } as Doc).seats!;
+  const S = chartModel({ ...d, chart: { ...sp, seatEdit: { BSW: 20 } } } as Doc).seats!;
+  const bsw = S.parties.find(p => p.key === 'BSW')!;
+  ok(!S0.groups.some(g => g.key === 'BSW') && S.groups.some(g => g.key === 'BSW' && g.seats === 20) && bsw.auto === 0, `BSW unter der Hürde: 0 → 20 von Hand (Summe ${S0.total} → ${S.total})`);
+  const tx = chartTexts({ ...d, chart: { ...sp, seatEdit: { BSW: 20 } } } as Doc, { ...sp, seatEdit: { BSW: 20 } })!;
+  ok(/von Hand angepasst/.test(tx.subtitle) && !/\(Projektion\)/.test(tx.subtitle), `Unterzeile nennt die Handänderung: ${tx.subtitle}`);
+}
+
+// ---------- Legende als eigenes Element ----------
+{
+  const legendOf = (chart: typeof spec, extra: Partial<Doc> = {}) => ({ ...doc0, graphics: [{ id: 'g1', name: 'Sitze', kind: 'chart' }], page: 0, chart, legend: { ...doc0.legend, visible: true, orientation: 'horizontal', size: 24 }, ...extra } as unknown as Doc);
+  const dl = legendOf(spec);
+  const M = legendModel(dl)!;
+  ok(M.main === 'list' && M.rows.length === 6 && M.rows.map(r => r.auto).join() === 'Die Linke,SPD,Grüne,SSW,CDU/CSU,AfD', `Legendeneinträge in Reihenfolge des Halbkreises: ${M.rows.map(r => r.auto).join(', ')}`);
+  ok(M.rows.every(r => r.count! > 0) && M.rows.find(r => r.auto === 'SPD')!.count === 120 && M.title === '', 'Sitze als Anzahl, kein Titel');
+  const lp = legendPrims(dl, { x: 100, y: 900 }, 880, 1)!;
+  ok(!!lp && lp.texts.some(t => t.text === 'SPD (120)') && lp.texts.some(t => t.text === 'CDU/CSU (208)') && lp.rects.length >= 6, `Legende gezeichnet: ${lp?.texts.map(t => t.text).join(' | ')}`);
+  ok(lp.box.w > 100 && lp.box.h > 20 && lp.box.h < 200, `Legendenkasten ${lp.box.w} × ${lp.box.h}`);
+  const lpNo = legendPrims(legendOf(spec, { legend: { ...dl.legend, counts: false } } as never), { x: 0, y: 0 }, 880, 1)!;
+  ok(lpNo.texts.some(t => t.text === 'SPD') && !lpNo.texts.some(t => /\(/.test(t.text)), 'ohne Zahl der Sitze');
+  ok(legendPrims({ ...dl, legend: { ...dl.legend, visible: false } } as Doc, { x: 0, y: 0 }, 880, 1) === null, 'ausgeblendet: keine Legende');
+  ok(legendPrims(legendOf({ ...defaultChart('saeulen') } as never), { x: 0, y: 0 }, 880, 1) === null, 'andere Diagramme haben weiter keine Legende');
+  // Farbe und Namen kommen aus dem Diagramm, eigene Namen der Legende gehen vor
+  const dl2 = legendOf({ ...spec, barColors: { SPD: '#123456' }, barLabels: { SPD: 'Sozialdemokraten' } } as never);
+  const r2 = legendModel(dl2)!.rows.find(r => r.auto === 'Sozialdemokraten')!;
+  ok(r2 && r2.color === '#123456', 'Farbe und Name je Partei aus dem Diagramm');
+  const dl3 = legendOf(spec, { legend: { ...dl.legend, labels: { 'k:SPD': 'SPD!' } } } as never);
+  ok(legendModel(dl3)!.rows.find(r => r.auto === 'SPD')!.label === 'SPD!', 'eigener Legendentext');
+  // Projektion: Hinweis als Fußzeile
+  const um = tableDataset('Umfrage', ['Partei', 'Prozent'], [['CDU/CSU', '27'], ['AfD', '25'], ['SPD', '15'], ['Grüne', '11'], ['Linke', '10'], ['BSW', '4'], ['FDP', '3']]);
+  const d = { ...defaultDoc('vg-lan-2026'), datasets: [um] } as Doc;
+  const sp = { ...defaultChart('sitze'), source: defaultSource(d, um, 'sitze')! };
+  const dp = { ...d, graphics: [{ id: 'g1', name: 'S', kind: 'chart' }], page: 0, chart: sp, legend: { ...d.legend, visible: true } } as unknown as Doc;
+  ok(/Unter 5 %: BSW 4,2 %, FDP 3,2 %/.test(legendModel(dp)!.caption?.text || ''), `Hürden-Hinweis als Fußzeile: ${legendModel(dp)!.caption?.text}`);
+}
+// Layout: Legende mittig unter dem Halbkreis, innerhalb der Fläche; älteres Projekt wird migriert
+{
+  const base = { ...doc0, graphics: [{ id: 'g1', name: 'Sitze', kind: 'chart' }], page: 0, pageData: {}, chart: spec } as unknown as Doc;
+  const old = { ...base, legend: { ...base.legend, visible: false }, variants: [] as Doc['variants'] } as Doc;
+  old.variants = [makeVariant(old, '4:5')];
+  ok(!spec.legendEl && initSeatLegend(old, true) && old.chart!.legendEl === true && old.legend.visible && old.legend.orientation === 'horizontal', 'älteres Projekt: Legende wird angelegt und einmalig vermerkt');
+  ok(!initSeatLegend(old, true), 'zweiter Aufruf ändert nichts');
+  const v = old.variants[0], L = v.L, lp = legendPrims(old, L.legend, L.main.w, v.ts)!;
+  const cxL = L.legend.x + lp.box.w / 2, cxM = L.main.x + L.main.w / 2;
+  ok(Math.abs(cxL - cxM) <= 2, `Legende mittig unter dem Halbkreis (Mitte ${cxL.toFixed(0)} / ${cxM.toFixed(0)})`);
+  ok(L.legend.y >= L.main.y + L.main.h && L.legend.y + lp.box.h <= v.h, `Legende unterhalb des Halbkreisrahmens und im Bild (y ${L.legend.y}–${L.legend.y + lp.box.h} von ${v.h})`);
+  const fresh = { ...base, legend: { ...base.legend, visible: true, orientation: 'horizontal', size: 24 }, chart: { ...spec, legendEl: true }, variants: [] as Doc['variants'] } as Doc;
+  fresh.variants = [makeVariant(fresh, '4:5')];
+  ok(fresh.variants[0].L.legend.y === L.legend.y && fresh.variants[0].L.main.h === L.main.h, 'neue Grafik: gleiches Layout wie migrierte');
+  const hid = { ...fresh, legend: { ...fresh.legend, visible: false }, variants: [] as Doc['variants'] } as Doc;
+  hid.variants = [makeVariant(hid, '4:5')];
+  ok(hid.variants[0].L.main.h > L.main.h, 'ohne Legende bekommt der Halbkreis die ganze Fläche');
+  const nodata = { ...base, chart: { ...defaultChart('sitze') }, variants: [] as Doc['variants'] } as Doc;
+  ok(!initSeatLegend(nodata, false) && !nodata.chart!.legendEl, 'ohne Daten keine Legende (erst mit den ersten Sitzen)');
+}
+
 // ---------- Rechner: Umfrage in Prozent ----------
 {
   const um = tableDataset('Umfrage', ['Partei', 'Prozent'], [['CDU/CSU', '27'], ['AfD', '25'], ['SPD', '15'], ['Grüne', '11'], ['Linke', '10'], ['BSW', '4'], ['FDP', '3'], ['Sonstige', '5']]);
-  const d = { ...defaultDoc('vg-krs-2025'), datasets: [um] } as Doc;
+  const d = { ...defaultDoc('vg-lan-2026'), datasets: [um] } as Doc;
   const s = defaultSource(d, um, 'sitze')!;
   ok(s.kind === 'sitze' && !!s.calc && s.calc.seats === 630 && s.calc.threshold === 5, `Prozente → Rechner: ${JSON.stringify(s)}`);
   const S = chartModel({ ...d, chart: { ...defaultChart('sitze'), source: s } } as Doc).seats!;

@@ -8,6 +8,7 @@ import { periodText, periodYear, selectedPeriod } from '../../data/time';
 import { countLabel } from '../../geo/geo';
 import { GEO } from '../../geo/geo';
 import { removeDataset, setGeoSet, showDataset } from '../../model/actions';
+import { ensureSeatLegend } from '../../model/layout';
 import { setUI, update, useStore } from '../../model/store';
 import { colorModel, fillOf, partyColor } from '../../render/colorModel';
 import { geoOf } from '../../render/scene';
@@ -27,6 +28,7 @@ function useInChart(id: string) {
     const tx = chartTexts(plain, d.chart as never);
     if (tx && (!old || d.texts.title.text === old.title || /^Titel der Grafik/.test(d.texts.title.text))) d.texts.title.text = tx.title;
     if (tx && (!old || d.texts.subtitle.text === old.subtitle || /^Unterzeile: /.test(d.texts.subtitle.text))) d.texts.subtitle.text = tx.subtitle;
+    ensureSeatLegend(d);
   });
 }
 /** Datensatz ohne Gebiet (eigene Tabelle, Deutschland-Werte) */

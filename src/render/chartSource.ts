@@ -107,9 +107,10 @@ export function chartTexts(doc: Doc, spec: ChartSpec): { title: string; subtitle
     const name = ds.name.replace(/\s·\s(Länder|Deutschland)$/, '').replace(/:.*$/, '').trim();
     const g = src.from === 'wahl' ? ds.groups.find(x => x.id === src.group)?.label || '' : '';
     const when = src.from === 'wahl' ? year(src.period || (ds.time ? ds.time.periods[ds.time.periods.length - 1] : null)) : '';
-    const how = S.calc ? `${S.total} Sitze nach Sainte-Laguë, ${S.calc.threshold.toLocaleString('de-DE')}-%-Hürde` : `${S.total} Sitze`;
+    const edited = S.parties.some(p => p.seats !== p.auto);   // Sitze von Hand geändert: die Projektion stimmt dann nicht mehr, das steht in der Unterzeile
+    const how = S.calc ? (edited ? `${S.total} Sitze, Projektion nach Sainte-Laguë, von Hand angepasst` : `${S.total} Sitze nach Sainte-Laguë, ${S.calc.threshold.toLocaleString('de-DE')}-%-Hürde`) : `${S.total} Sitze`;
     const head = [name && !name.includes(when) ? `${name}${when ? ' ' + when : ''}` : name, g].filter(Boolean).join(', ');
-    const sub = `${head ? head + ': ' : ''}${how}, Mehrheit ab ${S.majority}${S.calc ? ' (Projektion)' : ''}`;
+    const sub = `${head ? head + ': ' : ''}${how}, Mehrheit ab ${S.majority}${S.calc && !edited ? ' (Projektion)' : ''}`;
     if (S.coalition) {
       const labs = S.groups.filter(x => S.coalition!.keys.includes(x.key)).sort((a, b) => b.seats - a.seats).map(x => x.label);
       return { title: `${joinDe(labs)}: ${S.coalition.seats} Sitze`, subtitle: S.coalition.reached ? sub : `${sub} – es fehlen ${S.majority - S.coalition.seats}` };

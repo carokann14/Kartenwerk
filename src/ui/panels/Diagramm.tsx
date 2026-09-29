@@ -3,6 +3,7 @@ import React from 'react';
 import { getDoc, update, setUI, useStore } from '../../model/store';
 import { addDataset } from '../../model/actions';
 import { duplicateGraphic } from '../../model/graphics';
+import { ensureSeatLegend } from '../../model/layout';
 import { tableDataset } from '../TableEditor';
 import type { ChartScope, ChartSource, ChartSpec, ChartType, Doc } from '../../model/types';
 import type { Dataset } from '../../data/types';
@@ -28,6 +29,8 @@ function setChart(fn: (c: ChartSpec) => ChartSpec) {
       if (PLACEHOLDER.test(d.texts.title.text) || (oldTx && d.texts.title.text === oldTx.title)) d.texts.title.text = newTx.title;
       if (PLACEHOLDER.test(d.texts.subtitle.text) || (oldTx && d.texts.subtitle.text === oldTx.subtitle)) d.texts.subtitle.text = newTx.subtitle;
     }
+    // Sitzverteilung: sobald Sitze da sind (neue Art, erste Daten), wird die Beschriftung der Parteien zur Legende (eigenes Element, Layout neu)
+    ensureSeatLegend(d);
   }, { key: 'chart' });
 }
 const setSource = (src: ChartSource | null) => setChart(c => ({ ...c, source: src, type: typeFor(src, c.type) }));
@@ -94,6 +97,7 @@ export function PanelDiagramm() {
       {spec.type === 'saeulen' && M.hasCmp && spec.showCmp && <Check checked={spec.keyVisible} onChange={v => setChart(c => ({ ...c, keyVisible: v }))}>Zeichenerklärung ({M.curLabel} · {M.cmpLabel})</Check>}
       {isPartyLike && <Field label="Sonstige unter"><div className="row-btns"><NumInput min={0} max={20} step={0.5} value={spec.minShare} onChange={n => setChart(c => ({ ...c, minShare: n }))} ariaLabel="Schwelle für Sonstige in Prozent" /><span className="hint">%</span></div></Field>}
       {M.seats && <SeatDisplay spec={spec} S={M.seats} />}
+      {spec.type === 'sitze' && !M.seats && spec.seatEdit && <p className="hint">Von Hand gesetzte Sitze ergeben keine Verteilung. <button className="btn small ghost" onClick={() => setChart(c => ({ ...c, seatEdit: undefined }))}>Alle zurücksetzen</button></p>}
       {spec.type !== 'sitze' && <Field label="Nachkommastellen"><Seg items={[['0', '0'], ['1', '1'], ['2', '2']]} value={String(spec.decimals) as '1'} onChange={v => setChart(c => ({ ...c, decimals: +v }))} /></Field>}
       {!isPartyLike && spec.type !== 'sitze' && !(src?.kind === 'linie' && src.mode === 'werte' && src.columns.length > 1) && <Field label="Farbe"><div className="swatch-grid">{HUES.map(h => <button key={h} className={'swatch-btn' + (spec.color === h ? ' on' : '')} style={{ background: h }} onClick={() => setChart(c => ({ ...c, color: h }))} aria-label={'Farbton ' + h} />)}<ColorField value={spec.color || HUES[0]} onChange={hex => setChart(c => ({ ...c, color: hex }))} ariaLabel="Eigene Farbe" /></div></Field>}
       {!isPartyLike && M.bars.length > 1 && <Field label={spec.type === 'linie' ? 'Farbe und Name je Linie' : spec.type === 'sitze' ? 'Farbe und Name je Partei' : 'Farbe und Name je Balken'}>
@@ -234,7 +238,20 @@ function SeatDisplay({ spec, S }: { spec: ChartSpec; S: SeatModel }) {
     setChart(c => ({ ...c, seatOrder: o }));
   };
   const [drag, setDrag] = React.useState<number | null>(null);
+  // Sitze von Hand: nur die abweichenden Werte werden gemerkt (seatEdit), gleich dem berechneten Wert = zurück auf automatisch
+  const edit = spec.seatEdit || {}, nEdit = S.parties.filter(p => p.seats !== p.auto).length;
+  const setSeats = (k: string, n: number | null) => setChart(c => { const e = { ...(c.seatEdit || {}) }; if (n == null) delete e[k]; else e[k] = Math.max(0, Math.round(n)); return { ...c, seatEdit: Object.keys(e).length ? e : undefined }; });
   return <>
+    <Field label="Sitze" stack>
+      <div className="ptable seat-edit">{S.parties.map(p => (
+        <div key={p.key} className={'prow' + (p.seats !== p.auto ? ' edited' : '')}>
+          <span className="dot" style={{ background: p.color }} /><span className="grow">{p.label}</span>
+          <NumInput min={0} max={5000} value={p.seats} onChange={n => setSeats(p.key, Math.round(n) === p.auto ? null : n)} ariaLabel={`Sitze ${p.label}`} />
+          <button className="btn icon ghost small" disabled={p.seats === p.auto && edit[p.key] == null} onClick={() => setSeats(p.key, null)} aria-label={`${p.label} auf ${p.auto} zurücksetzen`} title={`Zurück auf ${p.auto}`}>↺</button>
+        </div>
+      ))}</div>
+      <p className="hint">Zusammen <b>{S.total}</b> Sitze, Mehrheit ab {S.majority}. {nEdit > 0 ? <>Von Hand geändert: {nEdit}. <button className="btn small ghost" onClick={() => setChart(c => ({ ...c, seatEdit: undefined }))}>Alle zurücksetzen</button></> : S.calc ? 'Die Zahlen kommen aus dem Rechner; hier lassen sie sich von Hand ändern, auch für Parteien unter der Hürde.' : 'Die Zahlen kommen aus der Tabelle; hier lassen sie sich von Hand ändern, ohne die Tabelle anzufassen.'}</p>
+    </Field>
     <Field label="Form"><Seg items={[['punkte', 'Punkte'], ['ring', 'Halbring']] as ['punkte' | 'ring', string][]} value={spec.seatStyle || 'punkte'} onChange={v => setChart(c => ({ ...c, seatStyle: v }))} /></Field>
     <Check checked={spec.majorityOn !== false} onChange={on => setChart(c => ({ ...c, majorityOn: on }))}>Mehrheitsmarke ({S.majority} von {S.total})</Check>
     <Field label="Koalition" stack>

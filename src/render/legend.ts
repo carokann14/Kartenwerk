@@ -5,8 +5,10 @@ import { colorModel, legendTitleAuto, partyColor } from './colorModel';
 import { hatchMap } from './hatch';
 import { activeOverlays, overlayName } from './scene';
 import { partyDef, partyOf } from '../data/parties';
+import { isChart } from '../model/graphicKeys';
+import { chartModel, seatNote } from './chart';
 
-export type ColorTarget = { type: 'overlay'; id: string } | { type: 'party'; key: string } | { type: 'category'; key: string } | { type: 'hatch'; id: string } | { type: 'extra'; id: string } | { type: 'markers'; key: string } | { type: 'nodata' } | null;
+export type ColorTarget = { type: 'overlay'; id: string } | { type: 'party'; key: string } | { type: 'category'; key: string } | { type: 'hatch'; id: string } | { type: 'extra'; id: string } | { type: 'markers'; key: string } | { type: 'bar'; key: string } | { type: 'nodata' } | null;
 export interface LegEntry {
   key: string; label: string; auto: string; color: string; count: number | null;
   kind: 'fill' | 'hatch' | 'line' | 'nodata' | 'marker'; hatch: HatchStyle | null; bg: string | null; marker?: MarkerEl;
@@ -30,7 +32,19 @@ export function legendModel(doc: Doc): LegModel | null {
   if (cache.has(doc)) return cache.get(doc)!;
   const res = compute(doc); cache.set(doc, res); return res;
 }
+/** Legende der Sitzverteilung: eine Zeile je Partei mit Sitzen, in der Reihenfolge des Halbkreises; Farbe und Name kommen aus dem Diagramm
+ *  (ChartSpec.barColors/barLabels), die Zahl der Sitze ist die „Anzahl“ des Eintrags. Hinweis der Projektion als Fußzeile. */
+function seatLegend(doc: Doc): LegModel | null {
+  const S = chartModel(doc).seats; if (!S) return null;
+  const L = doc.legend, hidden = new Set(L.hidden);
+  const lab = (key: string, auto: string) => L.labels[key] ?? auto;
+  const rows: LegEntry[] = S.groups.map(g => { const k = 'k:' + g.key; return { key: k, label: lab(k, g.label), auto: g.label, color: g.color, count: g.seats, kind: 'fill' as const, hatch: null, bg: null, hidden: hidden.has(k), target: { type: 'bar' as const, key: g.key }, removable: false }; });
+  const more: LegEntry[] = L.extra.map(x => { const hs = x.kind === 'hatch' ? doc.hatches.find(h => h.id === x.hatch) || null : null; return { key: 'x:' + x.id, label: x.label, auto: x.label, color: x.color, count: null, kind: x.kind, hatch: hs, bg: hs?.bg ?? null, hidden: hidden.has('x:' + x.id), target: { type: 'extra' as const, id: x.id }, removable: true }; });
+  const note = seatNote(S), caption = note || L.caption ? { key: 'caption' as const, auto: note, text: L.caption ?? note, hidden: hidden.has('caption') } : null;
+  return { main: 'list', title: L.title, titleAuto: '', rows, more, caption, ovNote: null };
+}
 function compute(doc: Doc): LegModel | null {
+  if (isChart(doc)) return doc.chart?.type === 'sitze' ? seatLegend(doc) : null;   // andere Diagramme: Zeichenerklärung im Diagramm selbst
   const cm = colorModel(doc), c = doc.color, L = doc.legend;
   const hasData = c.mode !== 'none' && !cm.mismatch && !!cm.dataset;
   const markerGroups = new Map<string, MarkerEl[]>();
@@ -80,6 +94,7 @@ export function entryColorSetter(t: ColorTarget): ((d: Doc, v: string) => void) 
   if (t.type === 'category') return (d, v) => { d.categoryColors[t.key] = v; };
   if (t.type === 'hatch') return (d, v) => { const h = d.hatches.find(x => x.id === t.id); if (h) h.color = v; };
   if (t.type === 'extra') return (d, v) => { const x = d.legend.extra.find(e => e.id === t.id); if (x) x.color = v; };
+  if (t.type === 'bar') return (d, v) => { if (d.chart) d.chart.barColors = { ...(d.chart.barColors || {}), [t.key]: v }; };
   if (t.type === 'markers') return (d, v) => { for (const e of d.els) if (e.type === 'marker' && e.legend.trim() === t.key) e.fill = v; };
   return (d, v) => { d.style.noData = v; };
 }
