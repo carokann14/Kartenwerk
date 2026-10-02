@@ -1,8 +1,10 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { GEO_INDEX, GeoIndexEntry, isLtw, levelRank } from '../geo/geo';
 import { hexToHsv, hsvToHex, normalizeHex } from '../lib/color';
-import { TextMark, colorAtRange, isRangeBold, isRangeItalic, setMarkField, shiftMarksOnEdit } from '../lib/richtext';
+import { TextMark, clampRange, colorAtRange, isRangeBold, isRangeItalic, setMarkField, shiftMarksOnEdit } from '../lib/richtext';
 import { clamp } from '../lib/util';
+import { placePopover } from '../lib/place';
 
 const S = (d: React.ReactNode) => (p: { size?: number }) => (
   <svg viewBox="0 0 24 24" width={p.size || 15} height={p.size || 15} fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>
@@ -75,11 +77,25 @@ export const Check = ({ checked, onChange, children, id }: { checked: boolean; o
 export const Note = ({ kind, children, icon }: { kind?: 'warn' | 'ok' | 'err'; children: React.ReactNode; icon?: React.ReactNode }) => (
   <div className={'note' + (kind ? ' ' + kind : '')}>{icon ?? (kind === 'warn' || kind === 'err' ? <Icon.warn /> : <Icon.info />)}<span>{children}</span></div>
 );
+/** Zahlenfeld. Während des Tippens wird nur übernommen, was schon im erlaubten Bereich liegt; Werte außerhalb werden erst
+ *  beim Verlassen des Felds (oder mit der Eingabetaste) auf min/max begrenzt. Früher wurde jeder Zwischenstand sofort
+ *  begrenzt – bei „Größe“ (min. 8) wurde aus getipptem „12“ so „82“, bei „Breite“ (min. 100) aus „500“ der Höchstwert. */
 export function NumInput({ value, onChange, min, max, step, id, ariaLabel }: { value: number; onChange: (v: number) => void; min?: number; max?: number; step?: number; id?: string; ariaLabel?: string }) {
   const [txt, setTxt] = React.useState(String(value));
-  React.useEffect(() => { setTxt(String(value)); }, [value]);
-  const commit = (s: string) => { const v = parseFloat(s.replace(',', '.')); if (isFinite(v)) onChange(Math.min(max ?? Infinity, Math.max(min ?? -Infinity, v))); };
-  return <input id={id} aria-label={ariaLabel} type="number" value={txt} min={min} max={max} step={step} onChange={e => { setTxt(e.target.value); commit(e.target.value); }} />;
+  const parse = (s: string) => parseFloat(s.replace(',', '.'));
+  const lo = min ?? -Infinity, hi = max ?? Infinity;
+  // Von außen geänderter Wert (Rückgängig, Ziehen in der Grafik …): anzeigen, außer das Feld zeigt diesen Wert schon
+  React.useEffect(() => { setTxt(t => (parse(t) === value ? t : String(value))); }, [value]);
+  const finish = () => {
+    const v = parse(txt);
+    if (!isFinite(v)) { setTxt(String(value)); return; }
+    const c = Math.min(hi, Math.max(lo, v));
+    if (c !== value) onChange(c);
+    setTxt(String(c));
+  };
+  return <input id={id} aria-label={ariaLabel} type="number" value={txt} min={min} max={max} step={step}
+    onChange={e => { const raw = e.target.value; setTxt(raw); const v = parse(raw); if (isFinite(v) && v >= lo && v <= hi && v !== value) onChange(v); }}
+    onBlur={finish} onKeyDown={e => { if (e.key === 'Enter') finish(); }} />;
 }
 /** Zahlenfeld, das leer sein darf (leer = automatisch); übergibt undefined, sobald das Feld geleert wird. */
 export function OptNum({ value, onChange, step, ariaLabel, placeholder = 'auto' }: { value: number | undefined; onChange: (v: number | undefined) => void; step?: number; ariaLabel?: string; placeholder?: string }) {
@@ -91,28 +107,35 @@ export function OptNum({ value, onChange, step, ariaLabel, placeholder = 'auto' 
 export const ratioIcon = (w: number, h: number) => { const s = 14 / Math.max(w, h); return <span className="ratio-ico"><i style={{ width: (w * s).toFixed(1) + 'px', height: (h * s).toFixed(1) + 'px' }} /></span>; };
 
 /** Farbwähler: Sättigung/Hellwert-Fläche, Farbton-Regler, Hex-Feld mit Pipette. Ersetzt <input type="color"> überall im Editor. */
-function ColorPopover({ value, onChange }: { value: string; onChange: (hex: string) => void }) {
+function ColorPopover({ value, onChange, popRef, style }: { value: string; onChange: (hex: string) => void; popRef?: React.Ref<HTMLDivElement>; style?: React.CSSProperties }) {
   const [hsv, setHsv] = React.useState(() => hexToHsv(value));
   const [hex, setHex] = React.useState(value);
   const lastOut = React.useRef(value);
   React.useEffect(() => { if (value !== lastOut.current) { setHsv(hexToHsv(value)); setHex(value); } }, [value]);
   const sq = React.useRef<HTMLDivElement>(null), hue = React.useRef<HTMLDivElement>(null);
   const set = (h: number, s: number, v: number) => { setHsv([h, s, v]); const hx = hsvToHex(h, s, v); setHex(hx); lastOut.current = hx; onChange(hx); };
+  /** Ziehen auf Fläche/Regler: Zeiger festhalten, bis er losgelassen oder abgebrochen wird */
+  const track = (el: HTMLElement, down: React.PointerEvent, move: (e: PointerEvent) => void) => {
+    try { el.setPointerCapture(down.pointerId); } catch { /* ohne Capture geht es auch */ }
+    move(down.nativeEvent);
+    const end = () => { el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', end); el.removeEventListener('pointercancel', end); };
+    el.addEventListener('pointermove', move); el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+  };
   const dragSq = (down: React.PointerEvent) => {
-    const el = sq.current!; el.setPointerCapture(down.pointerId);
-    const move = (e: PointerEvent) => { const r = el.getBoundingClientRect(); set(hsv[0], clamp((e.clientX - r.left) / r.width, 0, 1) * 100, 100 - clamp((e.clientY - r.top) / r.height, 0, 1) * 100); };
-    move(down.nativeEvent); el.addEventListener('pointermove', move); el.addEventListener('pointerup', () => el.removeEventListener('pointermove', move), { once: true });
+    const el = sq.current; if (!el) return;
+    const h = hsv[0];
+    track(el, down, e => { const r = el.getBoundingClientRect(); set(h, clamp((e.clientX - r.left) / r.width, 0, 1) * 100, 100 - clamp((e.clientY - r.top) / r.height, 0, 1) * 100); });
   };
   const dragHue = (down: React.PointerEvent) => {
-    const el = hue.current!; el.setPointerCapture(down.pointerId);
-    const move = (e: PointerEvent) => { const r = el.getBoundingClientRect(); set(clamp((e.clientX - r.left) / r.width, 0, 1) * 360, hsv[1], hsv[2]); };
-    move(down.nativeEvent); el.addEventListener('pointermove', move); el.addEventListener('pointerup', () => el.removeEventListener('pointermove', move), { once: true });
+    const el = hue.current; if (!el) return;
+    const sv = [hsv[1], hsv[2]];
+    track(el, down, e => { const r = el.getBoundingClientRect(); set(clamp((e.clientX - r.left) / r.width, 0, 1) * 360, sv[0], sv[1]); });
   };
   const commitHex = (s: string) => { const n = normalizeHex(s); if (n) { setHsv(hexToHsv(n)); setHex(n); lastOut.current = n; onChange(n); } };
   const canPick = typeof window !== 'undefined' && 'EyeDropper' in window;
   const pick = async () => { try { const r = await new (window as unknown as { EyeDropper: new () => { open(): Promise<{ sRGBHex: string }> } }).EyeDropper().open(); commitHex(r.sRGBHex); } catch { /* abgebrochen */ } };
   return (
-    <div className="color-pop" role="dialog" aria-label="Farbe wählen" onPointerDown={e => e.stopPropagation()}>
+    <div className="color-pop" ref={popRef} style={style} role="dialog" aria-label="Farbe wählen" onPointerDown={e => e.stopPropagation()}>
       <div className="color-sq" ref={sq} onPointerDown={dragSq} style={{ backgroundImage: `linear-gradient(to top, #000, rgba(0,0,0,0)), linear-gradient(to right, #fff, ${hsvToHex(hsv[0], 100, 100)})` }}>
         <span className="color-thumb" style={{ left: hsv[1] + '%', top: (100 - hsv[2]) + '%', background: hex }} />
       </div>
@@ -128,27 +151,56 @@ function ColorPopover({ value, onChange }: { value: string; onChange: (hex: stri
 /** `onCommit`: feuert einmal beim Schließen (nicht bei jeder Änderung während des Ziehens) mit der zuletzt gewählten Farbe –
  *  zum Merken einer eigenen Farbe, ohne bei jedem Zwischenschritt aufzurufen. `custom`: zeigt statt der aktuellen Farbe
  *  ein festes „eigene Farbe wählen“-Symbol (Farbrad + Pipette), damit dieses Feld nicht wie ein weiterer Farb-Vorschlag
- *  aussieht, wenn es zusammen mit festen Farbfeldern steht (z. B. „Manuell einfärben“). */
+ *  aussieht, wenn es zusammen mit festen Farbfeldern steht (z. B. „Manuell einfärben“).
+ *  Der Farbwähler wird über dem ganzen Fenster gezeichnet (Portal, `position: fixed`) und so platziert, dass er immer ganz
+ *  sichtbar ist – unabhängig davon, in welcher scrollenden Leiste das Farbfeld steht oder wie nah es am Fensterrand liegt. */
 export function ColorField({ value, onChange, onCommit, ariaLabel, title, custom }: { value: string; onChange: (hex: string) => void; onCommit?: (hex: string) => void; ariaLabel?: string; title?: string; custom?: boolean }) {
   const [open, setOpen] = React.useState(false);
+  const [pos, setPos] = React.useState<{ left: number; top: number } | null>(null);
   const ref = React.useRef<HTMLDivElement>(null);
+  const btn = React.useRef<HTMLButtonElement>(null);
+  const pop = React.useRef<HTMLDivElement>(null);
   const valueRef = React.useRef(value);
   valueRef.current = value;
-  const close = () => { setOpen(false); if (onCommit) onCommit(valueRef.current); };
+  const commitRef = React.useRef(onCommit);
+  commitRef.current = onCommit;
+  const openedWith = React.useRef(value);
+  // onCommit nur, wenn im Wähler wirklich eine andere Farbe gewählt wurde (bloßes Öffnen und Schließen legte sonst z. B.
+  // das neutrale Grau als „eigene Farbe“ ab)
+  const close = React.useCallback(() => { setOpen(false); setPos(null); if (commitRef.current && valueRef.current !== openedWith.current) commitRef.current(valueRef.current); }, []);
+  const doOpen = () => { openedWith.current = valueRef.current; setOpen(true); };
+  // Position bestimmen (vor dem Zeichnen, damit nichts springt) und bei Scrollen/Größenänderung nachführen
+  const place = React.useCallback(() => {
+    const b = btn.current, p = pop.current; if (!b || !p) return;
+    const r = b.getBoundingClientRect();
+    // Farbfeld aus dem sichtbaren Bereich gescrollt (oder ausgeblendet): Wähler schließen statt irgendwo stehen zu lassen
+    if (r.width === 0 && r.height === 0) { close(); return; }
+    const box = b.closest('.sp-body, .props, .layers, .modal-body')?.getBoundingClientRect() || { top: 0, left: 0, bottom: window.innerHeight, right: window.innerWidth };
+    if (r.bottom < box.top || r.top > box.bottom || r.right < box.left || r.left > box.right) { close(); return; }
+    setPos(placePopover(r, p.offsetWidth, p.offsetHeight, window.innerWidth, window.innerHeight));
+  }, [close]);
+  React.useLayoutEffect(() => { if (open) place(); }, [open, place]);
   React.useEffect(() => {
     if (!open) return;
-    const h = (e: PointerEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) close(); };
-    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
-    document.addEventListener('pointerdown', h); document.addEventListener('keydown', k);
-    return () => { document.removeEventListener('pointerdown', h); document.removeEventListener('keydown', k); };
-  }, [open]);
+    const h = (e: PointerEvent) => { const t = e.target as Node; if (ref.current?.contains(t) || pop.current?.contains(t)) return; close(); };
+    // Esc schließt nur den Farbwähler (nicht zusätzlich die Auswahl in der Grafik, siehe useShortcuts)
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); close(); btn.current?.focus(); } };
+    let raf = 0;
+    const re = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(place); };
+    document.addEventListener('pointerdown', h, true); document.addEventListener('keydown', k, true);
+    window.addEventListener('resize', re); window.addEventListener('scroll', re, true);
+    return () => { cancelAnimationFrame(raf); document.removeEventListener('pointerdown', h, true); document.removeEventListener('keydown', k, true); window.removeEventListener('resize', re); window.removeEventListener('scroll', re, true); };
+  }, [open, close, place]);
   return (
     <div className="color-anchor" ref={ref}>
-      <button type="button" className={'color-swatch' + (custom ? ' color-swatch-custom' : '')} style={custom ? undefined : { background: value }}
-        onClick={() => (open ? close() : setOpen(true))} aria-label={ariaLabel} title={title} aria-haspopup="dialog" aria-expanded={open}>
+      <button ref={btn} type="button" className={'color-swatch' + (custom ? ' color-swatch-custom' : '')} style={custom ? undefined : { background: value }}
+        onClick={() => (open ? close() : doOpen())} aria-label={ariaLabel} title={title} aria-haspopup="dialog" aria-expanded={open}>
         {custom && <Icon.pipette size={13} />}
       </button>
-      {open && <ColorPopover value={value} onChange={onChange} />}
+      {open && createPortal(
+        <ColorPopover value={value} onChange={onChange} popRef={pop}
+          style={pos ? { left: pos.left, top: pos.top } : { left: 0, top: 0, visibility: 'hidden' }} />,
+        document.body)}
     </div>
   );
 }
@@ -162,7 +214,9 @@ export function RichTextArea({ id, rows, value, marks, baseBold, onChange, place
   const ref = React.useRef<HTMLTextAreaElement>(null);
   const [sel, setSel] = React.useState<[number, number]>([0, 0]);
   const readSel = () => { const el = ref.current; if (el) setSel([el.selectionStart, el.selectionEnd]); };
-  const [s0, s1] = sel, hasSel = s1 > s0;
+  // Die gemerkte Auswahl kann kurz veraltet sein (Markierung gelöscht/ersetzt, „Rückgängig“, Text von außen geändert) –
+  // immer auf den aktuellen Text begrenzen. Ohne das las die Formatleiste über das Textende hinaus und die App stürzte ab.
+  const [s0, s1] = clampRange(value, sel[0], sel[1]), hasSel = s1 > s0;
   const restore = (a: number, b: number) => requestAnimationFrame(() => { const el = ref.current; if (el) { el.focus(); el.setSelectionRange(a, b); } });
   const apply = (field: 'b' | 'i', val: boolean) => { onChange(value, setMarkField(value, marks, s0, s1, field, val)); restore(s0, s1); };
   const bold = hasSel && isRangeBold(value, marks, s0, s1, baseBold);
@@ -186,10 +240,42 @@ export function RichTextArea({ id, rows, value, marks, baseBold, onChange, place
         {!hasSel && <p className="hint rtext-hint">Textstelle auswählen, um nur sie zu formatieren</p>}
       </div>
       <textarea id={id} ref={ref} rows={rows} value={value} placeholder={placeholder} aria-label={ariaLabel}
-        onChange={e => { const val = e.target.value; onChange(val, shiftMarksOnEdit(value, val, marks)); }}
+        onChange={e => { const el = e.target, val = el.value; onChange(val, shiftMarksOnEdit(value, val, marks)); setSel([el.selectionStart, el.selectionEnd]); }}
         onSelect={readSel} onKeyUp={readSel} onMouseUp={readSel} onFocus={readSel} />
     </div>
   );
+}
+
+/** Ref-Callback für aufklappende Menüs (Kopfleiste, Grafiken-Leiste): schiebt das Menü nach links, wenn es rechts über den
+ *  sichtbaren Bereich (Arbeitsfläche bzw. Fenster) hinausragen würde, und lässt es scrollen, wenn es unten nicht passt. */
+export function fitMenu(el: HTMLElement | null) {
+  if (!el) return;
+  el.style.transform = ''; el.style.maxHeight = ''; el.style.overflowY = '';
+  const r = el.getBoundingClientRect();
+  const c = (el.closest('.canvaswrap') as HTMLElement | null)?.getBoundingClientRect() || { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight };
+  let dx = Math.min(0, c.right - 8 - r.right);
+  if (r.left + dx < c.left + 8) dx += c.left + 8 - (r.left + dx);
+  if (dx) el.style.transform = `translateX(${Math.round(dx)}px)`;
+  const maxH = c.bottom - 8 - r.top;
+  if (r.height > maxH && maxH > 120) { el.style.maxHeight = Math.floor(maxH) + 'px'; el.style.overflowY = 'auto'; }
+}
+
+/** In jeden Dialog (.modal-back) setzen: holt beim Öffnen den Tastaturfokus in den Dialog und gibt ihn beim Schließen
+ *  zurück. Ohne das blieb der Fokus auf dem Knopf, der den Dialog geöffnet hat (hinter dem Dialog) – Esc schloss den Dialog
+ *  dann nicht, und Tab sprang durch die verdeckten Leisten. */
+export function DialogFocus() {
+  const ref = React.useRef<HTMLSpanElement>(null);
+  React.useEffect(() => {
+    const back = ref.current?.closest('.modal-back') as HTMLElement | null;
+    const prev = document.activeElement as HTMLElement | null;
+    if (back && !back.contains(document.activeElement)) {
+      const box = (back.querySelector('.modal') as HTMLElement | null) || back;
+      if (!box.hasAttribute('tabindex')) box.tabIndex = -1;
+      box.focus({ preventScroll: true });
+    }
+    return () => { if (prev && prev.isConnected && !back?.contains(prev)) prev.focus?.({ preventScroll: true }); };
+  }, []);
+  return <span ref={ref} hidden />;
 }
 
 /** Auswahl eines Gebietsstands in zwei Teilen: Ebene (Wahlkreise, Länder … Gemeinden) und Stand bzw. Wahljahr */

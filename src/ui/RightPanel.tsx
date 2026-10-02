@@ -22,6 +22,7 @@ import { elName } from '../render/annotations';
 import { LogoProps } from './LogoUI';
 import { MapZoom } from './MapZoom';
 import { setLogoVisible } from '../model/logo';
+import { ErrorBoundary } from './ErrorBoundary';
 
 // ---------- Ebenen ----------
 const CHART_LABEL = { saeulen: 'Säulen', gewinne: 'Gewinne und Verluste', balken: 'Balken', linie: 'Linie', sitze: 'Sitzverteilung' } as const;
@@ -37,34 +38,36 @@ function Layers() {
   const tog = (on: boolean, set: (v: boolean) => void, lab: string, title: string) => (
     <button className={'tog' + (on ? ' on' : '')} onClick={e => { e.stopPropagation(); set(!on); }} title={title} aria-label={title} aria-pressed={on}>{lab}</button>
   );
-  const Row = ({ s, icon, name, extra, lvl = 0, hidden = false }: { s: Sel; icon: React.ReactNode; name: React.ReactNode; extra?: React.ReactNode; lvl?: number; hidden?: boolean }) => (
-    <div className={`lrow${lvl ? ' l' + lvl : ''}${is(s) ? ' sel' : ''}${hidden ? ' hidden' : ''}`} onClick={pick(s)} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter') pick(s)(); }}>
+  // Als Funktion aufgerufen, nicht als <Row/>: eine innerhalb von Layers definierte Komponente wäre bei jedem Neuzeichnen ein
+  // neuer Typ – React baute dann alle Zeilen neu auf (Tastaturfokus auf einer Zeile ging bei jeder Änderung verloren).
+  const Row = ({ s, icon, name, extra, lvl = 0, hidden = false }: { s: Sel; icon: React.ReactNode; name: React.ReactNode; extra?: React.ReactNode; lvl?: number; hidden?: boolean }, key?: React.Key) => (
+    <div key={key} className={`lrow${lvl ? ' l' + lvl : ''}${is(s) ? ' sel' : ''}${hidden ? ' hidden' : ''}`} onClick={pick(s)} role="button" tabIndex={0} aria-pressed={is(s)} onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); pick(s)(); } }}>
       <span className="li" /><span className="li">{icon}</span><span className="ln">{name}</span><span className="lx">{extra}</span>
     </div>
   );
   return (
     <div className="layers">
       <div className="rp-head"><h2>Ebenen</h2><span className="aside">{v.w} × {v.h}</span></div>
-      <Row s={{ kind: 'graphic' }} icon={<Icon.graphic />} name={<>Grafik <small>{v.preset}</small></>} />
-      <Row lvl={1} s={{ kind: 'el', id: 'title' }} icon={<Icon.text />} name="Titel" hidden={!T.title.visible} extra={eye(T.title.visible, on => update(d => { d.texts.title.visible = on; }), 'Titel')} />
-      <Row lvl={1} s={{ kind: 'el', id: 'subtitle' }} icon={<Icon.text />} name="Unterzeile" hidden={!T.subtitle.visible} extra={eye(T.subtitle.visible, on => update(d => { d.texts.subtitle.visible = on; }), 'Unterzeile')} />
-      <Row lvl={1} s={{ kind: 'el', id: 'source' }} icon={<Icon.text />} name="Quellenzeile" hidden={!T.source.visible} extra={<>{T.source.text != null && <small className="dim" title="Quellenzeile von Hand bearbeitet">eigen</small>}{eye(T.source.visible, on => update(d => { d.texts.source.visible = on; }), 'Quellenzeile')}</>} />
-      {chart ? <Row lvl={1} s={{ kind: 'frame', id: 'main' }} icon={<Icon.chart />} name={<>Diagramm <small>{CHART_LABEL[doc.chart?.type || 'saeulen']}</small></>} /> : <>
-      <Row lvl={1} s={{ kind: 'frame', id: 'main' }} icon={<Icon.frame />} name={<>Hauptkarte <small>{fokusLabel(doc)}</small></>} extra={v.locked.main ? <span className="lock" title="Ausschnitt gesperrt"><Icon.lock /></span> : null} />
-      <Row lvl={2} s={{ kind: 'layer', id: 'wk' }} icon={<Icon.layer />} name={g.meta.levelLabel || g.meta.label} extra={<>{tog(L.wkFill, on => update(d => { d.layers.wkFill = on; }), 'F', 'Fläche')}{tog(L.wkLines, on => update(d => { d.layers.wkLines = on; }), 'G', 'Grenze')}{tog(L.wkLabels, on => update(d => { d.layers.wkLabels = on; }), 'B', 'Beschriftung')}</>} />
-      <Row lvl={2} s={{ kind: 'layer', id: 'hatches' }} icon={<Icon.layer />} name={<>Schraffuren <small>{doc.hatches.length}</small></>} hidden={!L.hatches} extra={eye(L.hatches, on => update(d => { d.layers.hatches = on; }), 'Schraffuren')} />
-      {Object.keys(g.byKr).length > 0 && g.meta.level !== 'krs' && <Row lvl={2} s={{ kind: 'layer', id: 'kr' }} icon={<Icon.layer />} name={krLinesLabel(g)} hidden={!L.krLines} extra={eye(L.krLines, on => update(d => { d.layers.krLines = on; }), 'Kreisgrenzen')} />}
-      <Row lvl={2} s={{ kind: 'layer', id: 'land' }} icon={<Icon.layer />} name="Ländergrenzen" hidden={!L.landLines} extra={eye(L.landLines, on => update(d => { d.layers.landLines = on; }), 'Ländergrenzen')} />
-      {doc.overlays.map(o => <Row key={o.id} lvl={2} s={{ kind: 'overlay', id: o.id }} icon={<span className="ov-swatch" style={{ borderTopColor: o.color, borderTopStyle: o.dash ? 'dashed' : 'solid' }} />} name={<>{overlayName(o.geoSet, true)} <small>{GEO[o.geoSet]?.meta.stand ? GEO[o.geoSet]?.meta.stand?.slice(-4) : ''}</small></>} hidden={!o.visible} extra={eye(o.visible, on => updateOverlay(o.id, { visible: on }), overlayName(o.geoSet, true))} />)}
-      {doc.bubbles && <Row lvl={2} s={{ kind: 'bubbles' }} icon={<span className="bub-icon" />} name={<>Blasen <small>{doc.datasets.find(d => d.id === doc.bubbles!.dataset)?.columns.find(c => c.id === doc.bubbles!.column)?.label || ''}</small></>} hidden={!doc.bubbles.visible} extra={eye(doc.bubbles.visible, on => update(d => { if (d.bubbles) d.bubbles.visible = on; }), 'Blasen')} />}
-      {isRegional(g) && <Row lvl={2} s={{ kind: 'layer', id: 'laender' }} icon={<Icon.layer />} name={<>Nachbarländer <small>Kontext</small></>} hidden={!L.laender} extra={eye(L.laender, on => update(d => { d.layers.laender = on; }), 'Nachbarländer')} />}
-      <Row lvl={2} s={{ kind: 'layer', id: 'water' }} icon={<Icon.layer />} name={<>Gewässer <small>Kontext</small></>} hidden={!L.lakes} extra={eye(L.lakes, on => update(d => { d.layers.lakes = on; }), 'Gewässer')} />
-      <Row lvl={2} s={{ kind: 'layer', id: 'neighbors' }} icon={<Icon.layer />} name={<>Nachbarstaaten <small>Kontext</small></>} hidden={!L.neighbors} extra={eye(L.neighbors, on => update(d => { d.layers.neighbors = on; }), 'Nachbarstaaten')} />
-      <Row lvl={1} s={{ kind: 'frame', id: 'inset' }} icon={<Icon.frame />} name={<>Inset „{insetLabel(doc)}“</>} hidden={!doc.inset.visible} extra={eye(doc.inset.visible, on => { update(d => { d.inset.visible = on; d.inset.autoHidden = false; }); refitAfterInset(); }, 'Inset')} />
+      {Row({ s: { kind: 'graphic' }, icon: <Icon.graphic />, name: <>Grafik <small>{v.preset}</small></> })}
+      {Row({ lvl: 1, s: { kind: 'el', id: 'title' }, icon: <Icon.text />, name: "Titel", hidden: !T.title.visible, extra: eye(T.title.visible, on => update(d => { d.texts.title.visible = on; }), 'Titel') })}
+      {Row({ lvl: 1, s: { kind: 'el', id: 'subtitle' }, icon: <Icon.text />, name: "Unterzeile", hidden: !T.subtitle.visible, extra: eye(T.subtitle.visible, on => update(d => { d.texts.subtitle.visible = on; }), 'Unterzeile') })}
+      {Row({ lvl: 1, s: { kind: 'el', id: 'source' }, icon: <Icon.text />, name: "Quellenzeile", hidden: !T.source.visible, extra: <>{T.source.text != null && <small className="dim" title="Quellenzeile von Hand bearbeitet">eigen</small>}{eye(T.source.visible, on => update(d => { d.texts.source.visible = on; }), 'Quellenzeile')}</> })}
+      {chart ? Row({ lvl: 1, s: { kind: 'frame', id: 'main' }, icon: <Icon.chart />, name: <>Diagramm <small>{CHART_LABEL[doc.chart?.type || 'saeulen']}</small></> }) : <>
+      {Row({ lvl: 1, s: { kind: 'frame', id: 'main' }, icon: <Icon.frame />, name: <>Hauptkarte <small>{fokusLabel(doc)}</small></>, extra: v.locked.main ? <span className="lock" title="Ausschnitt gesperrt"><Icon.lock /></span> : null })}
+      {Row({ lvl: 2, s: { kind: 'layer', id: 'wk' }, icon: <Icon.layer />, name: g.meta.levelLabel || g.meta.label, extra: <>{tog(L.wkFill, on => update(d => { d.layers.wkFill = on; }), 'F', 'Fläche')}{tog(L.wkLines, on => update(d => { d.layers.wkLines = on; }), 'G', 'Grenze')}{tog(L.wkLabels, on => update(d => { d.layers.wkLabels = on; }), 'B', 'Beschriftung')}</> })}
+      {Row({ lvl: 2, s: { kind: 'layer', id: 'hatches' }, icon: <Icon.layer />, name: <>Schraffuren <small>{doc.hatches.length}</small></>, hidden: !L.hatches, extra: eye(L.hatches, on => update(d => { d.layers.hatches = on; }), 'Schraffuren') })}
+      {Object.keys(g.byKr).length > 0 && g.meta.level !== 'krs' && Row({ lvl: 2, s: { kind: 'layer', id: 'kr' }, icon: <Icon.layer />, name: krLinesLabel(g), hidden: !L.krLines, extra: eye(L.krLines, on => update(d => { d.layers.krLines = on; }), 'Kreisgrenzen') })}
+      {Row({ lvl: 2, s: { kind: 'layer', id: 'land' }, icon: <Icon.layer />, name: "Ländergrenzen", hidden: !L.landLines, extra: eye(L.landLines, on => update(d => { d.layers.landLines = on; }), 'Ländergrenzen') })}
+      {doc.overlays.map(o => Row({ lvl: 2, s: { kind: 'overlay', id: o.id }, icon: <span className="ov-swatch" style={{ borderTopColor: o.color, borderTopStyle: o.dash ? 'dashed' : 'solid' }} />, name: <>{overlayName(o.geoSet, true)} <small>{GEO[o.geoSet]?.meta.stand ? GEO[o.geoSet]?.meta.stand?.slice(-4) : ''}</small></>, hidden: !o.visible, extra: eye(o.visible, on => updateOverlay(o.id, { visible: on }), overlayName(o.geoSet, true)) }, o.id))}
+      {doc.bubbles && Row({ lvl: 2, s: { kind: 'bubbles' }, icon: <span className="bub-icon" />, name: <>Blasen <small>{doc.datasets.find(d => d.id === doc.bubbles!.dataset)?.columns.find(c => c.id === doc.bubbles!.column)?.label || ''}</small></>, hidden: !doc.bubbles.visible, extra: eye(doc.bubbles.visible, on => update(d => { if (d.bubbles) d.bubbles.visible = on; }), 'Blasen') })}
+      {isRegional(g) && Row({ lvl: 2, s: { kind: 'layer', id: 'laender' }, icon: <Icon.layer />, name: <>Nachbarländer <small>Kontext</small></>, hidden: !L.laender, extra: eye(L.laender, on => update(d => { d.layers.laender = on; }), 'Nachbarländer') })}
+      {Row({ lvl: 2, s: { kind: 'layer', id: 'water' }, icon: <Icon.layer />, name: <>Gewässer <small>Kontext</small></>, hidden: !L.lakes, extra: eye(L.lakes, on => update(d => { d.layers.lakes = on; }), 'Gewässer') })}
+      {Row({ lvl: 2, s: { kind: 'layer', id: 'neighbors' }, icon: <Icon.layer />, name: <>Nachbarstaaten <small>Kontext</small></>, hidden: !L.neighbors, extra: eye(L.neighbors, on => update(d => { d.layers.neighbors = on; }), 'Nachbarstaaten') })}
+      {Row({ lvl: 1, s: { kind: 'frame', id: 'inset' }, icon: <Icon.frame />, name: <>Inset „{insetLabel(doc)}“</>, hidden: !doc.inset.visible, extra: eye(doc.inset.visible, on => { update(d => { d.inset.visible = on; d.inset.autoHidden = false; }); refitAfterInset(); }, 'Inset') })}
       </>}
-      {(!chart || doc.chart?.type === 'sitze') && <Row lvl={1} s={{ kind: 'el', id: 'legend' }} icon={<Icon.legend />} name="Legende" hidden={!doc.legend.visible} extra={eye(doc.legend.visible, on => update(d => { d.legend.visible = on; }), 'Legende')} />}
-      <Row lvl={1} s={{ kind: 'el', id: 'logo' }} icon={<Icon.image />} name={<>Logo{!doc.logo.asset && <small>keines geladen</small>}</>} hidden={!doc.logo.visible || !doc.logo.asset} extra={doc.logo.asset ? eye(doc.logo.visible, setLogoVisible, 'Logo') : null} />
-      {doc.els.map(el => <Row key={el.id} lvl={1} s={{ kind: 'ann', id: el.id }} icon={el.type === 'marker' ? <MarkerIcon m={el} s={14} /> : el.type === 'arrow' ? <ArrowIcon /> : <Icon.text />} name={elName(el)} hidden={!!el.hidden} extra={eye(!el.hidden, on => update(d => { const x = d.els.find(q => q.id === el.id); if (x) x.hidden = !on; }), elName(el))} />)}
+      {(!chart || doc.chart?.type === 'sitze') && Row({ lvl: 1, s: { kind: 'el', id: 'legend' }, icon: <Icon.legend />, name: "Legende", hidden: !doc.legend.visible, extra: eye(doc.legend.visible, on => update(d => { d.legend.visible = on; }), 'Legende') })}
+      {Row({ lvl: 1, s: { kind: 'el', id: 'logo' }, icon: <Icon.image />, name: <>Logo{!doc.logo.asset && <small>keines geladen</small>}</>, hidden: !doc.logo.visible || !doc.logo.asset, extra: doc.logo.asset ? eye(doc.logo.visible, setLogoVisible, 'Logo') : null })}
+      {doc.els.map(el => Row({ lvl: 1, s: { kind: 'ann', id: el.id }, icon: el.type === 'marker' ? <MarkerIcon m={el} s={14} /> : el.type === 'arrow' ? <ArrowIcon /> : <Icon.text />, name: elName(el), hidden: !!el.hidden, extra: eye(!el.hidden, on => update(d => { const x = d.els.find(q => q.id === el.id); if (x) x.hidden = !on; }), elName(el)) }, el.id))}
     </div>
   );
 }
@@ -386,7 +389,7 @@ function Props() {
   else body = <GraphicProps doc={doc} />;
   // Neuer Gegenstand = Eigenschaften von oben zeigen
   const selKey = s.kind === 'area' ? 'area:' + (s.ids.length > 1 ? 'multi' : s.ids[0]) : s.kind + ':' + ('id' in s ? s.id : '');
-  return <div className="props" key={selKey}>{body}</div>;
+  return <div className="props" key={selKey}><ErrorBoundary area="Eigenschaften" resetKey={doc}>{body}</ErrorBoundary></div>;
 }
 
 /** Ziehgriff am linken Rand: Panel breiter/schmaler ziehen (z. B. damit ein Farbwähler nicht am Fensterrand abgeschnitten wird). */
@@ -395,11 +398,12 @@ function PanelResize() {
     const el = e.currentTarget as HTMLElement; el.setPointerCapture(e.pointerId); el.classList.add('active');
     const startX = e.clientX, startW = getUI().panelW;
     const move = (ev: PointerEvent) => setUI({ panelW: clamp(startW - (ev.clientX - startX), 312, 640) });
-    const up = () => { el.classList.remove('active'); el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); };
-    el.addEventListener('pointermove', move); el.addEventListener('pointerup', up, { once: true });
+    const up = () => { el.classList.remove('active'); el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); };
+    el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
   };
   return <div className="rp-resize" onPointerDown={onDown} role="separator" aria-orientation="vertical" aria-label="Panel-Breite ziehen" />;
 }
 export function RightPanel() {
-  return <aside className="rightpanel" aria-label="Ebenen und Eigenschaften"><PanelResize /><Layers /><Props /></aside>;
+  const doc = useStore(s => s.doc);
+  return <aside className="rightpanel" aria-label="Ebenen und Eigenschaften"><PanelResize /><ErrorBoundary area="Ebenen" resetKey={doc}><Layers /></ErrorBoundary><Props /></aside>;
 }

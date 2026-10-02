@@ -306,7 +306,7 @@ export function buildTable(raw: RawInput, st: ImportSettings): TableResult {
   autoRoles(columns, body, st.preset);
   for (const c of columns) if (st.roles[c.label]) c.role = st.roles[c.label];
   // Summenzeilen
-  const summary = body.map(r => isSummaryRow(r, columns, st));
+  const summary = summaryFlags(body, columns, st);
   // Gruppen
   const groups = st.groups ? st.groups.map(g => mkGroup(g, columns)) : st.preset === 'genesis' ? genesisGroups(raw, st, columns) : autoGroups(columns, st, pv?.kinds || {}, pv?.colGroup || {});
   return { columns, body, summary, groups, headerLabels: header, notes, german, joint };
@@ -391,19 +391,34 @@ function autoGroups(columns: Column[], st: ImportSettings, kinds: Record<string,
   }
   return out;
 }
-function isSummaryRow(r: Cell[], columns: Column[], st: ImportSettings) {
-  if (!st.excludeSummary) return false;
+/** Art einer möglichen Summenzeile: 'total' (Deutschland, insgesamt …), 'land' (Landeszeile), 'other' (Regel einer Vorlage),
+ *  'none' (Datenzeile). Landeszeilen sind nur in Tabellen feinerer Gebiete Summen – siehe summaryFlags. */
+type SummaryKind = 'none' | 'total' | 'land' | 'other';
+function summaryKind(r: Cell[], columns: Column[], st: ImportSettings): SummaryKind {
+  if (!st.excludeSummary) return 'none';
   const get = (pred: (c: Column) => boolean) => { const c = columns.find(pred); return c ? txt(r[+c.id.slice(1)]) : ''; };
-  if (st.preset === 'bwl-kerg') { const g = get(c => c.label.startsWith('gehört')); return !/^(0[1-9]|1[0-6])$/.test(g); }
-  if (st.preset === 'bwl-umrechnung') { const n = Number(get(c => c.label === 'Wkr-Nr.')); return !(n >= 1 && n <= 299); }
-  if (st.preset === 'bwl-kreis') return !/^\d{4,5}$/.test(get(c => c.label === 'Statistische Kennziffer'));
-  if (st.preset === 'bwl-wbz' || st.preset === 'be-wbz' || st.preset === 'be-gebiete' || st.preset === 'genesis' || !!ltwPreset(st.preset)) return false;
+  if (st.preset === 'bwl-kerg') { const g = get(c => c.label.startsWith('gehört')); return !/^(0[1-9]|1[0-6])$/.test(g) ? 'other' : 'none'; }
+  if (st.preset === 'bwl-umrechnung') { const n = Number(get(c => c.label === 'Wkr-Nr.')); return !(n >= 1 && n <= 299) ? 'other' : 'none'; }
+  if (st.preset === 'bwl-kreis') return !/^\d{4,5}$/.test(get(c => c.label === 'Statistische Kennziffer')) ? 'other' : 'none';
+  if (st.preset === 'bwl-wbz' || st.preset === 'be-wbz' || st.preset === 'be-gebiete' || st.preset === 'genesis' || !!ltwPreset(st.preset)) return 'none';
   const name = get(c => c.role === 'name');
-  if (/^(deutschland|bund|bundesgebiet|insgesamt|summe|gesamt|total)$/i.test(name)) return true;
+  if (/^(deutschland|bund|bundesgebiet|insgesamt|summe|gesamt|total)$/i.test(name)) return 'total';
   // Landesnamen sind Summenzeilen, außer die Kennung ist ein Kreis- oder Gemeindeschlüssel (Berlin, Hamburg)
   const id = get(c => c.role === 'id').replace(/\s/g, '');
-  if (Object.values(LAENDER).some(([n]) => n === name) && !(id.length >= 4 && /^\d+$/.test(id))) return true;
-  return false;
+  if (Object.values(LAENDER).some(([n]) => n === name) && !(id.length >= 4 && /^\d+$/.test(id))) return 'land';
+  return 'none';
+}
+/** Summenzeilen einer Tabelle. Landeszeilen gelten als Summen, außer die Tabelle ist eine Ländertabelle (alle Zeilen mit
+ *  Inhalt sind Länder) oder das Ziel ist die Ebene „Länder“ – sonst wurden in einer reinen Ländertabelle alle Zeilen als
+ *  Summen verworfen und nichts ließ sich zuordnen. */
+export function summaryFlags(body: Cell[][], columns: Column[], st: ImportSettings): boolean[] {
+  const kinds = body.map(r => summaryKind(r, columns, st));
+  const filled = (r: Cell[]) => r.some(v => txt(v) !== '');
+  const nLand = kinds.filter(k => k === 'land').length;
+  const nData = kinds.filter((k, i) => k === 'none' && filled(body[i])).length;
+  const lanTarget = !!st.geoSet && GEO_INDEX.find(e => e.id === st.geoSet)?.level === 'lan';
+  const landIsData = nLand > 0 && (lanTarget || nData === 0);
+  return kinds.map(k => k === 'other' || k === 'total' || (k === 'land' && !landIsData));
 }
 
 // ---------- Gebietsstand erkennen ----------

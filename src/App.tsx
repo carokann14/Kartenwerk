@@ -7,6 +7,7 @@ import { clamp } from './lib/util';
 import { setLogoVisible } from './model/logo';
 import { Canvas, fitViewToCanvas } from './ui/Canvas';
 import { Icon } from './ui/common';
+import { ErrorBoundary } from './ui/ErrorBoundary';
 import { ImportWizard } from './ui/ImportWizard';
 import { GeoImportWizard } from './ui/GeoImportWizard';
 import { TableEditor } from './ui/TableEditor';
@@ -61,6 +62,7 @@ function StepPanel() {
   const STEPS = useSteps();
   const step = useStore(s => s.ui.step);
   const open = useStore(s => s.ui.panelOpen);
+  const doc = useStore(s => s.doc);
   if (!open) return <aside className="steppanel" aria-hidden="true" />;
   // Schritt gibt es bei dieser Grafik nicht (Karte ↔ Diagramm): Färbung/Gebiete ↔ Diagramm
   const k0 = STEPS.findIndex(s => s.id === step), k = k0 >= 0 ? k0 : STEPS.findIndex(s => s.id === (step === 'diagramm' ? 'faerbung' : 'diagramm')) >= 0 ? STEPS.findIndex(s => s.id === (step === 'diagramm' ? 'faerbung' : 'diagramm')) : 0, S = STEPS[k];
@@ -69,7 +71,7 @@ function StepPanel() {
       <StepResize />
       <div className="sp-head"><span className="step-no">{k + 1}/{STEPS.length}</span><h2>{S.label}</h2>
         {k < STEPS.length - 1 && <button className="btn small ghost" onClick={() => setUI({ step: STEPS[k + 1].id })}>Weiter: {STEPS[k + 1].label} <Icon.chev size={12} /></button>}</div>
-      <div className="sp-body"><S.C /></div>
+      <div className="sp-body"><ErrorBoundary key={S.id} area={S.label} resetKey={doc}><S.C /></ErrorBoundary></div>
     </aside>
   );
 }
@@ -79,8 +81,8 @@ function StepResize() {
     const el = e.currentTarget as HTMLElement; el.setPointerCapture(e.pointerId); el.classList.add('active');
     const startX = e.clientX, startW = getUI().stepW;
     const move = (ev: PointerEvent) => setUI({ stepW: clamp(startW + (ev.clientX - startX), 296, 640) });
-    const up = () => { el.classList.remove('active'); el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); };
-    el.addEventListener('pointermove', move); el.addEventListener('pointerup', up, { once: true });
+    const up = () => { el.classList.remove('active'); el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); };
+    el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
   };
   return <div className="step-resize" onPointerDown={onDown} role="separator" aria-orientation="vertical" aria-label="Panel-Breite ziehen" />;
 }
@@ -97,7 +99,10 @@ const isTyping = (e: KeyboardEvent) => { const t = e.target as HTMLElement; retu
 function useShortcuts() {
   useEffect(() => {
     const kd = (e: KeyboardEvent) => {
-      const u = getUI(); if (u.start || u.wizard || u.geoWizard || !getDoc()) return;
+      // Solange ein Dialog offen ist, gelten die Tastenkürzel der Arbeitsfläche nicht (sonst löschte z. B. Entf mit Fokus auf
+      // einem Knopf im Tabellen-Dialog den in der Grafik ausgewählten Marker, Strg+Z machte im Hintergrund rückgängig)
+      const u = getUI(); if (u.start || u.wizard || u.geoWizard || u.tableEdit || u.katalog || u.suggest || !getDoc()) return;
+      if (document.querySelector('.modal-back')) return;
       const mod = e.ctrlKey || e.metaKey, key = e.key.toLowerCase();
       if (mod && key === 'z' && !isTyping(e)) { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
       if (mod && key === 'y' && !isTyping(e)) { e.preventDefault(); redo(); return; }
@@ -145,6 +150,7 @@ function useAutosave() {
 export function App() {
   const [ready, setReady] = useState<'loading' | 'ok' | string>('loading');
   const hasDoc = useStore(s => !!s.doc);
+  const doc = useStore(s => s.doc);
   const start = useStore(s => s.ui.start);
   const wizard = useStore(s => s.ui.wizard);
   const geoWizard = useStore(s => s.ui.geoWizard);
@@ -168,16 +174,17 @@ export function App() {
         <div className={'main' + (panelOpen ? '' : ' panel-closed')} style={{ '--panelw': panelW + 'px', '--stepw': (panelOpen ? stepW : 0) + 'px' } as React.CSSProperties}>
           <Rail />
           <StepPanel />
-          <Canvas />
+          <ErrorBoundary area="Arbeitsfläche" resetKey={doc}><Canvas /></ErrorBoundary>
           <RightPanel />
         </div>
       </> : <div className="boot" />}
-      {(start || !hasDoc) && <StartDialog />}
-      {wizard && hasDoc && <ImportWizard />}
-      {geoWizard && hasDoc && <GeoImportWizard />}
-      {tableEdit && hasDoc && <TableEditor />}
-      {katalog && hasDoc && <KatalogDialog />}
-      {suggest && hasDoc && <SuggestDialog />}
+      {/* Dialoge: ein Fehler darin schließt nur den Dialog, nicht die ganze App */}
+      {(start || !hasDoc) && <ErrorBoundary area="Startdialog" onClose={hasDoc ? () => setUI({ start: false }) : undefined}><StartDialog /></ErrorBoundary>}
+      {wizard && hasDoc && <ErrorBoundary area="Datenimport" onClose={() => setUI({ wizard: null, afterImport: null })}><ImportWizard /></ErrorBoundary>}
+      {geoWizard && hasDoc && <ErrorBoundary area="Geodaten-Import" onClose={() => setUI({ geoWizard: false })}><GeoImportWizard /></ErrorBoundary>}
+      {tableEdit && hasDoc && <ErrorBoundary area="Tabelle" onClose={() => setUI({ tableEdit: null })}><TableEditor /></ErrorBoundary>}
+      {katalog && hasDoc && <ErrorBoundary area="Katalog" onClose={() => setUI({ katalog: false })}><KatalogDialog /></ErrorBoundary>}
+      {suggest && hasDoc && <ErrorBoundary area="Vorschläge" onClose={() => setUI({ suggest: null, suggestFresh: false })}><SuggestDialog /></ErrorBoundary>}
       <Toast />
       <Busy />
     </div>

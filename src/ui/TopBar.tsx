@@ -4,7 +4,7 @@ import { addVariant, removeVariant, switchVariant } from '../model/actions';
 import { duplicateProject, openProjectFile, renameProject, saveProjectFile } from '../model/projectIO';
 import { redo, setUI, undo, useStore } from '../model/store';
 import { activeVariant } from '../render/elements';
-import { Icon, ratioIcon } from './common';
+import { Icon, fitMenu, ratioIcon } from './common';
 
 export const APP_VERSION = 'M10 · Feinschliff';
 
@@ -43,7 +43,7 @@ export function TopBar() {
       <div className="tb-group menu-anchor tb-hide-narrow" ref={projRef}>
         <input className="proj-name" value={doc.name} onChange={e => renameProject(e.target.value)} aria-label="Projektname" size={Math.max(8, Math.min(34, doc.name.length + 1))} />
         <button className="btn icon ghost" onClick={() => setUI({ menu: menu === 'project' ? null : 'project' })} aria-haspopup="menu" aria-expanded={menu === 'project'} aria-label="Projektmenü"><Icon.chevDown /></button>
-        {menu === 'project' && <div className="menu" role="menu">
+        {menu === 'project' && <div className="menu" role="menu" ref={fitMenu}>
           <h6>Projekt</h6>
           <button className="menu-item" role="menuitem" onClick={() => { setUI({ menu: null, start: true }); }}><Icon.folder /> Projekte im Browser …</button>
           <button className="menu-item" role="menuitem" onClick={() => { setUI({ menu: null }); saveProjectFile(); }}><Icon.download /> Projektdatei speichern<span className="dim">.kartenwerk.json</span></button>
@@ -59,7 +59,7 @@ export function TopBar() {
         <button className="btn" onClick={() => setUI({ menu: menu === 'variants' ? null : 'variants' })} aria-haspopup="menu" aria-expanded={menu === 'variants'}>
           {ratioIcon(v.w, v.h)}<span>{v.preset}</span><span className="num dim">{v.w} × {v.h}</span><Icon.chevDown />
         </button>
-        {menu === 'variants' && <div className="menu" role="menu">
+        {menu === 'variants' && <div className="menu" role="menu" ref={fitMenu}>
           <h6>Varianten in diesem Projekt</h6>
           {doc.variants.map((x, k) => (
             <div key={x.id} className="menu-row">

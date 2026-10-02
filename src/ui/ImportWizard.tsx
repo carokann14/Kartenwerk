@@ -12,7 +12,7 @@ import type { Cell, Dataset, ImportSettings, PresetId, RawInput, Role } from '..
 import { GEO, areaContext, areaTitle } from '../geo/geo';
 import { addDataset, loadGeoSets, replaceDataset } from '../model/actions';
 import { getDoc, getUI, setUI, useStore } from '../model/store';
-import { Check, Field, GeoPicker, Icon, Note, NumInput, Seg } from './common';
+import { Check, DialogFocus, Field, GeoPicker, Icon, Note, NumInput, Seg } from './common';
 import { customOptions } from '../model/regionActions';
 import { BE_EBENEN } from '../data/berlin';
 const beStimmeOf = (t: string) => t.match(/(Erst|Zweit)stimmen/)?.[0] || 'Zweitstimmen';
@@ -89,6 +89,7 @@ export function ImportWizard() {
   const canNext = step === 1 ? !!raw : step === 4 ? !!st?.geoSet : true;
   return (
     <div className="modal-back" role="dialog" aria-modal="true" aria-labelledby="wiz-title" onKeyDown={e => { if (e.key === 'Escape') close(); }}>
+      <DialogFocus />
       <div className="modal wizard">
         <header className="modal-head">
           <h2 id="wiz-title">{base ? `Daten ersetzen: ${base.name}` : 'Daten importieren'}</h2>

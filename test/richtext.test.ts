@@ -1,6 +1,6 @@
 // Rich-Text-Marken (fett/kursiv/Farbe je Textstelle): Kernlogik ohne UI.
 // Aufruf: npx esbuild test/richtext.test.ts --bundle --platform=node --format=esm --outfile=/tmp/rt.test.mjs && node /tmp/rt.test.mjs
-import { boldCutOf, colorAtRange, isRangeBold, isRangeItalic, lineRuns, setMarkField, shiftMarksOnEdit, wrapRich } from '../src/lib/richtext';
+import { boldCutOf, clampRange, colorAtRange, isRangeBold, isRangeItalic, lineRuns, setMarkField, shiftMarksOnEdit, wrapRich } from '../src/lib/richtext';
 
 const ok = (c: boolean, m: string) => { console.log((c ? 'ok: ' : 'FEHLER: ') + m); if (!c) process.exitCode = 1; };
 
@@ -50,3 +50,30 @@ const wrapped = wrapRich(text, marks, 'text', 20, 999999); // maxW riesig → ei
 ok(wrapped.length === 1 && wrapped[0].from === 0 && wrapped[0].to === text.length, 'ohne Umbruchzwang bleibt alles eine Zeile');
 const wrapped2 = wrapRich('Erste Zeile\nZweite Zeile', [], 'text', 20, 999999);
 ok(wrapped2.length === 2, 'harter Zeilenumbruch \\n ergibt zwei Zeilen');
+
+// Veraltete Auswahl (Absturz 02.10.2026): Nach dem Löschen einer markierten Stelle am Textende fragte die Formatleiste noch mit der
+// alten Auswahl nach – über das Textende hinaus. Das darf weder werfen noch etwas Falsches melden.
+const kurz = 'Stärkste Partei je ';   // „Wahlkreis“ markiert und gelöscht, Auswahl steht noch bei 19–28
+let warf = false;
+try {
+  ok(!isRangeBold(kurz, [], 19, 28, false), 'veraltete Auswahl hinter dem Textende: nicht fett, kein Fehler');
+  ok(!isRangeItalic(kurz, [{ start: 0, end: 40, i: true }], 19, 28), 'veraltete Auswahl hinter dem Textende: nicht kursiv, kein Fehler');
+  ok(colorAtRange(kurz, [{ start: 0, end: 40, color: '#E63946' }], 30, 40, '#16181B') === '#16181B', 'Farbe einer Auswahl ganz hinter dem Text: Grundfarbe');
+  ok(isRangeBold(kurz, [], 5, 28, true), 'Auswahl teils hinter dem Text: der vorhandene Teil zählt (Grundschnitt fett)');
+  const mk = setMarkField(kurz, [], 10, 99, 'b', true);
+  ok(mk.length === 1 && mk[0].start === 10 && mk[0].end === kurz.length, 'Formatieren mit zu langer Auswahl endet am Textende: ' + JSON.stringify(mk));
+  ok(JSON.stringify(clampRange('abc', 5, 2)) === '[2,3]' && JSON.stringify(clampRange('abc', -4, 1)) === '[0,1]', 'clampRange begrenzt und ordnet');
+  ok(!isRangeBold('', [], 0, 3, true) && colorAtRange('', [], 0, 3, '#000') === '#000', 'leerer Text (alles gelöscht): kein Fehler');
+  // Ersetzen einer Auswahl am Ende: Stil des Zeichens davor wird übernommen, Marken bleiben im Text
+  const vorher = 'Hallo Welt', fett = setMarkField(vorher, [], 6, 10, 'b', true);
+  const nachher = shiftMarksOnEdit(vorher, 'Hallo X', fett);
+  ok(nachher.every(m => m.end <= 'Hallo X'.length), 'Ersetzen am Textende: keine Marke ragt über den Text hinaus ' + JSON.stringify(nachher));
+  ok(isRangeBold('Hallo X', nachher, 6, 7, false), 'fett markiertes Wort überschrieben: das neue Wort bleibt fett');
+  const davor = shiftMarksOnEdit(vorher, 'Hallo Welt!', fett);
+  ok(isRangeBold('Hallo Welt!', davor, 6, 11, false), 'Tippen direkt hinter einem fetten Wort: Zeichen übernimmt den Stil davor');
+  const normal = shiftMarksOnEdit(vorher, 'Hey Welt', fett);
+  ok(!isRangeBold('Hey Welt', normal, 0, 3, false) && isRangeBold('Hey Welt', normal, 4, 8, false), 'nicht formatierten Teil ersetzen: bleibt normal, das fette Wort rückt nach');
+  const leer = shiftMarksOnEdit(vorher, '', fett);
+  ok(leer.length === 0, 'alles markiert und gelöscht: keine Marken übrig');
+} catch (e) { warf = true; ok(false, 'Formatabfrage mit veralteter Auswahl warf: ' + (e as Error).message); }
+ok(!warf, 'keine Ausnahme bei veralteter Auswahl');

@@ -124,11 +124,15 @@ button { cursor: pointer; }
 .main {
   display: grid; min-height: 0;
   grid-template-columns: 52px var(--stepw, 296px) minmax(0, 1fr) var(--panelw, 312px);
+  /* Eine Zeile mit genau der verfügbaren Höhe: Inhalte der Leisten dürfen die Zeile nicht strecken, sonst wachsen
+     beide Leisten und die Arbeitsfläche über das Fenster hinaus und nichts lässt sich mehr nach unten scrollen. */
+  grid-template-rows: minmax(0, 1fr);
 }
 .main.panel-closed { --stepw: 0px; }
 .rail {
   background: var(--panel); border-right: 1px solid var(--line);
   display: flex; flex-direction: column; align-items: center; padding: 8px 0; gap: 4px;
+  min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none;
 }
 .rail-btn {
   width: 42px; padding: 7px 0 5px; border: 0; background: none; border-radius: 7px;
@@ -143,9 +147,10 @@ button { cursor: pointer; }
 .steppanel {
   position: relative;
   background: var(--panel); border-right: 1px solid var(--line);
-  /* kein overflow:hidden mehr: sonst schneidet dieser Rahmen einen offenen Farbwähler (der über den Rand hinausragen kann)
-     optisch ab, obwohl daneben noch reichlich Platz ist; das Scrollen selbst übernimmt .sp-body für sich. */
-  display: flex; flex-direction: column; min-width: 0;
+  /* min-height: 0 ist nötig, damit die Leiste nicht auf ihre Inhaltshöhe wächst; das Scrollen übernimmt .sp-body.
+     Kein overflow:hidden, damit der Ziehgriff (.step-resize) über den Rand greifen kann. Der Farbwähler hängt ohnehin
+     nicht mehr in dieser Leiste (Portal). */
+  display: flex; flex-direction: column; min-width: 0; min-height: 0;
 }
 .main.panel-closed .steppanel { border-right: 0; }
 .step-resize { position: absolute; right: -4px; top: 0; bottom: 0; width: 7px; cursor: ew-resize; z-index: 3; touch-action: none; }
@@ -157,7 +162,8 @@ button { cursor: pointer; }
 .sp-head h2 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: .005em; }
 .sp-head .step-no { font: 500 11px/1 var(--mono); color: var(--muted); }
 .sp-head .btn { margin-left: auto; }
-.sp-body { overflow-y: auto; padding: 12px 14px 24px; display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+.sp-body { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding: 12px 14px 24px; display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+.sp-head { flex: none; }
 
 .section { display: flex; flex-direction: column; gap: 8px; }
 .section > h3 {
@@ -188,8 +194,10 @@ input[type="color"] { width: 28px; height: 24px; padding: 0 2px; border: 1px sol
    damit er nicht wie ein weiterer Farbvorschlag aussieht, sondern klar als „eigene Farbe wählen“ erkennbar ist. */
 .color-swatch-custom { background: conic-gradient(from 200deg, #E63946, #F2C744, #4CAF50, #2F5D8A, #8A5A2F, #E63946); display: grid; place-items: center; color: #fff; }
 .color-swatch-custom svg { filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.6)); }
+/* Der Farbwähler liegt in einem Portal direkt im <body> (position: fixed) und wird per Skript ins Fenster gesetzt
+   (placePopover in common.tsx) – so schneidet ihn keine scrollende Leiste mehr ab, auch nicht am Fensterrand. */
 .color-pop {
-  position: absolute; top: calc(100% + 4px); left: 0; z-index: 60; width: 220px;
+  position: fixed; z-index: 200; width: 220px; box-sizing: border-box; max-height: calc(100vh - 16px); overflow-y: auto;
   background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow-lg);
   padding: 10px; display: flex; flex-direction: column; gap: 10px;
 }
@@ -359,11 +367,11 @@ table.dtable { width: 100%; border-collapse: collapse; font-size: 12px; }
 .tooltip .tt-r i { width: 9px; height: 9px; border-radius: 2px; display: block; }
 
 /* Right panel */
-.rightpanel { position: relative; background: var(--panel); border-left: 1px solid var(--line); display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+.rightpanel { position: relative; background: var(--panel); border-left: 1px solid var(--line); display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; min-width: 0; }
 .rp-resize { position: absolute; left: -4px; top: 0; bottom: 0; width: 7px; cursor: ew-resize; z-index: 3; touch-action: none; }
 .rp-resize::after { content: ''; position: absolute; left: 3px; top: 0; bottom: 0; width: 1px; background: transparent; }
 .rp-resize:hover::after, .rp-resize.active::after { background: var(--accent); }
-.layers { border-bottom: 1px solid var(--line); max-height: 44vh; overflow-y: auto; }
+.layers { border-bottom: 1px solid var(--line); max-height: 44vh; overflow-y: auto; overscroll-behavior: contain; }
 .rp-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px 6px; position: sticky; top: 0; background: var(--panel); z-index: 1; }
 .rp-head h2 { margin: 0; font-size: 10.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
 .rp-head .aside { margin-left: auto; font: 500 11px var(--mono); color: var(--muted); }
@@ -391,7 +399,7 @@ table.dtable { width: 100%; border-collapse: collapse; font-size: 12px; }
 .lrow .lock { color: var(--muted); }
 .lrow .lock svg { width: 12px; height: 12px; }
 
-.props { overflow-y: auto; padding: 0 12px 24px; display: flex; flex-direction: column; gap: 14px; }
+.props { overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; min-height: 0; padding: 0 12px 24px; display: flex; flex-direction: column; gap: 14px; }
 .props .rp-head { padding: 10px 0 2px; margin: 0; }
 .props-title { font-size: 14px; font-weight: 600; margin: 0; }
 .props-sub { color: var(--muted); font-size: 12px; margin: -10px 0 0; }
@@ -436,7 +444,7 @@ table.dtable { width: 100%; border-collapse: collapse; font-size: 12px; }
 
 /* Toast */
 .toast {
-  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 60;
+  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 60; pointer-events: none;   /* verdeckt sonst kurz Knöpfe darunter (z. B. im Dialog-Fuß) */
   background: var(--ink); color: var(--panel); padding: 8px 14px; border-radius: 8px; box-shadow: var(--shadow-lg); font-size: 12.5px;
 }
 
@@ -783,10 +791,13 @@ button.start-card:hover { border-color: var(--accent); }
 .te { border-collapse: collapse; font-size: 12.5px; min-width: 100%; }
 .te th, .te td { border-bottom: 1px solid var(--line-2); border-right: 1px solid var(--line-2); padding: 0; }
 .te th { background: var(--panel-2); position: sticky; top: 0; z-index: 1; white-space: nowrap; }
-.te th > input { font-weight: 600; }
+.te th input { font-weight: 600; }
 .te th:last-child, .te td:last-child { border-right: 0; padding: 0 4px; width: 1%; white-space: nowrap; }
 .te input { width: 100%; min-width: 90px; border: 0; background: transparent; padding: 6px 8px; font: inherit; color: inherit; border-radius: 0; }
-.te th > input { width: calc(100% - 26px); }
+/* Überschrift + „Spalte löschen“ nebeneinander; vorher ragte der Knopf in die Nachbarzelle und war dort verdeckt (nicht klickbar) */
+.te-th { display: flex; align-items: center; gap: 2px; padding-right: 2px; }
+.te-th > input { flex: 1 1 auto; width: auto; min-width: 60px; }
+.te-th > .btn.icon { flex: none; width: 22px; height: 22px; }
 .te td.r input { text-align: right; font-variant-numeric: tabular-nums; }
 .te input:focus { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--panel); }
 .modal.te-modal { width: min(820px, 100%); }
@@ -836,3 +847,16 @@ button.build:hover:not(:disabled) { border-color: var(--accent); }
 .seat-text-row { display: flex; align-items: flex-end; gap: 6px; }
 .seat-text-row label { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--muted); flex: 1; min-width: 0; }
 .seat-text-row input[type="number"] { width: 100%; min-width: 0; height: 26px; font-size: 12.5px; padding: 0 6px; }
+
+/* Fehleranzeige eines Bereichs (ErrorBoundary): statt leerer Seite ein Hinweis mit „Erneut versuchen“/„Rückgängig“ */
+.err-box { margin: 12px; padding: 12px 14px; border-radius: 8px; border: 1px solid color-mix(in srgb, var(--err) 35%, var(--line)); background: var(--err-soft); color: var(--ink); display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; align-self: start; min-width: 0; }
+.err-box .err-head { display: flex; gap: 8px; align-items: flex-start; color: var(--err); }
+.err-box .err-head svg { width: 16px; height: 16px; flex: none; margin-top: 1px; }
+.err-box .err-head b { font-weight: 600; }
+.err-box .err-detail summary { cursor: pointer; font-size: 11.5px; color: var(--muted); }
+.err-box .err-detail code { display: block; margin-top: 4px; font: 11px/1.4 var(--mono); white-space: pre-wrap; word-break: break-word; color: var(--ink-2); }
+.err-box.err-full, .err-box.err-modal { max-width: 520px; background: var(--panel); box-shadow: var(--shadow-lg); }
+/* Menüs in der Kopfleiste: bei niedrigem Fenster scrollen statt unten abgeschnitten zu werden */
+.topbar .menu { max-height: calc(100vh - 60px); overflow-y: auto; }
+/* Dialoge bekommen beim Öffnen den Fokus (DialogFocus); der Rahmen selbst braucht keinen Fokusring */
+.modal:focus { outline: none; }

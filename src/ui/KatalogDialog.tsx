@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { KatalogEntry, KatalogIndex, KatalogLevel, importKatalog, katalogSpan, loadKatalog } from '../data/katalog';
 import { addDataset } from '../model/actions';
 import { getUI, setUI, toast } from '../model/store';
-import { Icon, Seg } from './common';
+import { DialogFocus, Icon, Seg } from './common';
 
 const KB = (n: number) => (n > 1e6 ? `${(n / 1e6).toLocaleString('de-DE', { maximumFractionDigits: 1 })} MB` : `${Math.max(1, Math.round(n / 1000))} KB`);
 
@@ -29,6 +29,7 @@ export function KatalogDialog() {
   const themen = idx ? [...new Set(idx.entries.map(e => e.thema))] : [];
   return (
     <div className="modal-back" role="dialog" aria-modal="true" aria-labelledby="kat-title" onKeyDown={e => { if (e.key === 'Escape') close(); }}>
+      <DialogFocus />
       <div className="modal katalog">
         <header className="modal-head"><h2 id="kat-title"><Icon.katalog /> Kennzahlen-Katalog</h2><span className="spacer" /><button className="btn icon ghost" onClick={close} aria-label="Schließen"><Icon.x /></button></header>
         <div className="modal-body stack-12">

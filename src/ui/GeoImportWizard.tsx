@@ -7,7 +7,7 @@ import type { UserGeoRaw, UserGeoReport } from '../geo/buildUserGeo';
 import { addUserGeo } from '../model/geodataActions';
 import { setUI, useStore } from '../model/store';
 import { fmtInt } from '../lib/util';
-import { Field, Icon, Note, Seg } from './common';
+import { DialogFocus, Field, Icon, Note, NumInput, Seg } from './common';
 
 const STEPS = ['Datei', 'Lage', 'Felder'];
 const ACCEPT = '.zip,.shp,.dbf,.prj,.cpg,.shx,.geojson,.json,.kml,.kmz,.gpkg';
@@ -118,6 +118,7 @@ export function GeoImportWizard() {
   const canFinish = !!built && built.report.areas > 0 && attribution.trim().length > 2 && !busy;
   return (
     <div className="modal-back" role="dialog" aria-modal="true" aria-labelledby="gwiz-title" onKeyDown={e => { if (e.key === 'Escape') close(); }}>
+      <DialogFocus />
       <div className="modal wizard">
         <header className="modal-head">
           <h2 id="gwiz-title">Geodaten importieren</h2>
@@ -247,7 +248,7 @@ function StepFields(p: {
           <p className="hint">Über die <b>Kennung</b> finden Tabellen später ihre Gebiete, etwa die Wahlbezirksnummer. Zeilen mit gleicher Kennung werden zu einer Fläche zusammengefasst.</p>
           <Field label="Name der Karte"><input type="text" value={p.label} onChange={e => p.setLabel(e.target.value)} aria-label="Name der Karte" placeholder="z. B. Wahlbezirke Berlin 2026" /></Field>
           <Field label="Gebiete heißen"><input type="text" value={p.levelLabel} onChange={e => p.setLevelLabel(e.target.value)} aria-label="Bezeichnung der Gebiete (Mehrzahl)" placeholder="z. B. Wahlbezirke" /></Field>
-          <Field label="Stand (Jahr)"><input type="number" min={1990} max={2100} value={p.year} onChange={e => p.setYear(+e.target.value || p.year)} aria-label="Jahr" /></Field>
+          <Field label="Stand (Jahr)"><NumInput min={1990} max={2100} value={p.year} onChange={n => p.setYear(Math.round(n))} ariaLabel="Jahr" /></Field>
         </div>
         <div className="stack-12">
           <Field label="Quellenvermerk" stack><textarea rows={2} value={p.attribution} onChange={e => p.setAttribution(e.target.value)} placeholder="z. B. Geometrien: Amt für Statistik Berlin-Brandenburg, CC BY 3.0 DE" aria-label="Quellenvermerk (Pflicht)" /></Field>

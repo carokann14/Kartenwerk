@@ -6,7 +6,7 @@ import { getDoc, getUI, setUI, toast, update, useStore } from '../../model/store
 import { activeVariant, sourceText } from '../../render/elements';
 import { analyzeSvg, buildExportSvg, renderPng, SvgReport } from '../../export/svg';
 import { copyText, saveFile } from '../../export/save';
-import { Check, Field, Icon, Section, Seg, ratioIcon } from '../common';
+import { Check, Field, Icon, NumInput, Section, Seg, ratioIcon } from '../common';
 
 interface SvgResult extends SvgReport { svg: string; url: string; ms: number; doc: unknown }
 interface PngResult { blob: Blob; url: string; w: number; h: number; doc: unknown }
@@ -104,7 +104,7 @@ export function PanelExport() {
           </div>}
         </Section> : <Section title="PNG">
         <Field label="Faktor"><Seg items={[['1', '1×'], ['2', '2×'], ['3', '3×'], ['4', '4×']]} value={String(Math.round(pw / v.w * 10) / 10) as '1'} onChange={f => setUI({ pngWidth: Math.round(v.w * +f) })} /></Field>
-        <Field label="Breite (px)"><input type="number" min={200} max={10000} step={10} value={pw} onChange={e => setUI({ pngWidth: clamp(+e.target.value || v.w, 200, 10000) })} aria-label="Breite in Pixeln" /></Field>
+        <Field label="Breite (px)"><NumInput min={200} max={10000} step={10} value={pw} onChange={n => setUI({ pngWidth: Math.round(clamp(n, 200, 10000)) })} ariaLabel="Breite in Pixeln" /></Field>
         <p className="hint num">{pw} × {Math.round(pw * v.h / v.w)} px</p>
         <button className="btn primary" disabled={busy} onClick={() => runPngExport(pw)}><Icon.image /> {busy ? 'Wird erzeugt …' : 'PNG erzeugen'}</button>
         {png && <div className="card">

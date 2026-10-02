@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { setUI, useStore } from '../model/store';
 import { addGraphic, duplicateGraphic, moveGraphic, removeGraphic, renameGraphic, switchGraphic } from '../model/graphics';
 import { fitViewToCanvas } from './Canvas';
-import { Icon } from './common';
+import { Icon, fitMenu } from './common';
 
 export function GraphicsBar() {
   const graphics = useStore(s => s.doc!.graphics);
@@ -29,7 +29,7 @@ export function GraphicsBar() {
             : <button role="tab" aria-selected={k === page} className="gfx-btn" onClick={() => void go(k)} onDoubleClick={() => setEdit(k)} title={`${g.name} · Doppelklick: umbenennen · Rechtsklick: weitere Aktionen`}>
                 {g.kind === 'chart' ? <Icon.chart size={14} /> : <Icon.gebiete size={14} />}<span>{g.name}</span></button>}
           <button className="gfx-more" onClick={() => openMenu(k)} aria-label={`Aktionen für „${g.name}“`} aria-haspopup="menu" aria-expanded={menu === 'gfx-' + k}><Icon.more size={14} /></button>
-          {menu === 'gfx-' + k && <div className="menu gfx-menu" role="menu">
+          {menu === 'gfx-' + k && <div className="menu gfx-menu" role="menu" ref={fitMenu}>
             <button className="menu-item" role="menuitem" onClick={() => { setUI({ menu: null }); setEdit(k); }}>Umbenennen</button>
             <button className="menu-item" role="menuitem" onClick={() => { setUI({ menu: null }); duplicateGraphic(k); requestAnimationFrame(fitViewToCanvas); }}><Icon.copy /> Duplizieren</button>
             {graphics.length > 1 && <>
@@ -41,7 +41,7 @@ export function GraphicsBar() {
         </div>))}
       <div className="gfx-add-wrap">
         <button className="btn small ghost gfx-add" onClick={() => setUI({ menu: menu === 'gfx-add' ? null : 'gfx-add' })} aria-haspopup="menu" aria-expanded={menu === 'gfx-add'}><Icon.plus size={13} /> Grafik</button>
-        {menu === 'gfx-add' && <div className="menu gfx-menu" role="menu">
+        {menu === 'gfx-add' && <div className="menu gfx-menu" role="menu" ref={fitMenu}>
           <h6>Neue Grafik in dieser Mappe</h6>
           <button className="menu-item" role="menuitem" onClick={() => { setUI({ menu: null }); addGraphic('map'); requestAnimationFrame(fitViewToCanvas); }}><Icon.gebiete /> Karte</button>
           <button className="menu-item" role="menuitem" onClick={() => { setUI({ menu: null }); addGraphic('chart', 'saeulen'); }}><Icon.saeulen /> Säulen: Ergebnis</button>

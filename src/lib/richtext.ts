@@ -42,31 +42,41 @@ function fromDense(arr: Style[]): TextMark[] {
 /** Ein Feld (fett, kursiv, Farbe) über einem Zeichenbereich setzen; gibt neue, normalisierte Marks zurück. */
 export function setMarkField(text: string, marks: TextMark[] | undefined, start: number, end: number, field: 'b' | 'i' | 'color', value: boolean | string | undefined): TextMark[] {
   const arr = toDense(text, marks);
-  const s = Math.max(0, Math.min(text.length, start)), e = Math.max(0, Math.min(text.length, end));
+  const [s, e] = clampRange(text, start, end);
   for (let k = s; k < e; k++) (arr[k] as Record<string, unknown>)[field] = value;
   return fromDense(arr);
 }
+/** Auswahlbereich auf den vorhandenen Text begrenzen. Die Auswahl im Textfeld kann kurz veraltet sein (z. B. direkt nach dem
+ *  Löschen einer markierten Stelle oder nach „Rückgängig“) und dann über das Textende hinausreichen. */
+export function clampRange(text: string, start: number, end: number): [number, number] {
+  const n = text.length, s = Math.max(0, Math.min(n, start | 0)), e = Math.max(0, Math.min(n, end | 0));
+  return s <= e ? [s, e] : [e, s];
+}
 /** Ist der ganze Bereich fett (auch wenn das über den Grundschnitt der Fettung kommt)? */
 export function isRangeBold(text: string, marks: TextMark[] | undefined, start: number, end: number, baseBold: boolean): boolean {
-  if (end <= start) return false;
+  const [s, e] = clampRange(text, start, end);
+  if (e <= s) return false;
   const arr = toDense(text, marks);
-  for (let k = start; k < end; k++) if ((arr[k].b ?? baseBold) !== true) return false;
+  for (let k = s; k < e; k++) if ((arr[k].b ?? baseBold) !== true) return false;
   return true;
 }
 export function isRangeItalic(text: string, marks: TextMark[] | undefined, start: number, end: number): boolean {
-  if (end <= start) return false;
+  const [s, e] = clampRange(text, start, end);
+  if (e <= s) return false;
   const arr = toDense(text, marks);
-  for (let k = start; k < end; k++) if (!arr[k].i) return false;
+  for (let k = s; k < e; k++) if (!arr[k].i) return false;
   return true;
 }
 /** Farbe am Anfang der Auswahl, für die Vorschau im Farbfeld. */
 export function colorAtRange(text: string, marks: TextMark[] | undefined, start: number, end: number, fallback: string): string {
-  if (end <= start) return fallback;
+  const [s, e] = clampRange(text, start, end);
+  if (e <= s) return fallback;
   const arr = toDense(text, marks);
-  return arr[start]?.color ?? fallback;
+  return arr[s]?.color ?? fallback;
 }
-/** Marks an eine Textänderung anpassen (Tippen, Einfügen, Löschen). Neu eingefügte Zeichen übernehmen den
- *  Stil der vorausgehenden Stelle, wie in gängigen Editoren. */
+/** Marks an eine Textänderung anpassen (Tippen, Einfügen, Löschen, Ersetzen). Neu eingefügte Zeichen übernehmen den
+ *  Stil der vorausgehenden Stelle, wie in gängigen Editoren; ersetzt die Eingabe eine Auswahl, übernimmt sie den Stil
+ *  des ersten ersetzten Zeichens (fett markiertes Wort überschreiben → neues Wort bleibt fett). */
 export function shiftMarksOnEdit(oldText: string, newText: string, marks: TextMark[] | undefined): TextMark[] {
   if (!marks || !marks.length || oldText === newText) return marks || [];
   let p = 0; const maxP = Math.min(oldText.length, newText.length);
@@ -76,7 +86,8 @@ export function shiftMarksOnEdit(oldText: string, newText: string, marks: TextMa
   while (s < maxS && oldText[oldText.length - 1 - s] === newText[newText.length - 1 - s]) s++;
   const oldEnd = oldText.length - s, newEnd = newText.length - s;
   const dense = toDense(oldText, marks);
-  const insertedStyle: Style = p > 0 ? dense[p - 1] : (dense[oldEnd] || {});
+  const replaced = oldEnd > p && newEnd > p;
+  const insertedStyle: Style = (replaced ? dense[p] : p > 0 ? dense[p - 1] : dense[oldEnd]) || {};
   const next: Style[] = [...dense.slice(0, p), ...Array.from({ length: Math.max(0, newEnd - p) }, () => ({ ...insertedStyle })), ...dense.slice(oldEnd)];
   return fromDense(next);
 }

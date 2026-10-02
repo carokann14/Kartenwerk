@@ -7,7 +7,7 @@ import type { Cell, Column, Dataset } from '../data/types';
 import { classify, detectGerman } from '../data/parse';
 import { partyOf } from '../data/parties';
 import { uid } from '../lib/util';
-import { Field, Icon, Note } from './common';
+import { DialogFocus, Field, Icon, Note } from './common';
 
 const EMPTY_REPORT = { total: 0, exact: 0, byName: 0, ambiguous: 0, unknown: 0, duplicate: 0, summary: 0, ignored: 0, ruled: 0, missing: [], nameMismatch: [], issues: [], nullCells: 0, dashCells: 0 };
 const toText = (v: Cell) => (v == null ? '' : typeof v === 'number' ? v.toLocaleString('de-DE', { maximumFractionDigits: 6, useGrouping: false }) : String(v));
@@ -61,6 +61,7 @@ export function TableEditor() {
   };
   return (
     <div className="modal-back" role="dialog" aria-modal="true" aria-labelledby="te-title" onKeyDown={e => { if (e.key === 'Escape') close(); }}>
+      <DialogFocus />
       <div className="modal wizard te-modal">
         <header className="modal-head"><h2 id="te-title">{base ? 'Tabelle bearbeiten' : 'Neue Tabelle'}</h2><span className="spacer" /><button className="btn icon ghost" onClick={close} aria-label="Schließen"><Icon.x /></button></header>
         <div className="modal-body stack-12">
@@ -70,12 +71,12 @@ export function TableEditor() {
           </div>
           <p className="hint">Erste Spalte: Kategorien (Parteien, Jahre, Institute …), weitere Spalten: Werte. Aus Excel markieren, kopieren und in eine Zelle einfügen (Strg+V) – mehrere Zeilen und Spalten auf einmal. Parteinamen bekommen automatisch ihre Farbe.</p>
           <div className="te-wrap"><table className="te">
-            <thead><tr>{head.map((h, c) => <th key={c}><input value={h} onChange={e => setHead(hh => hh.map((x, k) => (k === c ? e.target.value : x)))} aria-label={`Überschrift Spalte ${c + 1}`} />
-              {c > 0 && W > 2 && <button className="btn icon ghost small" title="Spalte löschen" aria-label="Spalte löschen" onClick={() => { setHead(hh => hh.filter((_, k) => k !== c)); setGrid(g => g.map(r => r.filter((_, k) => k !== c))); }}><Icon.x size={11} /></button>}</th>)}
+            <thead><tr>{head.map((h, c) => <th key={c}><div className="te-th"><input value={h} onChange={e => setHead(hh => hh.map((x, k) => (k === c ? e.target.value : x)))} aria-label={`Überschrift Spalte ${c + 1}`} />
+              {c > 0 && W > 2 && <button className="btn icon ghost small" title="Spalte löschen" aria-label={`Spalte ${c + 1} löschen`} onClick={() => { setHead(hh => hh.filter((_, k) => k !== c)); setGrid(g => g.map(r => r.filter((_, k) => k !== c))); }}><Icon.x size={11} /></button>}</div></th>)}
               <th><button className="btn small ghost" onClick={() => { setHead(h => [...h, `Reihe ${h.length}`]); setGrid(g => g.map(r => [...r, ''])); }}><Icon.plus size={12} /> Spalte</button></th></tr></thead>
             <tbody>{grid.map((row, r) => <tr key={r}>
               {head.map((_, c) => <td key={c} className={c ? 'r' : ''}><input value={row[c] || ''} onChange={e => setCell(r, c, e.target.value)} onPaste={e => onPaste(r, c, e)} inputMode={c ? 'decimal' : 'text'} aria-label={`Zeile ${r + 1}, Spalte ${c + 1}`} /></td>)}
-              <td><button className="btn icon ghost small" title="Zeile löschen" aria-label="Zeile löschen" onClick={() => setGrid(g => g.filter((_, i) => i !== r))}><Icon.x size={11} /></button></td>
+              <td><button className="btn icon ghost small" title="Zeile löschen" aria-label={`Zeile ${r + 1} löschen`} onClick={() => setGrid(g => g.filter((_, i) => i !== r))}><Icon.x size={11} /></button></td>
             </tr>)}</tbody>
           </table></div>
           <div className="row-btns"><button className="btn small" onClick={() => setGrid(g => [...g, Array(W).fill('')])}><Icon.plus size={12} /> Zeile</button>

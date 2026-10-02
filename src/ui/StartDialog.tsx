@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { EXAMPLES, berlinExample } from '../data/examples';
 import { GEO_INDEX } from '../geo/geo';
-import { GeoPicker } from './common';
+import { DialogFocus, GeoPicker } from './common';
 import { ProjectMeta, listLocal } from '../model/persist';
 import { openLocalProject, openProjectFile, removeLocalProject, startEmpty, startExample } from '../model/projectIO';
 import { setUI, useStore } from '../model/store';
@@ -30,6 +30,7 @@ export function StartDialog() {
   const close = hasDoc ? () => setUI({ start: false }) : undefined;
   return (
     <div className="modal-back" role="dialog" aria-modal="true" aria-labelledby="start-title" onKeyDown={e => { if (e.key === 'Escape' && close) close(); }}>
+      <DialogFocus />
       <div className="modal start">
         <header className="modal-head">
           <h2 id="start-title">Kartenwerk <span className="proto-badge">{APP_VERSION}</span></h2>

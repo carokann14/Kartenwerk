@@ -5,7 +5,7 @@ import { loadGeoSets } from '../model/actions';
 import { createGraphic, switchGraphic } from '../model/graphics';
 import { Suggestion, suggestFor } from '../model/suggest';
 import { fitViewToCanvas } from './Canvas';
-import { Icon } from './common';
+import { DialogFocus, Icon } from './common';
 
 export async function applySuggestions(list: Suggestion[], dsId: string, replaceFirst: boolean) {
   if (!list.length) return;
@@ -31,6 +31,7 @@ export function SuggestDialog() {
   const flip = (id: string) => setOn(o => { const n = new Set(o); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   return (
     <div className="modal-back" role="dialog" aria-modal="true" aria-labelledby="sug-title" onKeyDown={e => { if (e.key === 'Escape') close(); }}>
+      <DialogFocus />
       <div className="modal suggest">
         <header className="modal-head"><h2 id="sug-title"><Icon.spark /> Passende Grafiken</h2><span className="spacer" /><button className="btn icon ghost" onClick={close} aria-label="Schließen"><Icon.x /></button></header>
         <div className="modal-body stack-12">

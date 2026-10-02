@@ -302,6 +302,8 @@ function Tooltip() {
   const doc = useStore(s => s.doc!);
   if (h.i == null) return null;
   const g = geoOf(doc), a = g.areas[h.i], cm = colorModel(doc);
+  // Zeiger-Index kann kurz zu einem anderen Gebietsstand gehören (z. B. direkt nach dem Wechsel per Doppelklick im Kartenmodus)
+  if (!a) return null;
   let rows: React.ReactNode = null;
   if (cm.dataset && cm.group) {
     const r = areaRowIndex(cm.dataset).get(a.id);
@@ -388,6 +390,7 @@ export function Canvas() {
   const wrap = useRef<HTMLDivElement>(null);
   const drag = useRef<Drag | null>(null);
   const space = useRef(false);
+  const overCanvas = useRef(false);   // Zeiger über der Arbeitsfläche (für die Leertaste)
   const v = activeVariant(doc);
   const cm = colorModel(doc);
   const chart = isChart(doc);
@@ -397,7 +400,16 @@ export function Canvas() {
   useLayoutEffect(() => { fitViewToCanvas(); }, [doc.active, doc.page, v.w, v.h, panelOpen]);
   useEffect(() => { const r = () => fitViewToCanvas(); window.addEventListener('resize', r); return () => window.removeEventListener('resize', r); }, []);
   useEffect(() => {
-    const kd = (e: KeyboardEvent) => { const t = e.target as HTMLElement; if (e.key === ' ' && !/INPUT|TEXTAREA|SELECT/.test(t.tagName)) { space.current = true; wrap.current?.classList.add('panning'); e.preventDefault(); } };
+    // Leertaste = Ansicht verschieben. Nicht, wenn gerade ein Eingabefeld oder Knopf den Fokus hat und der Zeiger nicht über der
+    // Arbeitsfläche steht (sonst ließen sich Knöpfe und Kästchen in den Leisten nicht mehr mit der Leertaste bedienen), und nie
+    // in einem offenen Dialog.
+    const kd = (e: KeyboardEvent) => {
+      if (e.key !== ' ') return;
+      const t = e.target as HTMLElement;
+      if (/INPUT|TEXTAREA|SELECT/.test(t.tagName) || t.isContentEditable || document.querySelector('.modal-back')) return;
+      if (!overCanvas.current && t.closest?.('button, a[href], summary, [role="button"], [tabindex]')) return;
+      space.current = true; wrap.current?.classList.add('panning'); e.preventDefault();
+    };
     const ku = (e: KeyboardEvent) => { if (e.key === ' ') { space.current = false; wrap.current?.classList.remove('panning'); } };
     window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
     return () => { window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
@@ -662,7 +674,8 @@ export function Canvas() {
   return (
     <section className={'canvaswrap' + (mapMode ? ' mapmode' : '') + (tool ? ' placing' : '')} id="canvas" ref={wrap} aria-label="Arbeitsfläche"
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={() => onPointerUp()}
-      onPointerLeave={() => { if (!drag.current) useHover.setState({ i: null }); }} onDoubleClick={onDoubleClick}>
+      onPointerEnter={() => { overCanvas.current = true; }}
+      onPointerLeave={() => { overCanvas.current = false; if (!drag.current) useHover.setState({ i: null }); }} onDoubleClick={onDoubleClick}>
       <div className="stage" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.z})` }}>
         <div className={'artboard-shadow' + (doc.background === 'transparent' ? ' checker' : '')} style={{ width: v.w, height: v.h }} />
         <svg id="artboard" width={v.w} height={v.h} viewBox={`0 0 ${v.w} ${v.h}`} xmlns="http://www.w3.org/2000/svg">
