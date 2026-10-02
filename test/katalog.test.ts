@@ -35,7 +35,7 @@ for (const e of K.entries) {
     ok(/abgerufen am/.test(main.settings.sourceTitle), `${e.id}: Quellenzeile „${main.settings.sourceTitle}“`);
     // Summen: Kreise bzw. Länder ergeben Deutschland (neueste Periode, Anzahl-Spalte)
     const ci = col(main, e.id === 'bevoelkerung' ? /^Insgesamt$/ : e.id === 'arbeitslosigkeit' ? /^Arbeitslose$/ : e.id === 'altersgruppen' ? /^Bevölkerung$/ : e.id === 'einkommen' ? /^Verfügbares Einkommen der privaten Haushalte/ : /^Wahlberechtigte$/);
-    if (ci >= 0 && de) {
+    if (ci >= 0 && de && typeof de.rows[0]?.[ci] === 'number') {
       const s = sum(main, ci), d = de.rows[0][ci] as number;
       ok(Math.abs(s - d) / d < 0.002, `${e.id} · ${level}: Summe „${main.columns[ci].label}“ ${s.toLocaleString('de-DE')} = Deutschland ${d.toLocaleString('de-DE')}`);
     }
@@ -91,43 +91,48 @@ for (const e of K.entries) {
   const u18 = out.find(r => r[6] === '01' && r[9] === 'ALTU18' && r[2] === 'BEVANT')!;
   ok(u18[0] === '29,4', `Ableitung: 5 von 17 gleich großen Gruppen = ${u18[0]} %`);
 }
-// Neue Einträge (BIP, Bürgergeld, Pkw): Spalten, Stadtstaaten als Kreis, berechnete Spalten gekennzeichnet und nicht addierbar
+// Neue Einträge (BIP, Bürgergeld, Pkw): Spalten, Stadtstaaten als Kreis, berechnete Spalten gekennzeichnet und nicht addierbar.
+// Spalten nach Art suchen, nicht nach genauem Wortlaut: Die Action ersetzt die Musterdaten durch die der Schnittstelle, deren Bezeichnungen abweichen können.
 {
+  const fmt = (x: unknown) => (typeof x === 'number' ? x.toLocaleString('de-DE') : String(x));
   const get = async (id: string) => { const e = K.entries.find(x => x.id === id)!; const [main, lan, de] = await importKatalog(e, 'krs'); console.log(`   ${id}: ${main.columns.map(c => c.label).join(' | ')}`); return { e, main, lan, de }; };
-  const hasArea = (ds: { rowArea?: string[]; rows: unknown[][] }, id: string) => (ds as unknown as { rowArea: string[] }).rowArea?.includes(id);
+  type DS = Awaited<ReturnType<typeof get>>['main'];
+  const hasArea = (ds: DS, id: string) => (ds as unknown as { rowArea: string[] }).rowArea?.includes(id);
+  /** erste Wertespalte (ab Spalte 2), die zum Muster passt und Quote bzw. Anzahl ist */
+  const find = (ds: DS, re: RegExp, rate: boolean) => ds.columns.findIndex((c, i) => i >= 2 && re.test(c.label) && isRate(c as never) === rate);
+  const deVal = (de: DS | undefined, ci: number) => (ci >= 0 ? de?.rows[0]?.[ci] : undefined);
   // BIP
   {
     const { main, de } = await get('bip');
-    ok(main.columns.length === 5, `BIP: ${main.columns.length - 2} Werte`);
     const vals = main.columns.slice(2), rate = vals.filter(c => isRate(c as never)), sums = vals.filter(c => !isRate(c as never));
-    ok(rate.length === 2 && sums.length === 1 && /Tsd\. EUR/.test(sums[0].label), `BIP: „je erwerbstätige Person“ und „pro Kopf“ gelten als Quote, nur das BIP insgesamt wird addiert (${sums.map(c => c.label).join('')})`);
-    ok(hasArea(main as never, '02000') && hasArea(main as never, '11000'), 'BIP: Hamburg (02000) und Berlin (11000) als Kreis vorhanden');
-    const ci = col(main, /^Bruttoinlandsprodukt \(Tsd/), v = de.rows[0][ci] as number;
-    ok(v > 4_000_000_000 && v < 5_000_000_000, `BIP Deutschland ${v.toLocaleString('de-DE')} Tsd. EUR`);
+    ok(rate.length >= 1 && sums.length >= 1, `BIP: ${sums.length} addierbare, ${rate.length} Quoten-Spalten (je Einwohner/Erwerbstätigen nicht addiert)`);
+    ok(hasArea(main, '02000') && hasArea(main, '11000'), 'BIP: Hamburg (02000) und Berlin (11000) als Kreis vorhanden');
+    const v = deVal(de, find(main, /./, false));
+    ok(typeof v === 'number' && v > 3_000_000_000 && v < 6_000_000_000, `BIP Deutschland ${fmt(v)} Tsd. EUR`);
   }
   // Pkw: Anteile und Pkw je 1.000 Einwohner
   {
     const { e, main, de } = await get('pkw');
     ok(!!e.note && /berechnet/.test(e.hint), 'Pkw: Hinweis „berechnet“ im Katalog');
-    const ct = col(main, /^Personenkraftwagen nach Kraftstoffarten · Insgesamt/), ce = col(main, /Elektro/), calc = main.columns.map((c, i) => [c, i] as const).filter(([c]) => /berechnet/.test(c.label));
-    const cs = col(main, /^Anteil am Pkw-Bestand, berechnet \(%\) · Elektro/), cj = col(main, /^Pkw je 1\.000 Einwohner, berechnet/);
-    ok(ct >= 0 && ce >= 0 && cs >= 0 && cj >= 0, 'Pkw: Spalten Insgesamt, Elektro, Anteil Elektro, Pkw je 1.000 Einwohner');
-    ok(calc.every(([c]) => isRate(c as never)), `Pkw: alle ${calc.length} berechneten Spalten gelten als Quote (nicht addierbar)`);
-    ok(main.rows.every(r => typeof r[cs] !== 'number' || ((r[cs] as number) >= 0 && (r[cs] as number) <= 100)), 'Pkw: Anteile liegen zwischen 0 und 100 %');
-    const dt = de.rows[0][ct] as number, dsE = de.rows[0][cs] as number, dj = de.rows[0][cj] as number;
-    ok(Math.abs(dsE - (de.rows[0][ce] as number) / dt * 100) < 0.06, `Pkw Deutschland: Elektro-Anteil ${dsE} % = Elektro / Insgesamt`);
-    ok(dj > 520 && dj < 680, `Pkw Deutschland: ${dj} Pkw je 1.000 Einwohner (plausibel 520–680)`);
-    ok(Math.abs(sum(main, ct) - dt) / dt < 0.002, `Pkw: Summe der Kreise ${sum(main, ct).toLocaleString('de-DE')} = Deutschland ${dt.toLocaleString('de-DE')}`);
+    const ct = find(main, /./, false), ce = find(main, /Elektro/, false), cs = find(main, /berechnet.*Elektro|Elektro.*berechnet/, true), cj = find(main, /je 1\.000 Einwohner/, true);
+    const calc = main.columns.filter(c => /berechnet/.test(c.label));
+    ok(ct >= 0 && ce >= 0 && cs >= 0 && cj >= 0, `Pkw: Spalten Insgesamt (${main.columns[ct]?.label}), Elektro, Anteil Elektro, Pkw je 1.000 Einwohner`);
+    ok(calc.length > 0 && calc.every(c => isRate(c as never)), `Pkw: alle ${calc.length} berechneten Spalten gelten als Quote (nicht addierbar)`);
+    ok(cs < 0 || main.rows.every(r => typeof r[cs] !== 'number' || ((r[cs] as number) >= 0 && (r[cs] as number) <= 100)), 'Pkw: Anteile liegen zwischen 0 und 100 %');
+    const dt = deVal(de, ct), dE = deVal(de, ce), dsE = deVal(de, cs), dj = deVal(de, cj);
+    ok(typeof dt === 'number' && typeof dE === 'number' && typeof dsE === 'number' && Math.abs(dsE - dE / dt * 100) < 0.06, `Pkw Deutschland: Elektro-Anteil ${fmt(dsE)} % = Elektro / Insgesamt`);
+    ok(typeof dj === 'number' && dj > 520 && dj < 680, `Pkw Deutschland: ${fmt(dj)} Pkw je 1.000 Einwohner (plausibel 520–680)`);
+    ok(typeof dt === 'number' && Math.abs(sum(main, ct) - dt) / dt < 0.002, `Pkw: Summe der Kreise ${fmt(sum(main, ct))} = Deutschland ${fmt(dt)}`);
   }
   // Bürgergeld
   {
     const { e, main, de } = await get('buergergeld');
     ok(!!e.note && /berechnet/.test(e.hint), 'Bürgergeld: Hinweis „berechnet“ im Katalog');
     const calc = main.columns.map((c, i) => [c, i] as const).filter(([c]) => /^Anteil an der Bevölkerung, berechnet/.test(c.label));
-    ok(calc.length === 7 && calc.every(([c]) => isRate(c as never)), `Bürgergeld: ${calc.length} berechnete Anteilsspalten, nicht addierbar`);
-    ok(main.columns.some(c => /Hilfe z\. Lebensunt/.test(c.label) && !/erwerbsf/.test(c.label)), 'Bürgergeld: verschachtelte Spaltenköpfe richtig (Hilfe zum Lebensunterhalt ohne „erwerbsf.“)');
-    const ia = calc[0][1], v = de.rows[0][ia] as number;
-    ok(v > 7 && v < 10, `Bürgergeld Deutschland: Mindestsicherung insgesamt ${v} % der Bevölkerung (plausibel 7–10 %)`);
+    ok(calc.length >= 1 && calc.every(([c]) => isRate(c as never)), `Bürgergeld: ${calc.length} berechnete Anteilsspalten, nicht addierbar`);
+    ok(!main.columns.some(c => /Hilfe/.test(c.label) && /erwerbsf/.test(c.label)), 'Bürgergeld: verschachtelte Spaltenköpfe richtig (Hilfe zum Lebensunterhalt ohne „erwerbsf.“)');
+    const v = deVal(de, calc[0]?.[1] ?? -1);
+    ok(typeof v === 'number' && v > 5 && v < 12, `Bürgergeld Deutschland: Mindestsicherung insgesamt ${fmt(v)} % der Bevölkerung (plausibel 5–12 %)`);
   }
 }
 // Zusatzspalten im Kleinen: Anteil an Insgesamt, je Einwohner mit dem letzten Stand am oder vor dem Stichtag

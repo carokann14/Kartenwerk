@@ -57,11 +57,31 @@ jobs:
         if: steps.daten.outcome == 'failure'
         run: echo "::warning title=Kennzahlen nicht aktualisiert::Das Laden von regionalstatistik.de ist fehlgeschlagen (Einzelheiten im Schritt davor). Die Seite wird mit dem vorhandenen Katalog gebaut; der nächste Lauf versucht es erneut."
 
+      - name: Geladene Rohdaten aufbewahren (zum Nachsehen, 14 Tage)
+        if: steps.daten.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: katalog-rohdaten
+          path: |
+            data-src/rdb
+            public/katalog
+          retention-days: 14
+
       - name: Prüfen (Typen und Tests)
+        id: pruefen
+        continue-on-error: ${{ steps.daten.outputs.neu == 'true' }}   # mit neuen Zahlen: Fehler führen zum Verwerfen (nächster Schritt), nicht zum Abbruch
         run: npm run typecheck && npm test
 
+      - name: Neue Zahlen verwerfen, wenn die Prüfung damit fehlschlägt
+        if: steps.pruefen.outcome == 'failure'
+        run: |
+          echo "::warning title=Neue Kennzahlen verworfen::Mit den neu geladenen Zahlen schlagen Tests fehl (Einzelheiten im Schritt „Prüfen“, Rohdaten unter Artifacts › katalog-rohdaten). Die Seite wird mit dem bisherigen Katalog gebaut."
+          git checkout -- public/katalog
+          git clean -fd -- public/katalog
+          npm test
+
       - name: Neue Zahlen committen
-        if: steps.daten.outputs.neu == 'true'
+        if: steps.daten.outputs.neu == 'true' && steps.pruefen.outcome == 'success'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -72,7 +92,7 @@ jobs:
 
       - name: Veröffentlichen?
         id: publish
-        run: echo "publish=${{ github.event_name != 'schedule' || steps.daten.outputs.neu == 'true' }}" >> "$GITHUB_OUTPUT"
+        run: echo "publish=${{ github.event_name != 'schedule' || (steps.daten.outputs.neu == 'true' && steps.pruefen.outcome == 'success') }}" >> "$GITHUB_OUTPUT"
 
       - name: Bauen
         if: steps.publish.outputs.publish == 'true'
