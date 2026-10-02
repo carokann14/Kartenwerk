@@ -46,6 +46,7 @@ export function TopBar() {
         {menu === 'project' && <div className="menu" role="menu" ref={fitMenu}>
           <h6>Projekt</h6>
           <button className="menu-item" role="menuitem" onClick={() => { setUI({ menu: null, start: true }); }}><Icon.folder /> Projekte im Browser …</button>
+          <a className="menu-item" role="menuitem" href="alt/" target="_blank" rel="noopener" style={{ textDecoration: 'none', color: 'inherit' }} onClick={() => setUI({ menu: null })} title="Stand vor dem Umbau des Editors (M11), eigener Speicher im Browser: Projekte dort über die Projektdatei öffnen">Alte Version öffnen …</a>
           <button className="menu-item" role="menuitem" onClick={() => { setUI({ menu: null }); saveProjectFile(); }}><Icon.download /> Projektdatei speichern<span className="dim">.kartenwerk.json</span></button>
           <button className="menu-item" role="menuitem" onClick={() => fileRef.current?.click()}><Icon.upload /> Projektdatei öffnen …</button>
           <button className="menu-item" role="menuitem" onClick={() => { setUI({ menu: null }); duplicateProject(); }}><Icon.copy /> Kopie anlegen</button>

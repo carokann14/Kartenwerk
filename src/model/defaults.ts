@@ -3,6 +3,7 @@ import type { Doc, HatchStyle, LegendSettings } from './types';
 import { uid } from '../lib/util';
 import { defaultLogo, defaultLogoBox, logoRatio } from './logo';
 import { GRAPHIC_KEYS } from './graphicKeys';
+import { defaultNodes, ensureNodes } from './nodes';
 
 export const PRESETS: Record<string, { w: number; h: number; label: string }> = {
   '4:5': { w: 1080, h: 1350, label: 'Instagram 4:5' },
@@ -31,7 +32,7 @@ export const LH = { title: 1.12, subtitle: 1.36, source: 1.4 };
 
 export function defaultDoc(geoSet = 'btw-wk-2025'): Doc {
   return {
-    app: 'kartenwerk', version: 2,
+    app: 'kartenwerk', version: 3,
     graphics: [{ id: uid('g'), name: 'Karte', kind: 'map' }], page: 0, pageData: {},
     id: uid('p'),
     name: 'Neues Projekt',
@@ -70,6 +71,7 @@ export function defaultDoc(geoSet = 'btw-wk-2025'): Doc {
     background: 'white',
     variants: [],
     active: 0,
+    nodes: defaultNodes('map'),
   };
 }
 
@@ -107,11 +109,13 @@ export function normalizeDoc(d: Doc): Doc {
   if (!Array.isArray(x.graphics) || !x.graphics.length) { x.graphics = [{ id: uid('g'), name: 'Karte', kind: 'map' }]; x.page = 0; x.pageData = {}; }
   x.pageData ||= {};
   x.page = Math.max(0, Math.min(x.page || 0, x.graphics.length - 1));
-  x.version = 2;
+  // Elementbaum (seit M11, Projektdatei Version 3): ältere Grafiken bekommen die festen Objekte in der bisherigen Reihenfolge
+  x.nodes = ensureNodes(x.nodes, x.graphics[x.page].kind);
+  x.version = 3;
   // übrige Grafiken wie die aktive auf den aktuellen Stand bringen
   for (const g of x.graphics) {
     const snap = x.pageData[g.id]; if (!snap || g === x.graphics[x.page]) continue;
-    const flat = normalizeDoc({ ...x, ...snap, graphics: [g], page: 0, pageData: {} } as Doc) as unknown as Record<string, unknown>;
+    const flat = normalizeDoc({ ...x, ...snap, nodes: snap.nodes, graphics: [g], page: 0, pageData: {} } as Doc) as unknown as Record<string, unknown>;
     x.pageData[g.id] = Object.fromEntries(GRAPHIC_KEYS.map(k => [k, flat[k]])) as Partial<Doc>;
   }
   for (const v of x.variants) {

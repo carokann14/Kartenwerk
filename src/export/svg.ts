@@ -11,6 +11,7 @@ import { bubbleSet } from '../render/bubbles';
 import { activeVariant, labelPrims, layoutLabels, legendPrims, Prims, TextPrim, textPrims } from '../render/elements';
 import { logoExportSvg } from '../model/logo';
 import { isChart } from '../model/graphicKeys';
+import { flatNodes } from '../model/nodes';
 import { chartPrims } from '../render/chart';
 import { FrameId, activeOverlays, frameMeshes, frameSets, insetIdx, insetLabel, krLinesLabel, laenderCtx, overlayParts } from '../render/scene';
 
@@ -244,20 +245,26 @@ export function buildExportSvg(doc: Doc, opts: Partial<ExportOpts> = {}, transpa
   const v = activeVariant(doc), W = v.w, H = v.h;
   let s = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
   if (!transparent) s += `<rect id="Hintergrund" x="0" y="0" width="${W}" height="${H}" fill="#FFFFFF"/>`;
-  if (isChart(doc)) s += `<g id="Diagramm">${primsToPaths(chartPrims(doc, v))}</g>`;
-  else {
-    s += exportFrame(doc, 'main', o);
-    if (doc.inset.visible) s += exportFrame(doc, 'inset', o);
-  }
-  const lp = legendPrims(doc); if (lp) s += `<g id="Legende">${primsToPaths(lp)}</g>`;
-  for (const [kind, name] of [['title', 'Titel'], ['subtitle', 'Unterzeile'], ['source', 'Quelle']] as const) { const p = textPrims(doc, kind); if (p) s += `<g id="${name}">${primsToPaths(p)}</g>`; }
-  s += logoExportSvg(doc, v);   // SVG-Logo als Vektor, Rasterlogo als Bild
-  const items = annItems(doc, v);
-  if (items.length) {
-    s += `<g id="Marker-und-Texte">`;
-    let nArrow = 0;
-    for (const it of items) s += `<g id="${it.el.type === 'arrow' ? 'Pfeil-' + (++nArrow) : svgId((it.el.type === 'marker' ? 'Marker-' : 'Text-') + elName(it.el)) || it.id}">${primsToPaths({ texts: it.texts, rects: it.rects, paths: it.paths, box: { x: 0, y: 0, w: 0, h: 0 } })}</g>`;
-    s += `</g>`;
+  // Objekte in der Reihenfolge des Elementbaums (hinten → vorn)
+  const chart = isChart(doc);
+  const TEXT_NAMES = { title: 'Titel', subtitle: 'Unterzeile', source: 'Quelle' } as const;
+  for (const n of flatNodes(doc.nodes)) {
+    switch (n.id) {
+      case 'main': s += chart ? `<g id="Diagramm">${primsToPaths(chartPrims(doc, v))}</g>` : exportFrame(doc, 'main', o); break;
+      case 'inset': if (!chart && doc.inset.visible) s += exportFrame(doc, 'inset', o); break;
+      case 'legend': { const lp = legendPrims(doc); if (lp) s += `<g id="Legende">${primsToPaths(lp)}</g>`; break; }
+      case 'title': case 'subtitle': case 'source': { const p = textPrims(doc, n.id); if (p) s += `<g id="${TEXT_NAMES[n.id]}">${primsToPaths(p)}</g>`; break; }
+      case 'logo': s += logoExportSvg(doc, v); break;   // SVG-Logo als Vektor, Rasterlogo als Bild
+      case 'ann': {
+        const items = annItems(doc, v);
+        if (!items.length) break;
+        s += `<g id="Marker-und-Texte">`;
+        let nArrow = 0;
+        for (const it of items) s += `<g id="${it.el.type === 'arrow' ? 'Pfeil-' + (++nArrow) : svgId((it.el.type === 'marker' ? 'Marker-' : 'Text-') + elName(it.el)) || it.id}">${primsToPaths({ texts: it.texts, rects: it.rects, paths: it.paths, box: { x: 0, y: 0, w: 0, h: 0 } })}</g>`;
+        s += `</g>`;
+        break;
+      }
+    }
   }
   return s + `</svg>`;
 }

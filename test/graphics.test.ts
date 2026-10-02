@@ -9,7 +9,7 @@ const ok = (c: boolean, m: string) => { console.log((c ? 'ok: ' : 'FEHLER: ') + 
 const old = defaultDoc('btw-wk-2025') as unknown as Record<string, unknown>;
 delete old.graphics; delete old.page; delete old.pageData; old.version = 1;
 const n = normalizeDoc(old as never);
-ok(n.version === 2 && n.graphics.length === 1 && n.graphics[0].kind === 'map' && n.page === 0 && Object.keys(n.pageData).length === 0, 'altes Projekt → Mappe mit einer Grafik „Karte“');
+ok(n.version === 3 && n.graphics.length === 1 && n.graphics[0].kind === 'map' && n.page === 0 && Object.keys(n.pageData).length === 0, 'altes Projekt → Mappe mit einer Grafik „Karte“');
 // zweite Grafik mit altem Stand (ohne neuere Felder)
 const snap = pickGraphic(n) as Record<string, unknown>;
 const legacy = JSON.parse(JSON.stringify(snap)); delete legacy.legend.simple; delete legacy.layers.laender;

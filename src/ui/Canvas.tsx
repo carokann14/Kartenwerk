@@ -20,6 +20,7 @@ import { LAENDER } from '../geo/geo';
 import { Icon } from './common';
 import { GraphicsBar } from './GraphicsBar';
 import { isChart } from '../model/graphicKeys';
+import { flatNodes } from '../model/nodes';
 import { chartPrims } from '../render/chart';
 import { MapZoom } from './MapZoom';
 import { logoRatio, logoRect } from '../model/logo';
@@ -160,18 +161,37 @@ function ChartView() {
       : textEl(tx, 't' + k))}
   </g>;
 }
-function Elements() {
+/** Titel, Unterzeile oder Quellenzeile als eigenes Objekt (M11: Reihenfolge aus dem Elementbaum) */
+function TextNode({ kind }: { kind: 'title' | 'subtitle' | 'source' }) {
   const doc = useStore(s => s.doc!);
-  const items: React.ReactNode[] = [];
-  for (const kind of ['title', 'subtitle', 'source'] as const) {
-    const p = textPrims(doc, kind);
-    if (p) items.push(<g key={kind} data-el={kind}>{p.texts.map((t, k) => textEl(t, k))}<rect x={p.box.x} y={p.box.y} width={p.box.w} height={p.box.h} fill="#FFFFFF" fillOpacity={0} /></g>);
-  }
+  const p = textPrims(doc, kind);
+  return p ? <g data-el={kind}>{p.texts.map((t, k) => textEl(t, k))}<rect x={p.box.x} y={p.box.y} width={p.box.w} height={p.box.h} fill="#FFFFFF" fillOpacity={0} /></g> : null;
+}
+function LogoNode() {
+  const doc = useStore(s => s.doc!);
   const lr = logoRect(doc, activeVariant(doc));
-  if (lr) items.push(<g key="logo" data-el="logo"><image href={doc.logo.asset!.data} x={+lr.x.toFixed(1)} y={+lr.y.toFixed(1)} width={+lr.w.toFixed(1)} height={+lr.h.toFixed(1)} preserveAspectRatio="none" opacity={doc.logo.opacity < 1 ? doc.logo.opacity : undefined} /><rect x={lr.x} y={lr.y} width={lr.w} height={lr.h} fill="#FFFFFF" fillOpacity={0} /></g>);
+  return lr ? <g data-el="logo"><image href={doc.logo.asset!.data} x={+lr.x.toFixed(1)} y={+lr.y.toFixed(1)} width={+lr.w.toFixed(1)} height={+lr.h.toFixed(1)} preserveAspectRatio="none" opacity={doc.logo.opacity < 1 ? doc.logo.opacity : undefined} /><rect x={lr.x} y={lr.y} width={lr.w} height={lr.h} fill="#FFFFFF" fillOpacity={0} /></g> : null;
+}
+function LegendNode() {
+  const doc = useStore(s => s.doc!);
   const lp = legendPrims(doc);
-  if (lp) items.push(<g key="legend" data-el="legend">{lp.rects.map((r, k) => <rect key={'r' + k} x={+r.x.toFixed(1)} y={+r.y.toFixed(1)} width={+r.w.toFixed(1)} height={+r.h.toFixed(1)} fill={r.fill} />)}{(lp.paths || []).map((q, k) => <path key={'p' + k} d={q.d} fill={q.fill} stroke={q.stroke} strokeWidth={q.width} />)}{lp.texts.map((t, k) => textEl(t, 't' + k))}<rect x={lp.box.x} y={lp.box.y} width={lp.box.w} height={lp.box.h} fill="#FFFFFF" fillOpacity={0} /></g>);
-  return <g>{items}</g>;
+  return lp ? <g data-el="legend">{lp.rects.map((r, k) => <rect key={'r' + k} x={+r.x.toFixed(1)} y={+r.y.toFixed(1)} width={+r.w.toFixed(1)} height={+r.h.toFixed(1)} fill={r.fill} />)}{(lp.paths || []).map((q, k) => <path key={'p' + k} d={q.d} fill={q.fill} stroke={q.stroke} strokeWidth={q.width} />)}{lp.texts.map((t, k) => textEl(t, 't' + k))}<rect x={lp.box.x} y={lp.box.y} width={lp.box.w} height={lp.box.h} fill="#FFFFFF" fillOpacity={0} /></g> : null;
+}
+/** Alle Objekte der Grafik in der Reihenfolge des Elementbaums (hinten → vorn) */
+function NodeLayers() {
+  const doc = useStore(s => s.doc!);
+  const chart = isChart(doc);
+  return <>{flatNodes(doc.nodes).map(n => {
+    switch (n.id) {
+      case 'main': return chart ? <ChartView key="main" /> : <MapFrame key="main" id="main" />;
+      case 'inset': return !chart && doc.inset.visible ? <MapFrame key="inset" id="inset" /> : null;
+      case 'title': case 'subtitle': case 'source': return <TextNode key={n.id} kind={n.id} />;
+      case 'legend': return <LegendNode key="legend" />;
+      case 'logo': return <LogoNode key="logo" />;
+      case 'ann': return <Annotations key="ann" />;
+      default: return null;
+    }
+  })}</>;
 }
 function Annotations() {
   const doc = useStore(s => s.doc!);
@@ -680,12 +700,7 @@ export function Canvas() {
         <div className={'artboard-shadow' + (doc.background === 'transparent' ? ' checker' : '')} style={{ width: v.w, height: v.h }} />
         <svg id="artboard" width={v.w} height={v.h} viewBox={`0 0 ${v.w} ${v.h}`} xmlns="http://www.w3.org/2000/svg">
           <rect id="bg" width={v.w} height={v.h} fill="#FFFFFF" fillOpacity={doc.background === 'transparent' ? 0 : 1} />
-          {chart ? <ChartView /> : <>
-            <MapFrame id="main" />
-            {doc.inset.visible && <MapFrame id="inset" />}
-          </>}
-          <Elements />
-          <Annotations />
+          <NodeLayers />
         </svg>
         <Overlay />
         <Guides />

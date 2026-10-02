@@ -5,7 +5,7 @@ import type { Doc } from './types';
 export const GRAPHIC_KEYS = [
   'geoSet', 'color', 'periodSel', 'overrides', 'fokus', 'umfeld', 'umfeldStyle', 'fokusOutline', 'layers', 'style', 'labels',
   'texts', 'legend', 'hatches', 'hatchAssign', 'hatchRules', 'els', 'overlays', 'bubbles', 'inset', 'logo', 'background',
-  'variants', 'active', 'chart',
+  'variants', 'active', 'chart', 'nodes',
 ] as const satisfies readonly (keyof Doc)[];
 export type GraphicKey = typeof GRAPHIC_KEYS[number];
 /** Zustand der aktiven Grafik (Verweise, keine Kopie) */

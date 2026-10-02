@@ -6,6 +6,7 @@ import { getDoc, setUI, toast, update } from './store';
 import { defaultDoc } from './defaults';
 import { makeVariant } from './layout';
 import { GRAPHIC_KEYS, pickGraphic } from './graphicKeys';
+import { defaultNodes } from './nodes';
 import type { ChartSource, ChartSpec, ChartType, ColorRule, Doc, GraphicKind, GraphicMeta } from './types';
 import { chartModel, defaultChart } from '../render/chart';
 import { chartTexts, defaultSource, typeFor } from '../render/chartSource';
@@ -81,6 +82,7 @@ export function createGraphic(init: GraphicInit, replace = false) {
   const d0 = getDoc();
   const geoSet = init.geoSet && GEO[init.geoSet] ? init.geoSet : d0.geoSet;
   const base = defaultDoc(geoSet);
+  base.nodes = defaultNodes(kind);
   base.logo = JSON.parse(JSON.stringify(d0.logo));
   base.inset.visible = (replace || d0.inset.visible) && GEO[geoSet]?.meta.level === 'btw-wk';
   if (kind === 'map') {

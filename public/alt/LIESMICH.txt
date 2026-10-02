@@ -1,0 +1,5 @@
+Alte Version von Kartenwerk (Stand a65b676 vom 02.10.2026, vor dem Umbau M11).
+Erreichbar unter https://carokann14.github.io/Kartenwerk/alt/ – fertig gebaut, wird nicht neu übersetzt.
+Abweichungen vom damaligen Stand: Daten, Schriften und Katalog kommen aus der aktuellen Seite (../data usw.),
+eigener Speicher im Browser (IndexedDB „kartenwerk-alt“), Hinweis „alte Version“ oben links.
+Entfernen, sobald der neue Editor gleichwertig ist (Plan M11–M14, Q20).

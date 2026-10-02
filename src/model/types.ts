@@ -113,12 +113,19 @@ export interface ChartSpec {
   legendEl?: boolean;              // Beschriftung der Parteien ist die Legende der Grafik (eigenes Element); ältere Projekte zeichneten sie unter den Halbkreis
 }
 export interface GraphicMeta { id: string; name: string; kind: GraphicKind }
+/** Elementbaum (M11): Objekte einer Grafik in der Reihenfolge, in der sie gezeichnet werden (hinten → vorn).
+ *  Etappe 1: die bisherigen Bestandteile als feste Objekte mit fester Kennung; Inhalt und Lage stehen weiter in
+ *  den bisherigen Feldern (Texte, Legende, Logo, Diagramm, `Variant.L`), der Baum bestimmt Reihenfolge und Zusammensetzung.
+ *  Feste Kennungen: main (Karte bzw. Diagramm), inset (Lupe), legend, title, subtitle, source, logo, ann (Marker, Textkästen, Pfeile). */
+export type NodeType = 'map' | 'chart' | 'text' | 'legend' | 'logo' | 'annotations' | 'group';
+export interface GNode { id: string; type: NodeType; name?: string; children?: GNode[] }
 export interface Doc {
-  app: 'kartenwerk'; version: 1 | 2;
+  app: 'kartenwerk'; version: 1 | 2 | 3;
   graphics: GraphicMeta[];                  // Grafiken der Mappe in Reihenfolge
   page: number;                             // Index der aktiven Grafik
   pageData: Record<string, Partial<Doc>>;   // gespeicherter Zustand der übrigen Grafiken (Felder aus GRAPHIC_KEYS)
   chart?: ChartSpec | null;                 // Diagramm der aktiven Grafik (nur bei kind 'chart')
+  nodes: GNode[];                           // Elementbaum der aktiven Grafik (M11, Projektdatei Version 3)
   id: string;
   name: string;
   geoSet: string;
