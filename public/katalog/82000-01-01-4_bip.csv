@@ -1,0 +1,1519 @@
+﻿statistics_code;statistics_label;time_code;time_label;time;1_variable_code;1_variable_label;1_variable_attribute_code;1_variable_attribute_label;value;value_unit;value_variable_code;value_variable_label
+82000;Kreise und krfr. Städte;JAHR;Jahr;2024;DINSG;Deutschland;DG;Deutschland;4328970000;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;DINSG;;DG;;94135;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;DINSG;;DG;;51834;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;DLAND;;01;Schleswig-Holstein;126333781;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;DLAND;;01;;85539;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;DLAND;;01;;42733;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;DLAND;;02;Hamburg;162843535;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;DLAND;;02;;119869;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;DLAND;;02;;87688;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;DLAND;;03;Niedersachsen;385211542;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;DLAND;;03;;90910;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;DLAND;;03;;48113;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;DLAND;;04;Bremen;41267423;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;DLAND;;04;;92694;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;DLAND;;04;;58638;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;DLAND;;05;Nordrhein-Westfalen;879843094;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;DLAND;;05;;89556;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;DLAND;;05;;48810;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;DLAND;;06;Hessen;371367806;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;DLAND;;06;;102767;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;DLAND;;06;;59190;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;DLAND;;07;Rheinland-Pfalz;180812329;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;DLAND;;07;;87775;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;DLAND;;07;;43808;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;DLAND;;08;Baden-Württemberg;652024295;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;DLAND;;08;;101640;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;DLAND;;08;;58018;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;DLAND;;09;Bayern;796174304;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;DLAND;;09;;101167;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;DLAND;;09;;60258;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;DLAND;;10;Saarland;42176924;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;DLAND;;10;;80985;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;DLAND;;10;;41632;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;DLAND;;11;Berlin;208449010;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;DLAND;;11;;94860;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;DLAND;;11;;56739;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;DLAND;;12;Brandenburg;101368770;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;DLAND;;12;;88404;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;DLAND;;12;;39665;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;DLAND;;13;Mecklenburg-Vorpommern;60845087;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;DLAND;;13;;80891;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;DLAND;;13;;38612;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;DLAND;;14;Sachsen;162990568;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;DLAND;;14;;78949;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;DLAND;;14;;40259;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;DLAND;;15;Sachsen-Anhalt;79513981;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;DLAND;;15;;80390;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;DLAND;;15;;37155;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;DLAND;;16;Thüringen;77747555;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;DLAND;;16;;76570;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;DLAND;;16;;36890;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;01001;Flensburg, kreisfreie Stadt;5174010;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;01001;;82514;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;01001;;53684;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;01002;Kiel, kreisfreie Stadt;15063929;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;01002;;82819;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;01002;;59728;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;01003;Lübeck, kreisfreie Stadt, Hansestadt;12658270;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;01003;;91172;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;01003;;58340;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;01004;Neumünster, kreisfreie Stadt;4530981;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;01004;;81970;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;01004;;56897;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;01051;Dithmarschen, Kreis;6194068;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;01051;;96873;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;01051;;46402;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;01053;Herzogtum Lauenburg, Kreis;6100492;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;01053;;82293;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;01053;;29637;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;01054;Nordfriesland, Kreis;8574669;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;01054;;90011;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;01054;;50428;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;01055;Ostholstein, Kreis;7199453;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;01055;;76210;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;01055;;35729;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;01056;Pinneberg, Kreis;11714877;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;01056;;87695;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;01056;;36102;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;01057;Plön, Kreis;3568295;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;01057;;77241;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;01057;;27318;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;01058;Rendsburg-Eckernförde, Kreis;10862543;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;01058;;85037;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;01058;;39078;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;01059;Schleswig-Flensburg, Kreis;7480838;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;01059;;82301;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;01059;;36471;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;01060;Segeberg, Kreis;11628086;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;01060;;87920;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;01060;;41101;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;01061;Steinburg, Kreis;5078353;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;01061;;85386;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;01061;;38301;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;01062;Stormarn, Kreis;10504917;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;01062;;87358;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;01062;;42601;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;02000;Hamburg;162843535;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;02000;;119869;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;02000;;87688;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03101;Braunschweig, kreisfreie Stadt;22600192;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03101;;130584;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03101;;89242;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03102;Salzgitter, kreisfreie Stadt;6304244;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03102;;106870;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03102;;60033;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03103;Wolfsburg, kreisfreie Stadt;25022568;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03103;;189312;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03103;;193293;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03151;Gifhorn, Landkreis;4830140;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03151;;79450;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03151;;27458;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03152;Göttingen, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03152;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03152;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03153;Goslar, Landkreis;4696811;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03153;;78193;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03153;;36912;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03154;Helmstedt, Landkreis;2598980;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03154;;79543;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03154;;28731;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03155;Northeim, Landkreis;4832355;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03155;;78941;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03155;;38362;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03156;Osterode am Harz, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03156;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03156;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03157;Peine, Landkreis;3678638;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03157;;80201;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03157;;26849;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03158;Wolfenbüttel, Landkreis;3223921;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03158;;84338;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03158;;27226;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03159;Göttingen, Landkreis;14497520;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03159;;81396;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03159;;44154;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03241;Region Hannover, Landkreis;68335915;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03241;;96182;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03241;;59948;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03241001;Hannover, Landeshauptstadt;44669915;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03241001;;102204;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03241001;;85704;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03251;Diepholz, Landkreis;8735568;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03251;;82766;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03251;;39532;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03252;Hameln-Pyrmont, Landkreis;5843353;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03252;;82282;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03252;;38860;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03254;Hildesheim, Landkreis;10026753;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03254;;77620;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03254;;37426;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03255;Holzminden, Landkreis;2798416;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03255;;89501;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03255;;42507;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03256;Nienburg (Weser), Landkreis;4785590;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03256;;82131;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03256;;39356;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03257;Schaumburg, Landkreis;5087881;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03257;;76284;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03257;;32418;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03351;Celle, Landkreis;7300678;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03351;;87614;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03351;;42284;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03352;Cuxhaven, Landkreis;6674438;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03352;;84489;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03352;;33520;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03353;Harburg, Landkreis;8445243;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03353;;81202;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03353;;31831;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03354;Lüchow-Dannenberg, Landkreis;1618359;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03354;;76244;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03354;;34685;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03355;Lüneburg, Landkreis;7299506;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03355;;81832;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03355;;40683;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03356;Osterholz, Landkreis;3148869;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03356;;74946;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03356;;27697;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03357;Rotenburg (Wümme), Landkreis;7049333;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03357;;82717;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03357;;42534;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03358;Heidekreis;6358708;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03358;;85522;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03358;;44946;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03359;Stade, Landkreis;8206274;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03359;;88642;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03359;;39514;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03360;Uelzen, Landkreis;3647502;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03360;;85182;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03360;;39761;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03361;Verden, Landkreis;5897745;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03361;;84656;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03361;;42598;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03401;Delmenhorst, kreisfreie Stadt;2382000;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03401;;71650;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03401;;29200;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03402;Emden, kreisfreie Stadt;3979772;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03402;;100019;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03402;;80477;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03403;Oldenburg (Oldb), kreisfreie Stadt;10782495;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03403;;86231;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03403;;61116;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03404;Osnabrück, kreisfreie Stadt;10600473;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03404;;79720;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03404;;63908;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03405;Wilhelmshaven, kreisfreie Stadt;4228294;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03405;;93334;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03405;;55725;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03451;Ammerland, Landkreis;5278896;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03451;;80168;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03451;;41396;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03452;Aurich, Landkreis;7144751;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03452;;81562;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03452;;37825;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03453;Cloppenburg, Landkreis;8126987;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03453;;80347;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03453;;45972;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03454;Emsland, Landkreis;19343753;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03454;;93222;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03454;;57851;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03455;Friesland, Landkreis;3420020;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03455;;76591;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03455;;34052;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03456;Grafschaft Bentheim, Landkreis;6125970;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03456;;81330;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03456;;42430;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03457;Leer, Landkreis;5989718;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03457;;81951;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03457;;35420;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03458;Oldenburg, Landkreis;4788915;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03458;;80001;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03458;;36283;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03459;Osnabrück, Landkreis;14380370;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03459;;80429;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03459;;40450;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03460;Vechta, Landkreis;8954491;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03460;;87915;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03460;;61135;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03461;Wesermarsch, Landkreis;4030278;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03461;;93529;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03461;;45220;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;03462;Wittmund, Landkreis;2108862;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;03462;;84005;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;03462;;37664;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;04011;Bremen, kreisfreie Stadt;36111353;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;04011;;94191;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;04011;;61697;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;04012;Bremerhaven, kreisfreie Stadt;5156070;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;04012;;83410;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;04012;;43523;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05111;Düsseldorf, kreisfreie Stadt;67308696;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05111;;115513;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05111;;109002;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05112;Duisburg, kreisfreie Stadt;21491425;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05112;;92160;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05112;;42750;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05113;Essen, kreisfreie Stadt;32215609;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05113;;91643;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05113;;56087;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05114;Krefeld, kreisfreie Stadt;11506834;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05114;;91892;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05114;;49835;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05116;Mönchengladbach, kreisfreie Stadt;11451677;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05116;;81691;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05116;;42820;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05117;Mülheim an der Ruhr, kreisfreie Stadt;8386302;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05117;;101124;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05117;;48484;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05119;Oberhausen, kreisfreie Stadt;7583131;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05119;;79519;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05119;;35505;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05120;Remscheid, kreisfreie Stadt;5005144;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05120;;81691;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05120;;43926;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05122;Solingen, kreisfreie Stadt;5528695;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05122;;79135;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05122;;33335;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05124;Wuppertal, kreisfreie Stadt;14924321;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05124;;83988;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05124;;41642;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05154;Kleve, Kreis;12521273;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05154;;81750;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05154;;39010;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05158;Mettmann, Kreis;25703838;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05158;;98033;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05158;;52421;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05162;Rhein-Kreis Neuss;21738229;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05162;;100233;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05162;;47542;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05166;Viersen, Kreis;10807740;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05166;;78555;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05166;;36306;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05170;Wesel, Kreis;16517283;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05170;;80593;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05170;;36085;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05314;Bonn, kreisfreie Stadt;28843104;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05314;;106718;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05314;;89434;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05315;Köln, kreisfreie Stadt;81881722;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05315;;100390;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05315;;79922;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05316;Leverkusen, kreisfreie Stadt;9384507;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05316;;108028;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05316;;55788;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05334;Städteregion Aachen, Kreis;26973853;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05334;;87476;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05334;;46312;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05334002;Aachen, kreisfreie Stadt;.;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05334002;;.;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05334002;;.;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05354;Aachen, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05354;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05354;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05358;Düren, Kreis;10370233;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05358;;83095;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05358;;37186;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05362;Rhein-Erft-Kreis;20794948;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05362;;101438;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05362;;43577;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05366;Euskirchen, Kreis;7070920;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05366;;82524;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05366;;34966;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05370;Heinsberg, Kreis;8638600;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05370;;77435;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05370;;32857;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05374;Oberbergischer Kreis;11957528;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05374;;83271;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05374;;43639;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05378;Rheinisch-Bergischer Kreis;9324397;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05378;;82662;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05378;;32839;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05382;Rhein-Sieg-Kreis;21521627;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05382;;84946;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05382;;35552;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05512;Bottrop, kreisfreie Stadt;3444253;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05512;;74054;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05512;;29011;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05513;Gelsenkirchen, kreisfreie Stadt;10221449;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05513;;86572;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05513;;38196;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05515;Münster, kreisfreie Stadt;22576052;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05515;;89347;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05515;;73379;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05554;Borken, Kreis;18219306;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05554;;83588;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05554;;47909;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05558;Coesfeld, Kreis;8612433;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05558;;79872;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05558;;37934;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05562;Recklinghausen, Kreis;20526029;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05562;;80371;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05562;;32996;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05566;Steinfurt, Kreis;19358895;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05566;;82817;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05566;;42936;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05570;Warendorf, Kreis;11534777;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05570;;81764;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05570;;40841;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05711;Bielefeld, kreisfreie Stadt;17956121;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05711;;80867;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05711;;54156;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05754;Gütersloh, Kreis;21022224;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05754;;89863;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05754;;57781;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05758;Herford, Kreis;10372377;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05758;;82446;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05758;;40756;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05762;Höxter, Kreis;4767464;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05762;;74712;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05762;;34262;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05766;Lippe, Kreis;13367884;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05766;;81000;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05766;;38482;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05770;Minden-Lübbecke, Kreis;15279989;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05770;;87127;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05770;;47640;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05774;Paderborn, Kreis;14287690;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05774;;81805;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05774;;45249;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05911;Bochum, kreisfreie Stadt;17045975;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05911;;84782;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05911;;47634;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05913;Dortmund, kreisfreie Stadt;30880051;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05913;;88776;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05913;;51261;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05914;Hagen, kreisfreie Stadt;7851143;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05914;;84675;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05914;;41211;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05915;Hamm, kreisfreie Stadt;6911596;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05915;;80907;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05915;;38467;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05916;Herne, kreisfreie Stadt;5401973;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05916;;79862;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05916;;34627;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05954;Ennepe-Ruhr-Kreis;11679938;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05954;;79147;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05954;;37124;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05958;Hochsauerlandkreis;12039561;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05958;;79704;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05958;;46125;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05962;Märkischer Kreis;17438738;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05962;;83639;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05962;;42693;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05966;Olpe, Kreis;6807626;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05966;;84860;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05966;;51423;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05970;Siegen-Wittgenstein, Kreis;13228071;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05970;;84335;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05970;;48238;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05974;Soest, Kreis;14417915;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05974;;92414;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05974;;48008;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;05978;Unna, Kreis;15141929;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;05978;;82747;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;05978;;38331;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06411;Darmstadt, kreisfreie Stadt, Wissenschaftsstadt;16247392;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06411;;114912;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06411;;97917;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06412;Frankfurt am Main, kreisfreie Stadt;95394507;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06412;;123779;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06412;;126718;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06413;Offenbach am Main, kreisfreie Stadt;7168261;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06413;;96978;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06413;;54184;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06414;Wiesbaden, kreisfreie Stadt, Landeshauptstadt;22647344;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06414;;113106;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06414;;78624;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06415;Hanau, kreisfreie Stadt;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06415;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06415;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06431;Bergstraße, Landkreis;9807001;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06431;;87343;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06431;;35749;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06432;Darmstadt-Dieburg, Landkreis;10465612;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06432;;92822;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06432;;34638;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06433;Groß-Gerau, Landkreis;14397265;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06433;;114422;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06433;;53698;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06434;Hochtaunuskreis;17520829;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06434;;132688;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06434;;72657;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06435;Main-Kinzig-Kreis;17965969;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06435;;94644;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06435;;42778;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06436;Main-Taunus-Kreis;17459267;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06436;;126866;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06436;;73148;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06437;Odenwaldkreis;3079962;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06437;;78542;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06437;;32750;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06438;Offenbach, Landkreis;17510152;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06438;;97087;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06438;;49007;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06439;Rheingau-Taunus-Kreis;5742281;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06439;;85385;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06439;;30897;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06440;Wetteraukreis;12138295;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06440;;94513;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06440;;39011;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06531;Gießen, Landkreis;12751806;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06531;;86835;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06531;;47532;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06532;Lahn-Dill-Kreis;10999900;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06532;;85506;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06532;;43263;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06533;Limburg-Weilburg, Landkreis;6713224;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06533;;82891;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06533;;38569;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06534;Marburg-Biedenkopf, Landkreis;12271687;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06534;;92157;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06534;;50511;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06535;Vogelsbergkreis;3636957;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06535;;77928;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06535;;35893;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06611;Kassel, kreisfreie Stadt, documenta-Stadt;13765249;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06611;;87238;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06611;;69822;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06631;Fulda, Landkreis;10986622;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06631;;83282;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06631;;49381;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06632;Hersfeld-Rotenburg, Landkreis;5331241;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06632;;83093;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06632;;45291;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06633;Kassel, Landkreis;8640823;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06633;;85673;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06633;;37421;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06634;Schwalm-Eder-Kreis;7534320;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06634;;92584;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06634;;41806;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06635;Waldeck-Frankenberg, Landkreis;7551918;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06635;;86814;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06635;;48681;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;06636;Werra-Meißner-Kreis;3639923;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;06636;;85748;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;06636;;37190;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07111;Koblenz, kreisfreie Stadt;10438351;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07111;;89931;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07111;;92080;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07131;Ahrweiler, Landkreis;4572531;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07131;;83185;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07131;;35460;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07132;Altenkirchen (Westerwald), Landkreis;4375976;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07132;;80200;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07132;;33117;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07133;Bad Kreuznach, Landkreis;6237749;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07133;;82533;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07133;;37884;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07134;Birkenfeld, Landkreis;2947348;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07134;;76946;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07134;;35675;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07135;Cochem-Zell, Landkreis;2628355;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07135;;83623;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07135;;42687;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07137;Mayen-Koblenz, Landkreis;8423430;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07137;;86227;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07137;;38809;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07138;Neuwied, Landkreis;8050546;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07138;;88762;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07138;;42627;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07140;Rhein-Hunsrück-Kreis;4834919;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07140;;84465;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07140;;45378;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07141;Rhein-Lahn-Kreis;4151157;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07141;;82336;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07141;;33094;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07143;Westerwaldkreis;9079966;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07143;;90382;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07143;;43711;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07211;Trier, kreisfreie Stadt;6197210;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07211;;79750;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07211;;59495;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07231;Bernkastel-Wittlich, Landkreis;4710672;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07231;;81298;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07231;;41593;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07232;Eifelkreis Bitburg-Prüm;3742409;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07232;;90179;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07232;;37326;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07233;Vulkaneifel, Landkreis;2575834;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07233;;82583;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07233;;43344;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07235;Trier-Saarburg, Landkreis;3804511;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07235;;75584;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07235;;25533;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07311;Frankenthal (Pfalz), kreisfreie Stadt;2294277;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07311;;87668;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07311;;47674;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07312;Kaiserslautern, kreisfreie Stadt;6038486;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07312;;81725;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07312;;60085;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07313;Landau in der Pfalz, kreisfreie Stadt;2689588;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07313;;77429;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07313;;55794;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07314;Ludwigshafen am Rhein, kreisfreie Stadt;13236827;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07314;;106166;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07314;;74988;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07315;Mainz, kreisfreie Stadt;15874565;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07315;;93457;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07315;;70781;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07316;Neustadt an der Weinstraße, kreisfreie Stadt;2108678;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07316;;75504;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07316;;39917;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07317;Pirmasens, kreisfreie Stadt;1918032;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07317;;74594;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07317;;48351;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07318;Speyer, kreisfreie Stadt;3473461;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07318;;83668;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07318;;69862;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07319;Worms, kreisfreie Stadt;4271809;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07319;;93334;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07319;;49341;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07320;Zweibrücken, kreisfreie Stadt;2060353;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07320;;91053;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07320;;61800;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07331;Alzey-Worms, Landkreis;4376664;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07331;;91036;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07331;;33406;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07332;Bad Dürkheim, Landkreis;3726930;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07332;;76790;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07332;;27756;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07333;Donnersbergkreis;2569757;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07333;;85052;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07333;;34375;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07334;Germersheim, Landkreis;5373035;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07334;;88913;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07334;;40850;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07335;Kaiserslautern, Landkreis;2909525;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07335;;81152;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07335;;27393;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07336;Kusel, Landkreis;1604459;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07336;;82407;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07336;;23056;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07337;Südliche Weinstraße, Landkreis;3759482;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07337;;81320;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07337;;33243;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07338;Rhein-Pfalz-Kreis;3813102;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07338;;86441;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07338;;24489;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07339;Mainz-Bingen, Landkreis;10007544;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07339;;118431;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07339;;48501;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;07340;Südwestpfalz, Landkreis;1934791;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;07340;;82213;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;07340;;21481;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08111;Stuttgart, Stadtkreis;74942328;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08111;;135531;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08111;;122278;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08115;Böblingen, Landkreis;34495502;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08115;;149598;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08115;;87394;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08116;Esslingen, Landkreis;28200136;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08116;;99837;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08116;;52581;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08117;Göppingen, Landkreis;9950461;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08117;;83999;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08117;;38416;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08118;Ludwigsburg, Landkreis;31878488;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08118;;115670;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08118;;59576;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08119;Rems-Murr-Kreis, Landkreis;18255174;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08119;;88905;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08119;;41451;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08121;Heilbronn, Stadtkreis;9160188;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08121;;92207;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08121;;69490;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08125;Heilbronn, Landkreis;26412312;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08125;;141665;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08125;;74665;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08126;Hohenlohekreis, Landkreis;7402216;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08126;;96626;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08126;;64094;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08127;Schwäbisch Hall, Landkreis;11565781;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08127;;99038;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08127;;57613;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08128;Main-Tauber-Kreis, Landkreis;6659594;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08128;;87572;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08128;;49954;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08135;Heidenheim, Landkreis;6208624;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08135;;91690;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08135;;45909;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08136;Ostalbkreis, Landkreis;18555769;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08136;;104812;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08136;;58472;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08211;Baden-Baden, Stadtkreis;3938763;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08211;;93196;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08211;;69462;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08212;Karlsruhe, Stadtkreis;26838185;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08212;;110575;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08212;;86961;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08215;Karlsruhe, Landkreis;19632766;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08215;;90480;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08215;;43073;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08216;Rastatt, Landkreis;11928717;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08216;;102964;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08216;;51629;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08221;Heidelberg, Stadtkreis;11729157;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08221;;89011;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08221;;75445;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08222;Mannheim, Stadtkreis;25437160;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08222;;101868;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08222;;80206;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08225;Neckar-Odenwald-Kreis, Landkreis;5492184;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08225;;82284;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08225;;37754;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08226;Rhein-Neckar-Kreis, Landkreis;26637606;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08226;;108093;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08226;;47721;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08231;Pforzheim, Stadtkreis;6217664;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08231;;81965;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08231;;46057;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08235;Calw, Landkreis;5981857;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08235;;86409;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08235;;37105;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08236;Enzkreis, Landkreis;7692820;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08236;;90075;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08236;;38500;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08237;Freudenstadt, Landkreis;5441280;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08237;;83815;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08237;;44626;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08311;Freiburg im Breisgau, Stadtkreis;15601583;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08311;;82446;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08311;;65872;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08315;Breisgau-Hochschwarzwald, Landkreis;9938294;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08315;;80929;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08315;;36502;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08316;Emmendingen, Landkreis;6793089;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08316;;85583;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08316;;40047;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08317;Ortenaukreis, Landkreis;21816262;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08317;;86543;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08317;;49117;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08325;Rottweil, Landkreis;7337163;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08325;;94456;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08325;;52300;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08326;Schwarzwald-Baar-Kreis, Landkreis;10084993;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08326;;85042;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08326;;47127;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08327;Tuttlingen, Landkreis;8610445;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08327;;97909;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08327;;59349;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08335;Konstanz, Landkreis;12605590;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08335;;83910;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08335;;43226;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08336;Lörrach, Landkreis;9357354;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08336;;87605;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08336;;39360;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08337;Waldshut, Landkreis;6233542;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08337;;81851;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08337;;36309;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08415;Reutlingen, Landkreis;14859410;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08415;;94458;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08415;;50640;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08416;Tübingen, Landkreis;10469057;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08416;;83967;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08416;;44889;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08417;Zollernalbkreis, Landkreis;8320447;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08417;;87143;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08417;;43037;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08421;Ulm, Stadtkreis;13323724;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08421;;100865;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08421;;102934;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08425;Alb-Donau-Kreis, Landkreis;8133019;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08425;;98632;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08425;;40250;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08426;Biberach, Landkreis;12364757;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08426;;103546;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08426;;59705;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08435;Bodenseekreis, Landkreis;13813870;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08435;;108215;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08435;;62505;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08436;Ravensburg, Landkreis;15699334;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08436;;91049;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08436;;54058;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;08437;Sigmaringen, Landkreis;6007629;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;08437;;86635;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;08437;;45353;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09161;Ingolstadt, kreisfreie Stadt;20724411;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09161;;166183;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09161;;147651;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09162;München, kreisfreie Stadt;151995791;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09162;;125211;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09162;;101543;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09163;Rosenheim, kreisfreie Stadt;4087601;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09163;;79494;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09163;;63018;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09171;Altötting, Landkreis;6741744;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09171;;101867;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09171;;59410;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09172;Berchtesgadener Land, Landkreis;4638769;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09172;;83371;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09172;;44095;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09173;Bad Tölz-Wolfratshausen, Landkreis;4903100;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09173;;85973;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09173;;37711;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09174;Dachau, Landkreis;5767977;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09174;;89552;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09174;;37758;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09175;Ebersberg, Landkreis;5789383;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09175;;91996;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09175;;40311;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09176;Eichstätt, Landkreis;5950928;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09176;;102447;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09176;;43936;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09177;Erding, Landkreis;5639728;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09177;;92400;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09177;;40331;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09178;Freising, Landkreis;15261659;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09178;;133882;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09178;;82921;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09179;Fürstenfeldbruck, Landkreis;7842953;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09179;;92499;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09179;;36048;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09180;Garmisch-Partenkirchen, Landkreis;3556539;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09180;;76211;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09180;;39823;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09181;Landsberg am Lech, Landkreis;5560051;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09181;;95005;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09181;;45748;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09182;Miesbach, Landkreis;4975340;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09182;;91234;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09182;;51323;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09183;Mühldorf a.Inn, Landkreis;5413922;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09183;;87955;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09183;;44504;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09184;München, Landkreis;50074706;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09184;;153281;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09184;;141620;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09185;Neuburg-Schrobenhausen, Landkreis;4482033;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09185;;97171;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09185;;45197;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09186;Pfaffenhofen a.d.Ilm, Landkreis;6516344;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09186;;103902;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09186;;50072;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09187;Rosenheim, Landkreis;10966562;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09187;;86416;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09187;;42551;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09188;Starnberg, Landkreis;7394755;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09188;;93745;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09188;;53151;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09189;Traunstein, Landkreis;9679814;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09189;;96512;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09189;;55765;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09190;Weilheim-Schongau, Landkreis;7307188;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09190;;98396;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09190;;52758;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09261;Landshut, kreisfreie Stadt;5219073;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09261;;93430;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09261;;74238;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09262;Passau, kreisfreie Stadt;4680157;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09262;;84027;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09262;;88360;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09263;Straubing, kreisfreie Stadt;3447018;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09263;;82688;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09263;;71422;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09271;Deggendorf, Landkreis;6360915;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09271;;90015;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09271;;52357;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09272;Freyung-Grafenau, Landkreis;3220236;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09272;;81241;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09272;;40964;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09273;Kelheim, Landkreis;5457322;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09273;;93727;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09273;;43375;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09274;Landshut, Landkreis;7276225;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09274;;100607;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09274;;45005;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09275;Passau, Landkreis;7387643;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09275;;83671;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09275;;38005;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09276;Regen, Landkreis;3342417;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09276;;79859;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09276;;43210;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09277;Rottal-Inn, Landkreis;5475227;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09277;;91389;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09277;;45443;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09278;Straubing-Bogen, Landkreis;3774717;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09278;;91602;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09278;;36582;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09279;Dingolfing-Landau, Landkreis;7377577;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09279;;108658;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09279;;73131;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09361;Amberg, kreisfreie Stadt;3266977;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09361;;88170;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09361;;77079;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09362;Regensburg, kreisfreie Stadt;17802929;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09362;;105555;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09362;;118271;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09363;Weiden i.d.OPf., kreisfreie Stadt;2946441;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09363;;76295;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09363;;69431;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09371;Amberg-Sulzbach, Landkreis;3838781;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09371;;92978;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09371;;36892;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09372;Cham, Landkreis;6693568;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09372;;86505;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09372;;52138;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09373;Neumarkt i.d.OPf., Landkreis;6817302;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09373;;96002;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09373;;49239;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09374;Neustadt a.d.Waldnaab, Landkreis;3955621;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09374;;90919;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09374;;41149;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09375;Regensburg, Landkreis;6696608;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09375;;90014;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09375;;34340;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09376;Schwandorf, Landkreis;7019953;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09376;;87122;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09376;;47112;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09377;Tirschenreuth, Landkreis;3630781;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09377;;97150;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09377;;50164;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09461;Bamberg, kreisfreie Stadt;6036681;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09461;;77937;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09461;;79306;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09462;Bayreuth, kreisfreie Stadt;5999903;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09462;;88351;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09462;;82183;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09463;Coburg, kreisfreie Stadt;5185507;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09463;;124556;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09463;;126519;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09464;Hof, kreisfreie Stadt;2545722;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09464;;75523;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09464;;54593;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09471;Bamberg, Landkreis;4507912;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09471;;82732;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09471;;30480;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09472;Bayreuth, Landkreis;2934976;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09472;;84111;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09472;;28428;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09473;Coburg, Landkreis;2910879;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09473;;85131;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09473;;34451;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09474;Forchheim, Landkreis;4117477;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09474;;86237;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09474;;35424;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09475;Hof, Landkreis;4137774;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09475;;84898;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09475;;44765;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09476;Kronach, Landkreis;2677595;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09476;;80002;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09476;;41336;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09477;Kulmbach, Landkreis;3371955;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09477;;87898;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09477;;47071;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09478;Lichtenfels, Landkreis;2946194;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09478;;81971;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09478;;43616;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09479;Wunsiedel i.Fichtelgebirge, Landkreis;3414653;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09479;;85832;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09479;;48261;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09561;Ansbach, kreisfreie Stadt;3274547;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09561;;83239;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09561;;81414;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09562;Erlangen, kreisfreie Stadt;14160480;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09562;;123066;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09562;;122473;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09563;Fürth, kreisfreie Stadt;6119471;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09563;;93117;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09563;;46404;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09564;Nürnberg, kreisfreie Stadt;40230540;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09564;;98496;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09564;;76186;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09565;Schwabach, kreisfreie Stadt;1956013;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09565;;85177;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09565;;47807;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09571;Ansbach, Landkreis;7212528;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09571;;85719;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09571;;38469;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09572;Erlangen-Höchstadt, Landkreis;8850341;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09572;;129580;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09572;;63923;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09573;Fürth, Landkreis;3062433;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09573;;83836;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09573;;26026;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09574;Nürnberger Land, Landkreis;6783891;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09574;;87757;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09574;;40141;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09575;Neustadt a.d.Aisch-Bad Windsheim, Landkreis;4257529;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09575;;89785;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09575;;42148;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09576;Roth, Landkreis;5223356;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09576;;90517;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09576;;40638;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09577;Weißenburg-Gunzenhausen, Landkreis;3705633;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09577;;82105;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09577;;39137;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09661;Aschaffenburg, kreisfreie Stadt;5891495;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09661;;96356;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09661;;80902;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09662;Schweinfurt, kreisfreie Stadt;6203895;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09662;;93910;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09662;;114442;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09663;Würzburg, kreisfreie Stadt;10320829;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09663;;78623;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09663;;77888;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09671;Aschaffenburg, Landkreis;7435150;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09671;;97085;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09671;;43506;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09672;Bad Kissingen, Landkreis;4397682;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09672;;82814;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09672;;42503;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09673;Rhön-Grabfeld, Landkreis;3676119;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09673;;85243;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09673;;46297;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09674;Haßberge, Landkreis;3232503;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09674;;83166;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09674;;38587;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09675;Kitzingen, Landkreis;4350491;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09675;;87729;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09675;;47681;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09676;Miltenberg, Landkreis;5410443;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09676;;89252;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09676;;42476;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09677;Main-Spessart, Landkreis;5708387;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09677;;89855;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09677;;45468;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09678;Schweinfurt, Landkreis;3383102;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09678;;89754;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09678;;29627;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09679;Würzburg, Landkreis;5432673;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09679;;92148;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09679;;33629;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09761;Augsburg, kreisfreie Stadt;17804338;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09761;;88800;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09761;;59340;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09762;Kaufbeuren, kreisfreie Stadt;2026812;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09762;;76983;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09762;;43935;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09763;Kempten (Allgäu), kreisfreie Stadt;4329754;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09763;;83300;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09763;;64827;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09764;Memmingen, kreisfreie Stadt;3232959;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09764;;83875;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09764;;73276;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09771;Aichach-Friedberg, Landkreis;4743582;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09771;;84243;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09771;;34722;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09772;Augsburg, Landkreis;10114465;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09772;;87636;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09772;;38574;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09773;Dillingen a.d.Donau, Landkreis;4170324;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09773;;89037;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09773;;42258;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09774;Günzburg, Landkreis;6673728;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09774;;90822;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09774;;51427;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09775;Neu-Ulm, Landkreis;7989746;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09775;;91093;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09775;;43641;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09776;Lindau (Bodensee), Landkreis;4085994;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09776;;90536;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09776;;49637;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09777;Ostallgäu, Landkreis;6503922;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09777;;87452;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09777;;45934;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09778;Unterallgäu, Landkreis;7719462;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09778;;100341;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09778;;52773;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09779;Donau-Ries, Landkreis;7983098;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09779;;94332;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09779;;59183;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;09780;Oberallgäu, Landkreis;6770570;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;09780;;84208;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;09780;;43850;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;10041;Saarbrücken, Regionalverband;16838817;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;10041;;80569;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;10041;;50600;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;10041100;Saarbrücken, Landeshauptstadt;.;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;10041100;;.;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;10041100;;.;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;10042;Merzig-Wadern, Landkreis;3449490;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;10042;;80624;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;10042;;31630;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;10043;Neunkirchen, Landkreis;3906037;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;10043;;71785;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;10043;;29276;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;10044;Saarlouis, Landkreis;7666066;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;10044;;83096;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;10044;;37284;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;10045;Saarpfalz-Kreis;7232999;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;10045;;85628;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;10045;;50130;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;10046;St. Wendel, Landkreis;3083520;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;10046;;81402;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;10046;;35066;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;11000;Berlin;208449010;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;11000;;94860;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;11000;;56739;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;11001001;Berlin-Mitte;.;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;11001001;;.;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;11001001;;.;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;11002002;Berlin-Friedrichshain-Kreuzberg;.;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;11002002;;.;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;11002002;;.;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;11003003;Berlin-Pankow;.;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;11003003;;.;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;11003003;;.;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;11004004;Berlin-Charlottenburg-Wilmersdorf;.;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;11004004;;.;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;11004004;;.;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;11005005;Berlin-Spandau;.;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;11005005;;.;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;11005005;;.;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;11006006;Berlin-Steglitz-Zehlendorf;.;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;11006006;;.;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;11006006;;.;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;11007007;Berlin-Tempelhof-Schöneberg;.;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;11007007;;.;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;11007007;;.;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;11008008;Berlin-Neukölln;.;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;11008008;;.;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;11008008;;.;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;11009009;Berlin-Treptow-Köpenick;.;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;11009009;;.;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;11009009;;.;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;11010010;Berlin-Marzahn-Hellersdorf;.;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;11010010;;.;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;11010010;;.;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;11011011;Berlin-Lichtenberg;.;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;11011011;;.;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;11011011;;.;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;11012012;Berlin-Reinickendorf;.;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;11012012;;.;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;11012012;;.;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12051;Brandenburg an der Havel, kreisfreie Stadt;3209578;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12051;;81247;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12051;;43357;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12052;Cottbus, kreisfreie Stadt;4934378;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12052;;79451;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12052;;51968;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12053;Frankfurt (Oder), kreisfreie Stadt;2788918;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12053;;74844;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12053;;48855;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12054;Potsdam, kreisfreie Stadt;10435860;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12054;;87398;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12054;;56556;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12060;Barnim, Landkreis;5607309;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12060;;77736;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12060;;28982;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12061;Dahme-Spreewald, Landkreis;9154295;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12061;;108271;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12061;;51363;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12062;Elbe-Elster, Landkreis;3254432;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12062;;75985;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12062;;33087;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12063;Havelland, Landkreis;4485974;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12063;;78214;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12063;;26345;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12064;Märkisch-Oderland, Landkreis;5773089;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12064;;80620;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12064;;29186;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12065;Oberhavel, Landkreis;6954746;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12065;;87288;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12065;;31977;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12066;Oberspreewald-Lausitz, Landkreis;3943042;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12066;;83074;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12066;;36471;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12067;Oder-Spree, Landkreis;7933307;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12067;;92966;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12067;;44035;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12068;Ostprignitz-Ruppin, Landkreis;3337621;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12068;;73440;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12068;;33624;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12069;Potsdam-Mittelmark, Landkreis;7639974;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12069;;85198;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12069;;34615;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12070;Prignitz, Landkreis;2858611;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12070;;84627;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12070;;37677;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12071;Spree-Neiße, Landkreis;5279750;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12071;;121510;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12071;;47951;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12072;Teltow-Fläming, Landkreis;8891927;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12072;;105645;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12072;;50080;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;12073;Uckermark, Landkreis;4885959;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;12073;;95988;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;12073;;41542;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13001;Greifswald, Hansestadt, kreisfreie Stadt;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13001;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13001;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13002;Neubrandenburg, Stadt, kreisfreie Stadt;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13002;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13002;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13003;Rostock, kreisfreie Stadt;10939523;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13003;;88657;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13003;;53330;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13004;Schwerin, kreisfreie Stadt;5260492;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13004;;78906;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13004;;53635;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13005;Stralsund, Hansestadt, kreisfreie Stadt;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13005;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13005;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13006;Wismar, Hansestadt, kreisfreie Stadt;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13006;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13006;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13051;Bad Doberan, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13051;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13051;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13052;Landkreis Demmin;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13052;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13052;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13053;Güstrow, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13053;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13053;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13054;Landkreis Ludwigslust;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13054;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13054;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13055;Mecklenburg-Strelitz, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13055;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13055;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13056;Landkreis Müritz;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13056;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13056;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13057;Nordvorpommern, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13057;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13057;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13058;Landkreis Nordwestmecklenburg;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13058;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13058;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13059;Ostvorpommern, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13059;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13059;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13060;Landkreis Parchim;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13060;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13060;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13061;Rügen, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13061;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13061;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13062;Landkreis Uecker-Randow;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13062;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13062;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13071;Mecklenburgische Seenplatte, Landkreis;9395811;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13071;;79099;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13071;;38048;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13072;Landkreis Rostock;7571502;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13072;;80900;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13072;;34612;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13073;Vorpommern-Rügen, Landkreis;7562298;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13073;;76273;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13073;;35061;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13074;Nordwestmecklenburg, Landkreis;5186444;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13074;;87443;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13074;;33050;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13075;Vorpommern-Greifswald, Landkreis;8036541;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13075;;74249;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13075;;35628;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;13076;Ludwigslust-Parchim, Landkreis;6892475;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;13076;;82991;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;13076;;33021;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14161;Chemnitz, kreisfreie Stadt;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14161;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14161;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14166;Plauen, kreisfreie Stadt;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14166;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14166;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14167;Zwickau, kreisfreie Stadt;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14167;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14167;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14171;Annaberg, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14171;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14171;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14173;Chemnitzer Land, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14173;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14173;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14177;Freiberg, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14177;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14177;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14178;Vogtlandkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14178;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14178;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14181;Mittlerer Erzgebirgskreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14181;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14181;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14182;Mittweida, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14182;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14182;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14188;Stollberg, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14188;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14188;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14191;Aue-Schwarzenberg, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14191;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14191;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14193;Zwickauer Land, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14193;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14193;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14262;Dresden, kreisfreie Stadt;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14262;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14262;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14263;Görlitz, kreisfreie Stadt;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14263;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14263;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14264;Hoyerswerda, kreisfreie Stadt;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14264;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14264;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14272;Bautzen, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14272;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14272;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14280;Meißen, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14280;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14280;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14284;Niederschlesischer Oberlausitzkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14284;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14284;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14285;Riesa-Großenhain, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14285;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14285;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14286;Löbau-Zittau, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14286;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14286;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14287;Sächsische Schweiz, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14287;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14287;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14290;Weißeritzkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14290;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14290;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14292;Kamenz, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14292;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14292;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14365;Leipzig, kreisfreie Stadt;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14365;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14365;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14374;Delitzsch, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14374;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14374;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14375;Döbeln, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14375;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14375;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14379;Leipziger Land, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14379;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14379;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14383;Muldentalkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14383;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14383;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14389;Torgau-Oschatz, Landkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14389;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14389;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14511;Chemnitz, kreisfreie Stadt;11159702;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14511;;76494;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14511;;45479;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14521;Erzgebirgskreis;9620625;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14521;;66928;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14521;;30038;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14522;Mittelsachsen, Landkreis;10229719;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14522;;76989;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14522;;34432;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14523;Vogtlandkreis;7192926;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14523;;70932;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14523;;32681;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14524;Zwickau, Landkreis;12151210;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14524;;79016;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14524;;39410;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14612;Dresden, kreisfreie Stadt;30400067;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14612;;86346;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14612;;53904;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14625;Bautzen, Landkreis;10474548;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14625;;75084;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14625;;35667;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14626;Görlitz, Landkreis;9418255;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14626;;83332;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14626;;38456;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14627;Meißen, Landkreis;8315097;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14627;;75127;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14627;;34676;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14628;Sächsische Schweiz-Osterzgebirge, Landkreis;7260850;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14628;;70993;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14628;;29688;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14713;Leipzig, kreisfreie Stadt;30559825;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14713;;82097;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14713;;50104;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14729;Leipzig, Landkreis;8499934;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14729;;83198;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14729;;32640;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;14730;Nordsachsen, Landkreis;7707808;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;14730;;81257;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;14730;;38520;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15001;Dessau-Roßlau, kreisfreie Stadt;2964854;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15001;;72280;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15001;;39149;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15002;Halle (Saale), kreisfreie Stadt;9608504;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15002;;74264;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15002;;42290;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15003;Magdeburg, kreisfreie Stadt, Landeshauptstadt;10832994;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15003;;76240;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15003;;44505;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15081;Altmarkkreis Salzwedel;2605143;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15081;;79011;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15081;;32410;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15082;Anhalt-Bitterfeld, Landkreis;5800945;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15082;;85098;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15082;;37811;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15083;Börde, Landkreis;6312296;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15083;;85180;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15083;;37515;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15084;Burgenlandkreis;5937889;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15084;;82959;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15084;;34038;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15085;Harz, Landkreis;6422897;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15085;;72601;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15085;;31132;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15086;Jerichower Land, Landkreis;2889195;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15086;;79825;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15086;;32609;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15087;Mansfeld-Südharz, Landkreis;3740884;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15087;;75535;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15087;;28866;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15088;Saalekreis;8398455;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15088;;102103;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15088;;46003;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15089;Salzlandkreis;6303335;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15089;;83142;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15089;;34723;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15090;Stendal, Landkreis;3858348;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15090;;86011;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15090;;36172;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15091;Wittenberg, Landkreis;3838232;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15091;;72869;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15091;;31471;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15101;Dessau, kreisfreie Stadt;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15101;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15101;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15151;Anhalt-Zerbst, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15151;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15151;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15153;Bernburg, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15153;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15153;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15154;Bitterfeld, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15154;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15154;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15159;Köthen, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15159;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15159;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15171;Wittenberg, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15171;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15171;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15202;Halle (Saale), kreisfreie Stadt;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15202;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15202;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15256;Burgenlandkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15256;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15256;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15260;Mansfelder Land, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15260;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15260;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15261;Merseburg-Querfurt, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15261;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15261;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15265;Saalkreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15265;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15265;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15266;Sangerhausen, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15266;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15266;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15268;Weißenfels, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15268;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15268;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15303;Magdeburg, kreisfreie Stadt;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15303;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15303;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15352;Aschersleben-Staßfurt, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15352;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15352;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15355;Bördekreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15355;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15355;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15357;Halberstadt, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15357;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15357;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15358;Jerichower Land, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15358;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15358;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15362;Ohrekreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15362;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15362;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15363;Stendal, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15363;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15363;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15364;Quedlinburg, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15364;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15364;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15367;Schönebeck, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15367;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15367;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15369;Wernigerode, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15369;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15369;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;15370;Altmarkkreis Salzwedel, Kreis;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;15370;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;15370;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16051;Erfurt, kreisfreie Stadt;11322130;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16051;;78049;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16051;;51659;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16052;Gera, kreisfreie Stadt;3545213;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16052;;71761;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16052;;37064;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16053;Jena, kreisfreie Stadt;6411784;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16053;;83982;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16053;;58341;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16054;Suhl, kreisfreie Stadt;1366386;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16054;;70392;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16054;;38494;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16055;Weimar, kreisfreie Stadt;2543269;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16055;;72994;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16055;;38686;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16056;Eisenach, kreisfreie Stadt;-;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16056;;-;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16056;;-;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16061;Eichsfeld, Landkreis;3359936;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16061;;72111;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16061;;32324;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16062;Nordhausen, Landkreis;2641588;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16062;;72549;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16062;;32559;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16063;Wartburgkreis;5768902;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16063;;76803;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16063;;37085;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16064;Unstrut-Hainich-Kreis;3232893;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16064;;72986;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16064;;34077;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16065;Kyffhäuserkreis;2084044;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16065;;77456;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16065;;28886;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16066;Schmalkalden-Meiningen, Landkreis;4081509;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16066;;72833;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16066;;33820;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16067;Gotha, Landkreis;4813288;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16067;;77736;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16067;;35292;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16068;Sömmerda, Landkreis;2226822;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16068;;79920;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16068;;32795;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16069;Hildburghausen, Landkreis;1670255;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16069;;74039;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16069;;27681;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16070;Ilm-Kreis;4086957;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16070;;79306;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16070;;38257;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16071;Weimarer Land, Landkreis;2786619;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16071;;84489;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16071;;33724;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16072;Sonneberg, Landkreis;1670834;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16072;;70461;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16072;;30126;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16073;Saalfeld-Rudolstadt, Landkreis;3297650;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16073;;75430;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16073;;32777;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16074;Saale-Holzland-Kreis;2670721;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16074;;78355;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16074;;31912;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16075;Saale-Orla-Kreis;2953561;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16075;;83853;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16075;;38061;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16076;Greiz, Landkreis;2802513;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16076;;75493;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16076;;29783;EUR;W3;Bruttoinlandsprodukt pro Kopf
+82000;;;;2024;KREISE;;16077;Altenburger Land, Landkreis;2410681;Tsd. EUR;W1;Bruttoinlandsprodukt
+82000;;;;2024;KREISE;;16077;;70414;EUR;W2;Bruttoinlandsprodukt je erwerbstätige Person
+82000;;;;2024;KREISE;;16077;;27478;EUR;W3;Bruttoinlandsprodukt pro Kopf

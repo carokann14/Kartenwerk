@@ -12,7 +12,7 @@ import path from 'node:path';
 import { readFile } from '../src/data/parse';
 import { parseGenesis, TABLE_TITLES } from '../src/data/genesis';
 import { DEFS } from './katalog-defs';
-import { deriveAltersgruppen } from './katalog-derive';
+import { deriveAltersgruppen, deriveAnteile, deriveJe, popLookup } from './katalog-derive';
 
 const LEVELS = ['DINSG', 'DLAND', 'KREISE'];   // Deutschland, Länder, Kreise (auch frühere Kreise); ohne Regierungsbezirke
 const DIR = process.env.RDB || 'data-src/rdb', OUT = 'public/katalog', STRICT = !!process.env.KATALOG_STRICT;
@@ -21,6 +21,18 @@ const decode = (b: Buffer) => { try { return new TextDecoder('utf-8', { fatal: t
 type Entry = { id: string; retrieved: string; bytes: number; [k: string]: unknown };
 const old: { built: string; entries: Entry[] } | null = fs.existsSync(path.join(OUT, 'index.json')) ? JSON.parse(fs.readFileSync(path.join(OUT, 'index.json'), 'utf8')) : null;
 const entries: Entry[] = [];
+/** Bevölkerung insgesamt (Tabelle 12411-01-01-4) für „je Einwohner“: RDB_POP=<Datei> oder die größte Datei dieser Tabelle in RDB */
+let pop: ((key: string, time: string) => number | undefined) | null = null;
+function loadPop() {
+  const f = process.env.RDB_POP || files.filter(x => x.startsWith('12411-01-01-4')).map(x => path.join(DIR, x)).sort((a, b) => fs.statSync(b).size - fs.statSync(a).size)[0];
+  if (!f || !fs.existsSync(f)) throw new Error('Bevölkerungstabelle 12411-01-01-4 fehlt (für „je Einwohner“)');
+  const L = decode(fs.readFileSync(f)).split(/\r?\n/).filter(Boolean), H = L[0].split(';'), ix = (n: string) => H.indexOf(n);
+  const vs: { code: number; attr: number }[] = [];
+  for (let k = 1; k < 10; k++) { const c = ix(`${k}_variable_code`); if (c < 0) break; vs.push({ code: c, attr: ix(`${k}_variable_attribute_code`) }); }
+  const B = L.slice(1).map(l => l.split(';')), reg = vs.findIndex(v => B.slice(0, 200).every(r => LEVELS.includes(r[v.code]) || r[v.code] === 'REGBEZ' || r[v.code] === 'GEMEIN'));
+  if (reg < 0) throw new Error(`${f}: Gebietsmerkmal nicht gefunden`);
+  return popLookup(B, { value: ix('value'), time: ix('time'), region: { ...vs[reg], label: -1 }, others: vs.filter((_, k) => k !== reg).map(v => ({ ...v, label: -1 })), levels: LEVELS });
+}
 let changed = false;
 fs.mkdirSync(OUT, { recursive: true });
 for (const d of DEFS) {
@@ -48,6 +60,20 @@ for (const d of DEFS) {
     if (!age) throw new Error(`${src}: Merkmal Altersgruppen nicht gefunden`);
     rows = deriveAltersgruppen(rows, { value: ix('value'), unit: ix('value_unit'), vcode: iVal, vlabel: iMeas, time: iTime, region: R, age, sex, levels: LEVELS });
     if (!rows.length) throw new Error(`${src}: keine Altersgruppen berechenbar`);
+  }
+  // Berechnete Zusatzspalten (Anteil an Insgesamt, Zahl je Einwohner); bei neuen (optionalen) Tabellen kein Abbruch, wenn die Form unerwartet ist
+  if (d.extra?.length) {
+    try {
+      const cls = others.find(v => body.slice(0, 500).some(r => r[v.code])) || null;
+      const ctx = { value: ix('value'), unit: ix('value_unit'), vcode: iVal, vlabel: iMeas, time: iTime, region: R, cls, levels: LEVELS };
+      const add: string[][] = [];
+      for (const x of d.extra) {
+        if (x.kind === 'anteile') add.push(...deriveAnteile(rows, ctx, x));
+        else { pop ||= loadPop(); add.push(...deriveJe(rows, ctx, pop, x)); }
+      }
+      if (!add.length) throw new Error('keine Zusatzspalten berechenbar');
+      rows = [...rows, ...add];
+    } catch (e) { if (STRICT && !d.optional) throw e; console.warn(`${d.id}: Zusatzspalten entfallen – ${(e as Error).message}`); }
   }
   // Namen je Gebiet vor dem Sortieren merken (in verkleinerten Dateien steht er nur einmal)
   const names = new Map<string, string>();

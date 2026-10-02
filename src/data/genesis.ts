@@ -31,6 +31,8 @@ export const TABLE_TITLES: Record<string, string> = {
   '13211-02-05-4': 'Arbeitslose und Arbeitslosenquoten',
   '14111-01-04-4': 'Bundestagswahlen',
   '82000-01-01-4': 'Bruttoinlandsprodukt',
+  '22811-01-01-4': 'Empfänger/-innen von sozialen Mindestsicherungsleistungen nach Art der Leistung',
+  '46251-02-01-4': 'Personenkraftwagen nach Kraftstoffarten',
   '82000-07-01-4': 'Verfügbares Einkommen der privaten Haushalte',
   '33111-01-02-4': 'Bodenfläche nach Art der tatsächlichen Nutzung',
 };
@@ -56,8 +58,19 @@ const cache = new WeakMap<Cell[][], GenesisParsed>();
 export function parseGenesis(cells: Cell[][], fileName = ''): GenesisParsed {
   const hit = cache.get(cells); if (hit) return hit;
   const g = isGenesisFlat(cells) ? parseFlat(cells, fileName) : parseTable(cells);
+  addStadtstaaten(g);
   cache.set(cells, g);
   return g;
+}
+/** Tabellen mit Kreisen führen Hamburg (02) und Berlin (11) nur als Land; die Karte kennt sie auch als Kreis (02000, 11000) */
+const STADTSTAAT: Record<string, string> = { '02': '02000', '11': '11000' };
+function addStadtstaaten(g: GenesisParsed) {
+  const krs = g.levels.krs, lan = g.levels.lan;
+  if (!krs?.size || !lan) return;
+  for (const [land, kreis] of Object.entries(STADTSTAAT)) {
+    const a = lan.get(land);
+    if (a && !krs.has(kreis)) krs.set(kreis, { key: kreis, name: a.name, vals: new Map([...a.vals].map(([p, v]) => [p, [...v]])) });
+  }
 }
 const base = (format: GenesisParsed['format']): GenesisParsed => ({ format, code: '', title: '', statLabel: '', stand: '', copyright: '', timeLabel: 'Jahr', periods: [], columns: [], colMeasure: [], colParty: [], colTotal: [], levels: {}, notes: [] });
 function put(g: GenesisParsed, key: string, name: string, period: string, col: number, v: Cell) {
@@ -145,13 +158,21 @@ function parseTable(cells: Cell[][]): GenesisParsed {
   // Titel: „Bevölkerung nach Geschlecht - Stichtag 31.12. - regionale“ + „Tiefe: Kreise und krfr. Städte“
   const full = titleLines.slice(0, 2).join(' ').replace(/\s+/g, ' ');
   g.title = full.split(/\s+-\s+/)[0].trim();
-  const rest = titleLines.slice(/Tiefe:/.test(titleLines[1] || '') ? 2 : 1);
+  const ti = titleLines.findIndex(x => /Tiefe:/.test(x));   // „… regionale Tiefe:“ (dann folgt die Tiefe in der nächsten Zeile) oder „Tiefe: Kreise …“
+  const rest = titleLines.slice(ti < 0 ? 1 : ti + 1 + (/Tiefe:\s*$/.test(titleLines[ti]) ? 1 : 0));
   g.statLabel = rest[0] || '';
   const unitLine = rest[1] || '';
   const hdr = cells.slice(h, d).map(r => r.map(txt));
   const width = Math.max(...cells.slice(d, d + 20).map(r => r.length));
-  // verbundene Zellen in Kopfzeilen nach rechts auffüllen
-  for (const r of hdr) { let last = ''; for (let i = lead + 2; i < width; i++) { if (r[i]) last = r[i]; else r[i] = last; } }
+  // verbundene Zellen in Kopfzeilen nach rechts auffüllen – aber nicht über den Beginn einer neuen Gruppe in einer Zeile darüber
+  // hinweg (Bürgergeld: „Hilfe zum Lebensunterhalt“ hat keine dritte Ebene und erbt sie nicht von „Gesamtregelleistung“)
+  hdr.forEach((r, k) => {
+    let last = '';
+    for (let i = lead + 2; i < width; i++) {
+      if (r[i]) last = r[i];
+      else { if (i > lead + 2 && hdr.slice(0, k).some(u => u[i] !== u[i - 1])) last = ''; r[i] = last; }
+    }
+  });
   const periodRow = hdr.findIndex(r => r.slice(lead + 2, width).filter(Boolean).every(isPeriod) && r.slice(lead + 2).some(Boolean));
   const timeName = periodRow > 0 ? hdr[periodRow - 1][lead + 2] : '';
   const colLabel: string[] = [], colPeriod: string[] = [];

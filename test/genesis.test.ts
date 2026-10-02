@@ -134,3 +134,34 @@ ok(rv('2019-12-31', '16063') == null && rv('2019-12-31', '16061') != null, `Ante
 for (const p of T.periods) { const a = T.byPeriod[p], b2 = dsD.time!.byPeriod[p]; const bad = a.rowArea.filter((id, i) => JSON.stringify(a.rows[i].slice(2)) !== JSON.stringify(b2.rows[b2.rowArea.indexOf(id)]?.slice(2))); if (bad.length) { console.log('   Abweichung', p, bad.slice(0, 3), a.rows[a.rowArea.indexOf(bad[0])], b2.rows[b2.rowArea.indexOf(bad[0])]); break; } }
 fs.writeFileSync('data-src/.tmp/12411-01-01-4_flat.csv', Buffer.from(enc(rows.join('\n') + '\n')));
 fs.writeFileSync('data-src/.tmp/12411-01-01-4.csv', Buffer.from(enc(lines.join('\n') + '\n')));
+
+// ---------- Verschachtelte Spaltenköpfe (Bürgergeld 22811-01-01-4): leere Zellen erben nichts über Gruppengrenzen hinweg ----------
+{
+  const { parseGenesis } = await import('../src/data/genesis');
+  const L = [
+    'Tabelle: 22811-01-01-4;;;;;;;;', 'Empfänger/-innen von Mindestsicherungsleistungen;;;;;;;;', 'nach Art der Leistung - Stichtag 31.12. - regionale Tiefe:;;;;;;;;', 'Kreise und krfr. Städte;;;;;;;;',
+    'Sozialberichterstattung;;;;;;;;',
+    ';;;Empfänger;Empfänger;Empfänger;Empfänger;Empfänger;Empfänger',
+    ';;;;Regelleistung SGB II;Regelleistung SGB II;Regelleistung SGB II;Hilfe zum Lebensunterhalt;Grundsicherung',
+    ';;;;zusammen;für erwerbsfähige;für nicht erwerbsfähige;;',
+    ';;;Anzahl;Anzahl;Anzahl;Anzahl;Anzahl;Anzahl',
+    '31.12.2024;DG;Deutschland;100;60;40;20;10;30', '31.12.2024;01;  Schleswig-Holstein;10;6;4;2;1;3',
+  ];
+  const raw = await readFile('22811-01-01-4_t.csv', enc(L.join('\n') + '\n'));
+  const g = parseGenesis(raw.sheets[0].cells, '22811-01-01-4_t.csv');
+  const c = g.columns;
+  ok(c.length === 6, `Kopfzeilen: ${c.length} Spalten`);
+  ok(/Hilfe zum Lebensunterhalt/.test(c[4]) && !/erwerbsfähige/.test(c[4]), `Spalte ohne dritte Ebene erbt nichts: „${c[4]}“`);
+  ok(/Grundsicherung/.test(c[5]) && !/erwerbsfähige/.test(c[5]), `Spalte „${c[5]}“`);
+  ok(/Regelleistung SGB II · für nicht erwerbsfähige/.test(c[3]) && /Regelleistung SGB II · zusammen/.test(c[1]), `Gruppen bleiben erhalten: „${c[1]}“ / „${c[3]}“`);
+}
+// ---------- Hamburg und Berlin: in Kreis-Tabellen nur als Land, die Karte braucht sie als Kreis ----------
+{
+  const { parseGenesis } = await import('../src/data/genesis');
+  const L = ['Tabelle: 82000-01-01-4;;;', 'Bruttoinlandsprodukt - Jahressumme - regionale Tiefe:;;;', 'Kreise und krfr. Städte;;;', 'VGR der Länder;;;', ';;;Bruttoinlandsprodukt', ';;;Tsd. EUR',
+    '2024;DG;Deutschland;1000', '2024;01;  Schleswig-Holstein;100', '2024;01001;      Flensburg, kreisfreie Stadt;10', '2024;02;  Hamburg;300', '2024;11;  Berlin;400', '2024;11001001;      Berlin-Mitte;.'];
+  const g = parseGenesis((await readFile('82000-01-01-4_t.csv', enc(L.join('\n') + '\n'))).sheets[0].cells, '82000-01-01-4_t.csv');
+  const hh = g.levels.krs?.get('02000'), be = g.levels.krs?.get('11000');
+  ok(!!hh && hh.vals.get('2024')?.[0] === '300' && !!be && be.vals.get('2024')?.[0] === '400', `Stadtstaaten als Kreis ergänzt: Hamburg ${hh?.vals.get('2024')?.[0]}, Berlin ${be?.vals.get('2024')?.[0]}`);
+  ok(g.levels.lan?.get('02')?.vals.get('2024')?.[0] === '300', 'Land Hamburg bleibt');
+}

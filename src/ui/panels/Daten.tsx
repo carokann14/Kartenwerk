@@ -5,6 +5,9 @@ import { PRESET_LABELS } from '../../data/pipeline';
 import { datasetFor, dsLabel } from '../../data/aggregate';
 import type { Dataset } from '../../data/types';
 import { periodText, periodYear, selectedPeriod } from '../../data/time';
+import type { TimeAxis } from '../../data/types';
+/** „Zeitreihe 2015–2025“, bei nur einem Zeitpunkt „Stichtag 31.12.2024“ bzw. „Jahr 2024“ */
+const timeSpan = (x: TimeAxis) => x.periods.length > 1 ? `Zeitreihe ${periodYear(x.periods[0])}–${periodYear(x.periods[x.periods.length - 1])}` : `${x.label} ${periodText(x.periods[0])}`;
 import { countLabel } from '../../geo/geo';
 import { GEO } from '../../geo/geo';
 import { removeDataset, setGeoSet, showDataset } from '../../model/actions';
@@ -38,7 +41,7 @@ function NoGeoCard({ doc, d, used }: { doc: Doc; d: Dataset; used: boolean }) {
     <div className="ds-head"><h4>{dsLabel(doc, d)}</h4>{used && <span className="chip accent">im Diagramm</span>}</div>
     <p className="hint">{own ? 'Eigene Tabelle' : d.fileName + ' · ' + PRESET_LABELS[d.preset]} · ohne Gebiet, für Diagramme</p>
     <div className="meta-row"><span className="chip ok"><span className="dot" />{d.rows.length} {d.rows.length === 1 ? 'Zeile' : 'Zeilen'} · {d.columns.filter(c => c.kind === 'number').length} Werte-Spalten</span>
-      {d.time && <span className="chip">Zeitreihe {periodYear(d.time.periods[0])}–{periodYear(d.time.periods[d.time.periods.length - 1])}</span>}</div>
+      {d.time && <span className="chip">{timeSpan(d.time)}</span>}</div>
     <div className="row-btns">
       {isChart(doc) && !used && <button className="btn small primary" onClick={() => useInChart(d.id)}><Icon.diagramm /> Im Diagramm zeigen</button>}
       {!isChart(doc) && <button className="btn small primary" onClick={() => addGraphic('chart', 'saeulen', d.id)}><Icon.diagramm /> Diagramm anlegen</button>}
@@ -107,7 +110,7 @@ export function PanelDaten() {
               <p className="hint">{d.fileName} · {PRESET_LABELS[d.preset]} · {GEO[d.geoSet]?.meta.label}</p>
               <div className="meta-row">
                 <span className={'chip ' + (open ? 'warn' : 'ok')}><span className="dot" />{r.exact + r.byName + r.ruled - r.ignored} von {GEO[d.geoSet]?.areas.length} zugeordnet</span>
-                {d.time && <span className="chip" title={`${d.time.label}: ${d.time.periods.map(periodText).join(', ')}`}>Zeitreihe {periodYear(d.time.periods[0])}–{periodYear(d.time.periods[d.time.periods.length - 1])}{used && selectedPeriod(doc.periodSel, d) !== d.time.periods[d.time.periods.length - 1] ? ` · Karte: ${periodText(selectedPeriod(doc.periodSel, d)!)}` : ''}</span>}
+                {d.time && <span className="chip" title={`${d.time.label}: ${d.time.periods.map(periodText).join(', ')}`}>{timeSpan(d.time)}{used && selectedPeriod(doc.periodSel, d) !== d.time.periods[d.time.periods.length - 1] ? ` · Karte: ${periodText(selectedPeriod(doc.periodSel, d)!)}` : ''}</span>}
                 {r.summary > 0 && <span className="chip">{r.summary} Summenzeilen ausgeschlossen</span>}
                 {r.byName > 0 && <span className="chip">{r.byName} über Namen</span>}
                 {open > 0 && <span className="chip err">{open} offen</span>}
