@@ -54,8 +54,8 @@
     "krs": 475
    },
    "source": "12411-01-01-4_api.csv",
-   "retrieved": "2026-09-28",
-   "bytes": 4364204
+   "retrieved": "2026-10-02",
+   "bytes": 4364234
   },
   {
    "id": "arbeitslosigkeit",
@@ -107,8 +107,8 @@
     "krs": 475
    },
    "source": "13211-02-05-4_api.csv",
-   "retrieved": "2026-09-28",
-   "bytes": 6712316
+   "retrieved": "2026-10-02",
+   "bytes": 6712278
   },
   {
    "id": "wahlbeteiligung",
@@ -140,8 +140,8 @@
     "krs": 475
    },
    "source": "14111-01-04-4_api.csv",
-   "retrieved": "2026-09-28",
-   "bytes": 695018
+   "retrieved": "2026-10-02",
+   "bytes": 694990
   },
   {
    "id": "altersgruppen",
@@ -154,6 +154,20 @@
    "file": "12411-02-03-4_altersgruppen.csv",
    "timeLabel": "Stichtag",
    "periods": [
+    "2011-12-31",
+    "2012-12-31",
+    "2013-12-31",
+    "2014-12-31",
+    "2015-12-31",
+    "2016-12-31",
+    "2017-12-31",
+    "2018-12-31",
+    "2019-12-31",
+    "2020-12-31",
+    "2021-12-31",
+    "2022-12-31",
+    "2023-12-31",
+    "2024-12-31",
     "2025-12-31"
    ],
    "columns": [
@@ -168,11 +182,11 @@
    "levels": {
     "de": 1,
     "lan": 16,
-    "krs": 400
+    "krs": 403
    },
-   "source": "12411-02-03-4_bevölkerung_nach_altersgruppen_flat.csv",
-   "retrieved": "2026-09-29",
-   "bytes": 345562
+   "source": "12411-02-03-4_api.csv",
+   "retrieved": "2026-10-02",
+   "bytes": 4974652
   },
   {
    "id": "einkommen",
@@ -184,6 +198,29 @@
    "file": "82000-07-01-4_einkommen.csv",
    "timeLabel": "Jahr",
    "periods": [
+    "2000",
+    "2001",
+    "2002",
+    "2003",
+    "2004",
+    "2005",
+    "2006",
+    "2007",
+    "2008",
+    "2009",
+    "2010",
+    "2011",
+    "2012",
+    "2013",
+    "2014",
+    "2015",
+    "2016",
+    "2017",
+    "2018",
+    "2019",
+    "2020",
+    "2021",
+    "2022",
     "2023"
    ],
    "columns": [
@@ -195,9 +232,9 @@
     "lan": 16,
     "krs": 475
    },
-   "source": "82000-07-01-4_verfügbares_einkommen_flat.csv",
-   "retrieved": "2026-09-29",
-   "bytes": 104095
+   "source": "82000-07-01-4_api.csv",
+   "retrieved": "2026-10-02",
+   "bytes": 2228663
   },
   {
    "id": "bip",
@@ -209,21 +246,45 @@
    "file": "82000-01-01-4_bip.csv",
    "timeLabel": "Jahr",
    "periods": [
+    "2000",
+    "2001",
+    "2002",
+    "2003",
+    "2004",
+    "2005",
+    "2006",
+    "2007",
+    "2008",
+    "2009",
+    "2010",
+    "2011",
+    "2012",
+    "2013",
+    "2014",
+    "2015",
+    "2016",
+    "2017",
+    "2018",
+    "2019",
+    "2020",
+    "2021",
+    "2022",
+    "2023",
     "2024"
    ],
    "columns": [
-    "Bruttoinlandsprodukt (Tsd. EUR)",
     "Bruttoinlandsprodukt je erwerbstätige Person (EUR)",
-    "Bruttoinlandsprodukt pro Kopf (EUR)"
+    "Bruttoinlandsprodukt pro Kopf (EUR)",
+    "Bruttoinlandsprodukt (Tsd. EUR)"
    ],
    "levels": {
     "de": 1,
     "lan": 16,
-    "krs": 474
+    "krs": 475
    },
-   "source": "82000-01-01-4_tabelle.csv",
+   "source": "82000-01-01-4_api.csv",
    "retrieved": "2026-10-02",
-   "bytes": 126920
+   "bytes": 3048809
   },
   {
    "id": "buergergeld",
@@ -236,20 +297,34 @@
    "file": "22811-01-01-4_buergergeld.csv",
    "timeLabel": "Stichtag",
    "periods": [
+    "2010-12-31",
+    "2011-12-31",
+    "2012-12-31",
+    "2013-12-31",
+    "2014-12-31",
+    "2015-12-31",
+    "2016-12-31",
+    "2017-12-31",
+    "2018-12-31",
+    "2019-12-31",
+    "2020-12-31",
+    "2021-12-31",
+    "2022-12-31",
+    "2023-12-31",
     "2024-12-31"
    ],
    "columns": [
-    "Empfänger/-innen von sozialen Mindestsicherungsleistungen · Insgesamt",
-    "Empfänger/-innen von sozialen Mindestsicherungsleistungen · Gesamtregelleistung (Bürgergeld) n.d.SGB II · zusammen",
-    "Empfänger/-innen von sozialen Mindestsicherungsleistungen · Gesamtregelleistung (Bürgergeld) n.d.SGB II · Bürgergeld für erwerbsf. Leistungsberechtigte",
-    "Empfänger/-innen von sozialen Mindestsicherungsleistungen · Gesamtregelleistung (Bürgergeld) n.d.SGB II · Bürgergeld für nicht erwerbsf. Leistungsberechtigte",
+    "Empfänger/-innen von sozialen Mindestsicherungsleistungen",
+    "Empfänger/-innen von sozialen Mindestsicherungsleistungen · Bürgergeld für nicht erwerbsf. Leistungsberechtigte",
+    "Empfänger/-innen von sozialen Mindestsicherungsleistungen · Bürgergeld für erwerbsf. Leistungsberechtigte",
+    "Empfänger/-innen von sozialen Mindestsicherungsleistungen · zusammen",
     "Empfänger/-innen von sozialen Mindestsicherungsleistungen · Hilfe z. Lebensunt. außerh. v. Einr. n. d. SGB XII",
     "Empfänger/-innen von sozialen Mindestsicherungsleistungen · Grundsicher. im Alter u.b. Erwerbsm. n. d. SGB XII",
     "Empfänger/-innen von sozialen Mindestsicherungsleistungen · Regelleist. n.d. Asylbewerberleistungsgesetz",
-    "Anteil an der Bevölkerung, berechnet (%) · Insgesamt",
-    "Anteil an der Bevölkerung, berechnet (%) · Gesamtregelleistung (Bürgergeld) n.d.SGB II · zusammen",
-    "Anteil an der Bevölkerung, berechnet (%) · Gesamtregelleistung (Bürgergeld) n.d.SGB II · Bürgergeld für erwerbsf. Leistungsberechtigte",
-    "Anteil an der Bevölkerung, berechnet (%) · Gesamtregelleistung (Bürgergeld) n.d.SGB II · Bürgergeld für nicht erwerbsf. Leistungsberechtigte",
+    "Anteil an der Bevölkerung, berechnet (%)",
+    "Anteil an der Bevölkerung, berechnet (%) · Bürgergeld für nicht erwerbsf. Leistungsberechtigte",
+    "Anteil an der Bevölkerung, berechnet (%) · Bürgergeld für erwerbsf. Leistungsberechtigte",
+    "Anteil an der Bevölkerung, berechnet (%) · zusammen",
     "Anteil an der Bevölkerung, berechnet (%) · Hilfe z. Lebensunt. außerh. v. Einr. n. d. SGB XII",
     "Anteil an der Bevölkerung, berechnet (%) · Grundsicher. im Alter u.b. Erwerbsm. n. d. SGB XII",
     "Anteil an der Bevölkerung, berechnet (%) · Regelleist. n.d. Asylbewerberleistungsgesetz"
@@ -257,11 +332,11 @@
    "levels": {
     "de": 1,
     "lan": 16,
-    "krs": 474
+    "krs": 475
    },
-   "source": "22811-01-01-4_tabelle.csv",
+   "source": "22811-01-01-4_api.csv",
    "retrieved": "2026-10-02",
-   "bytes": 1094119
+   "bytes": 14940150
   },
   {
    "id": "pkw",
@@ -274,34 +349,40 @@
    "file": "46251-02-01-4_pkw.csv",
    "timeLabel": "Stichtag",
    "periods": [
+    "2020-01-01",
+    "2021-01-01",
+    "2022-01-01",
+    "2023-01-01",
+    "2024-01-01",
+    "2025-01-01",
     "2026-01-01"
    ],
    "columns": [
-    "Personenkraftwagen nach Kraftstoffarten · Insgesamt",
-    "Personenkraftwagen nach Kraftstoffarten · Benzin",
-    "Personenkraftwagen nach Kraftstoffarten · Diesel",
-    "Personenkraftwagen nach Kraftstoffarten · Gas (einschl. bivalent)",
-    "Personenkraftwagen nach Kraftstoffarten · Hybrid",
-    "Personenkraftwagen nach Kraftstoffarten · darunter Plug-In-Hybrid",
-    "Personenkraftwagen nach Kraftstoffarten · Elektro",
-    "Personenkraftwagen nach Kraftstoffarten · sonstige Kraftstoffarten",
+    "PKW Bestand · Insgesamt",
+    "PKW Bestand · Diesel",
+    "PKW Bestand · sonstige Kraftstoffarten",
+    "PKW Bestand · Benzin",
+    "PKW Bestand · darunter Plug-In-Hybrid",
+    "PKW Bestand · Elektro",
+    "PKW Bestand · Hybrid",
+    "PKW Bestand · Gas (einschl. bivalent)",
     "Pkw je 1.000 Einwohner, berechnet",
-    "Anteil am Pkw-Bestand, berechnet (%) · Benzin",
     "Anteil am Pkw-Bestand, berechnet (%) · Diesel",
-    "Anteil am Pkw-Bestand, berechnet (%) · Gas (einschl. bivalent)",
-    "Anteil am Pkw-Bestand, berechnet (%) · Hybrid",
+    "Anteil am Pkw-Bestand, berechnet (%) · sonstige Kraftstoffarten",
+    "Anteil am Pkw-Bestand, berechnet (%) · Benzin",
     "Anteil am Pkw-Bestand, berechnet (%) · darunter Plug-In-Hybrid",
     "Anteil am Pkw-Bestand, berechnet (%) · Elektro",
-    "Anteil am Pkw-Bestand, berechnet (%) · sonstige Kraftstoffarten"
+    "Anteil am Pkw-Bestand, berechnet (%) · Hybrid",
+    "Anteil am Pkw-Bestand, berechnet (%) · Gas (einschl. bivalent)"
    ],
    "levels": {
     "de": 1,
     "lan": 16,
-    "krs": 474
+    "krs": 475
    },
-   "source": "46251-02-01-4_tabelle.csv",
+   "source": "46251-02-01-4_api.csv",
    "retrieved": "2026-10-02",
-   "bytes": 818233
+   "bytes": 5254135
   },
   {
    "id": "bundestagswahlen",
@@ -341,8 +422,8 @@
     "krs": 475
    },
    "source": "14111-01-04-4_api.csv",
-   "retrieved": "2026-09-28",
-   "bytes": 4198443
+   "retrieved": "2026-10-02",
+   "bytes": 4198415
   }
  ]
 }

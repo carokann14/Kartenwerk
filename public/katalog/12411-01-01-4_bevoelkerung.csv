@@ -1,5 +1,5 @@
 ﻿statistics_code;statistics_label;time_code;time_label;time;1_variable_code;1_variable_label;1_variable_attribute_code;1_variable_attribute_label;2_variable_code;2_variable_label;2_variable_attribute_code;2_variable_attribute_label;value;value_unit;value_variable_code;value_variable_label
-12411;Fortschreibung des Bevölkerungsstandes;STAG;Stichtag;1995-12-31;DINSG;Deutschland;DG;Deutschland;GES;Geschlecht;GESM;männlich;39824823;Anzahl;BEVSTD;Bevölkerungsstand
+12411;Fortschreibung des Bevölkerungsstandes;STAG;Stichtag;1995-12-31;DINSG;Regierungsbezirke / Statistische Regionen;DG;Deutschland;GES;Geschlecht;GESM;männlich;39824823;Anzahl;BEVSTD;Bevölkerungsstand
 12411;;;;1995-12-31;DINSG;;DG;;GES;;GESW;weiblich;41992676;Anzahl;BEVSTD;Bevölkerungsstand
 12411;;;;1995-12-31;DINSG;;DG;;GES;;;Insgesamt;81817499;Anzahl;BEVSTD;Bevölkerungsstand
 12411;;;;1995-12-31;DLAND;;01;Schleswig-Holstein;GES;;GESW;weiblich;1395204;Anzahl;BEVSTD;Bevölkerungsstand
