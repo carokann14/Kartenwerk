@@ -1,14 +1,15 @@
 import React, { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { create } from 'zustand';
+import { current } from 'immer';
 import { CONTEXT, GEO, GeoSet, areaContext, areaD, areaTitle, arcLines, bboxOfIds, ensureGeo, linesD, lodTol } from '../geo/geo';
 import { CUTS, measureW } from '../lib/fonts';
 import { clamp, esc, fmt1, fmtNum } from '../lib/util';
 import { signed } from '../lib/color';
 import { beginGesture, getDoc, getUI, setUI, toast, update, useStore } from '../model/store';
-import type { ArrowEl, ArrowEnd, Doc, Fokus, Variant } from '../model/types';
+import type { ArrowEl, ArrowEnd, Box, Doc, FrameBox, Fokus, GNode, Sel, Variant } from '../model/types';
 import { colorModel, fillOf } from '../render/colorModel';
 import { areaFill, hatchMap, patternSpec } from '../render/hatch';
-import { LabelItem, TextPrim, activeVariant, labelPrims, layoutLabels, legendPrims, textPrims } from '../render/elements';
+import { LabelItem, TextPrim, activeVariant, chartVariant, nodeTextPrims, labelPrims, layoutLabels, legendPrims, textPrims } from '../render/elements';
 import { FrameId, activeOverlays, fokusIdx, fokusLabel, frameMeshes, frameSets, geoOf, insetIdx, insetLabel, laenderCtx, laenderSetFor, overlayParts } from '../render/scene';
 import { finerSet } from '../geo/relate';
 import { refitFrame, setFokus, setGeoSet } from '../model/actions';
@@ -20,15 +21,23 @@ import { LAENDER } from '../geo/geo';
 import { Icon } from './common';
 import { GraphicsBar } from './GraphicsBar';
 import { isChart } from '../model/graphicKeys';
-import { flatNodes } from '../model/nodes';
+import { findNode, flatNodes } from '../model/nodes';
+import { Dir, HPOS, NBox, aabb, autoHeight, canRotate, duplicateNodes, handleDirs, layoutOf, nodeBox, round, scaleAbout, selFor, selIds, selectableIds, setR, snapLayouts, unionBox } from '../model/transform';
 import { chartPrims } from '../render/chart';
 import { MapZoom } from './MapZoom';
-import { logoRatio, logoRect } from '../model/logo';
+import { logoRect } from '../model/logo';
 
 // Zeiger-Zustand außerhalb des Dokuments (kein Neuzeichnen der Panels)
 const useHover = create<{ i: number | null; x: number; y: number }>(() => ({ i: null, x: 0, y: 0 }));
 // Aktive Hilfslinie(n) beim Ziehen (für das Hervorheben in `Guides`, kein Teil des Dokuments)
 const useSnapGuides = create<{ x: number | null; y: number | null }>(() => ({ x: null, y: null }));
+// M11 · Etappe 2: Objekt unter dem Zeiger (dünner Rahmen), aufgezogener Auswahlrahmen, Anzeige beim Drehen/Skalieren
+const useHoverNode = create<{ id: string | null }>(() => ({ id: null }));
+type Rect = { x: number; y: number; w: number; h: number };
+const useMarquee = create<{ r: Rect | null }>(() => ({ r: null }));
+const useTfInfo = create<{ text: string | null; x: number; y: number }>(() => ({ text: null, x: 0, y: 0 }));
+/** Drehung eines Objekts um seine Mitte (nur bei r ≠ 0, sonst bleibt das Markup wie vor M11) */
+const rotT = (b: Rect | null | undefined, r?: number) => r && b ? `rotate(${r} ${+(b.x + b.w / 2).toFixed(2)} ${+(b.y + b.h / 2).toFixed(2)})` : undefined;
 
 export function textEl(t: TextPrim, key?: React.Key) {
   const halo = t.halo ? { stroke: '#FFFFFF', strokeWidth: +(t.size * 0.24).toFixed(2), strokeLinejoin: 'round' as const, paintOrder: 'stroke' } : {};
@@ -48,16 +57,16 @@ const ContextLayer = memo(function ContextLayer({ neighbors, lakes, st, k }: { n
 });
 
 /** Nachbarländer als Umfeld regionaler Gebietsstände (eine Fläche je Land, Grenze als Kontur) */
-const LaenderLayer = memo(function LaenderLayer({ g, idx, st, k, zoom }: { g: GeoSet; idx: number[]; st: Doc['style']; k: number; zoom: number }) {
+const LaenderLayer = memo(function LaenderLayer({ g, idx, st, k, zoom, fs = 1 }: { g: GeoSet; idx: number[]; st: Doc['style']; k: number; zoom: number; fs?: number }) {
   const tol = lodTol(g, k, zoom);
   const ds = useMemo(() => idx.map(i => areaD(g, i, tol)), [g, idx, tol]);
-  return <g data-ctx="1" pointerEvents="none">{idx.map((i, n) => <path key={i} data-bl={g.areas[i].id} d={ds[n]} fillRule="evenodd" fill={st.laender} />)}{st.laenderLineW > 0 && <path d={ds.join('')} fill="none" stroke={st.laenderLine} strokeWidth={st.laenderLineW / k} strokeLinejoin="round" />}</g>;
+  return <g data-ctx="1" pointerEvents="none">{idx.map((i, n) => <path key={i} data-bl={g.areas[i].id} d={ds[n]} fillRule="evenodd" fill={st.laender} />)}{st.laenderLineW > 0 && <path d={ds.join('')} fill="none" stroke={st.laenderLine} strokeWidth={st.laenderLineW * fs / k} strokeLinejoin="round" />}</g>;
 });
-const OverlayPath = memo(function OverlayPath({ bg, og, color, width, dash, k, zoom }: { bg: GeoSet; og: GeoSet; color: string; width: number; dash: boolean; k: number; zoom: number }) {
+const OverlayPath = memo(function OverlayPath({ bg, og, color, width, dash, k, zoom, fs = 1 }: { bg: GeoSet; og: GeoSet; color: string; width: number; dash: boolean; k: number; zoom: number; fs?: number }) {
   const parts = useMemo(() => overlayParts(bg, og), [bg, og]);
   const tols = parts.map(p => lodTol(p.set, k, zoom)).join(',');
   const d = useMemo(() => parts.map(p => linesD(arcLines(p.set, p.arcs, lodTol(p.set, k, zoom)))).join(''), [parts, tols]); // eslint-disable-line
-  const w = width / k;
+  const w = width * fs / k;
   return <path d={d} fill="none" stroke={color} strokeWidth={w} strokeLinejoin="round" strokeLinecap={dash ? 'butt' : 'round'} strokeDasharray={dash ? `${w * 3.2} ${w * 2.4}` : undefined} pointerEvents="none" />;
 });
 function MapFrame({ id }: { id: FrameId }) {
@@ -94,31 +103,32 @@ function MapFrame({ id }: { id: FrameId }) {
   const selIds = sel.kind === 'area' ? sel.ids.map(x => g.byId.get(x)).filter((x): x is number => x != null && sets.F.has(x)) : [];
   const selD = selIds.map(i => areaD(g, i, tol)).join('');
   const lupe = id === 'main' && doc.inset.visible && doc.fokus.kind === 'de' ? (() => { const bb = bboxOfIds(g, insetIdx(doc)), p = 800; return { x: bb[0] - p, y: bb[1] - p, w: bb[2] - bb[0] + 2 * p, h: bb[3] - bb[1] + 2 * p }; })() : null;
-  const capSize = Math.round(17 * v.ts);
+  const fs = F.k ?? 1;   // Skalierung des Rahmens über die Eckgriffe (M11): Linien, Beschriftungen, Blasen wachsen mit
+  const capSize = Math.round(17 * v.ts * fs);
   return (
     <g className="frame" data-frame={id} transform={`translate(${F.x} ${F.y})`}>
       <clipPath id={'clip-' + id}><rect width={F.w} height={F.h} /></clipPath>
       <rect className="frame-hit" data-frame-hit={id} width={F.w} height={F.h} fill="#FFFFFF" fillOpacity={id === 'inset' ? 1 : 0} />
       <g clipPath={`url(#clip-${id})`}>
         <g transform={`matrix(${k} 0 0 ${k} ${F.w / 2 - vw.cx * k} ${F.h / 2 - vw.cy * k})`}>
-          <ContextLayer neighbors={doc.layers.neighbors} lakes={doc.layers.lakes} st={st} k={k} />
-          {lc && <LaenderLayer g={lc.g} idx={lc.idx} st={st} k={k} zoom={zoom} />}
+          <ContextLayer neighbors={doc.layers.neighbors} lakes={doc.layers.lakes} st={st} k={k / fs} />
+          {lc && <LaenderLayer g={lc.g} idx={lc.idx} st={st} k={k} zoom={zoom} fs={fs} />}
           <AreaPaths g={g} ids={Ulist} fill={linesMode ? 'none' : st.umfeld} u pe={!linesMode} tol={tol} />
           <AreaPaths g={g} ids={Flist} fills={fills} tol={tol} />
           {hatchLayers.length > 0 && <g pointerEvents="none">
-            <defs>{hatchLayers.map(({ st: h }) => { const P = patternSpec(h, k); return (
+            <defs>{hatchLayers.map(({ st: h }) => { const P = patternSpec(h, k / fs); return (
               <pattern key={h.id} id={`hp-${id}-${h.id}`} patternUnits="userSpaceOnUse" width={P.s} height={P.s} patternTransform={`rotate(${P.ang})`}>
                 {P.dot ? <circle cx={P.s / 2} cy={P.s / 2} r={P.dot} fill={h.color} /> : P.lines.map((d, j) => <path key={j} d={d} stroke={h.color} strokeWidth={P.w} fill="none" />)}
               </pattern>); })}</defs>
             {hatchLayers.map(({ st: h, d }) => <path key={h.id} d={d} fill={`url(#hp-${id}-${h.id})`} fillRule="evenodd" />)}
           </g>}
-          {doc.layers.wkLines && <path d={md.wk} fill="none" stroke={st.wkLine} strokeWidth={st.wkLineW / k} strokeLinejoin="round" strokeLinecap="round" pointerEvents="none" />}
-          {krOn && <path d={md.kr} fill="none" stroke={st.krLine} strokeWidth={st.krLineW / k} strokeLinejoin="round" strokeLinecap="round" pointerEvents="none" />}
-          {linesMode && <><path d={md.wkU} fill="none" stroke="#C8C2B6" strokeWidth={0.6 / k} strokeLinejoin="round" pointerEvents="none" /><path d={md.outline} fill="none" stroke="#B9B2A5" strokeWidth={0.8 / k} strokeLinejoin="round" pointerEvents="none" /></>}
-          {doc.layers.landLines && <path d={md.land} fill="none" stroke={st.landLine} strokeWidth={st.landLineW / k} strokeLinejoin="round" strokeLinecap="round" pointerEvents="none" />}
-          {activeOverlays(doc).map(o => <OverlayPath key={o.id} bg={g} og={GEO[o.geoSet]} color={o.color} width={o.width} dash={o.dash} k={k} zoom={zoom} />)}
-          {id === 'main' && doc.fokusOutline && doc.fokus.kind !== 'de' && <path d={md.fokus} fill="none" stroke={st.fokusLine} strokeWidth={1.8 / k} strokeLinejoin="round" pointerEvents="none" />}
-          {lupe && <rect x={lupe.x} y={lupe.y} width={lupe.w} height={lupe.h} fill="none" stroke={st.frameLine} strokeWidth={1.2 / k} pointerEvents="none" />}
+          {doc.layers.wkLines && <path d={md.wk} fill="none" stroke={st.wkLine} strokeWidth={st.wkLineW * fs / k} strokeLinejoin="round" strokeLinecap="round" pointerEvents="none" />}
+          {krOn && <path d={md.kr} fill="none" stroke={st.krLine} strokeWidth={st.krLineW * fs / k} strokeLinejoin="round" strokeLinecap="round" pointerEvents="none" />}
+          {linesMode && <><path d={md.wkU} fill="none" stroke="#C8C2B6" strokeWidth={0.6 * fs / k} strokeLinejoin="round" pointerEvents="none" /><path d={md.outline} fill="none" stroke="#B9B2A5" strokeWidth={0.8 * fs / k} strokeLinejoin="round" pointerEvents="none" /></>}
+          {doc.layers.landLines && <path d={md.land} fill="none" stroke={st.landLine} strokeWidth={st.landLineW * fs / k} strokeLinejoin="round" strokeLinecap="round" pointerEvents="none" />}
+          {activeOverlays(doc).map(o => <OverlayPath key={o.id} bg={g} og={GEO[o.geoSet]} color={o.color} width={o.width} dash={o.dash} k={k} zoom={zoom} fs={fs} />)}
+          {id === 'main' && doc.fokusOutline && doc.fokus.kind !== 'de' && <path d={md.fokus} fill="none" stroke={st.fokusLine} strokeWidth={1.8 * fs / k} strokeLinejoin="round" pointerEvents="none" />}
+          {lupe && <rect x={lupe.x} y={lupe.y} width={lupe.w} height={lupe.h} fill="none" stroke={st.frameLine} strokeWidth={1.2 * fs / k} pointerEvents="none" />}
           {hover != null && sets.F.has(hover) && <path d={areaD(g, hover, tol)} fill="none" stroke={st.ink} strokeWidth={1.4 / k} pointerEvents="none" />}
           {selD && <><path d={selD} fill="none" stroke="#FFFFFF" strokeWidth={4.2 / k} strokeLinejoin="round" pointerEvents="none" /><path d={selD} fill="none" stroke="#16181B" strokeWidth={1.8 / k} strokeLinejoin="round" pointerEvents="none" /></>}
         </g>
@@ -126,9 +136,9 @@ function MapFrame({ id }: { id: FrameId }) {
         <g className="lbls">{labels.items.map(it => <LabelG key={it.key} it={it} doc={doc} />)}</g>
       </g>
       {id === 'inset' && <>
-        <rect width={F.w} height={F.h} fill="none" stroke={st.frameLine} strokeWidth={1.5} pointerEvents="none" />
-        <rect x={0} y={0} width={Math.round(measureW(insetLabel(doc), 'bold', capSize) + 14)} height={capSize + 10} fill={st.frameLine} pointerEvents="none" />
-        {textEl({ x: 7, y: 5 + capSize * 0.8, text: insetLabel(doc), cut: 'bold', size: capSize, color: '#FFFFFF', anchor: 'start' })}
+        <rect width={F.w} height={F.h} fill="none" stroke={st.frameLine} strokeWidth={1.5 * fs} pointerEvents="none" />
+        <rect x={0} y={0} width={Math.round(measureW(insetLabel(doc), 'bold', capSize) + 14 * fs)} height={capSize + 10 * fs} fill={st.frameLine} pointerEvents="none" />
+        {textEl({ x: 7 * fs, y: 5 * fs + capSize * 0.8, text: insetLabel(doc), cut: 'bold', size: capSize, color: '#FFFFFF', anchor: 'start' })}
       </>}
     </g>
   );
@@ -148,7 +158,7 @@ function LabelG({ it, doc }: { it: LabelItem; doc: Doc }) {
 function ChartView() {
   const doc = useStore(s => s.doc!);
   const F = activeVariant(doc).L.main;
-  const p = chartPrims(doc, activeVariant(doc));
+  const p = chartPrims(doc, chartVariant(activeVariant(doc)));
   return <g className="frame" data-frame="main">
     <rect className="frame-hit" data-frame-hit="main" x={F.x} y={F.y} width={F.w} height={F.h} fill="#FFFFFF" fillOpacity={0} />
     {p.rects.map((r, k) => <rect key={'r' + k} x={+r.x.toFixed(1)} y={+r.y.toFixed(1)} width={+r.w.toFixed(1)} height={+r.h.toFixed(1)} fill={r.fill} />)}
@@ -165,17 +175,23 @@ function ChartView() {
 function TextNode({ kind }: { kind: 'title' | 'subtitle' | 'source' }) {
   const doc = useStore(s => s.doc!);
   const p = textPrims(doc, kind);
-  return p ? <g data-el={kind}>{p.texts.map((t, k) => textEl(t, k))}<rect x={p.box.x} y={p.box.y} width={p.box.w} height={p.box.h} fill="#FFFFFF" fillOpacity={0} /></g> : null;
+  return p ? <g data-el={kind} transform={rotT(p.box, activeVariant(doc).L[kind].r)}>{p.texts.map((t, k) => textEl(t, k))}<rect x={p.box.x} y={p.box.y} width={p.box.w} height={p.box.h} fill="#FFFFFF" fillOpacity={0} /></g> : null;
 }
 function LogoNode() {
   const doc = useStore(s => s.doc!);
-  const lr = logoRect(doc, activeVariant(doc));
-  return lr ? <g data-el="logo"><image href={doc.logo.asset!.data} x={+lr.x.toFixed(1)} y={+lr.y.toFixed(1)} width={+lr.w.toFixed(1)} height={+lr.h.toFixed(1)} preserveAspectRatio="none" opacity={doc.logo.opacity < 1 ? doc.logo.opacity : undefined} /><rect x={lr.x} y={lr.y} width={lr.w} height={lr.h} fill="#FFFFFF" fillOpacity={0} /></g> : null;
+  const v = activeVariant(doc), lr = logoRect(doc, v);
+  return lr ? <g data-el="logo" transform={rotT(lr, v.L.logo.r)}><image href={doc.logo.asset!.data} x={+lr.x.toFixed(1)} y={+lr.y.toFixed(1)} width={+lr.w.toFixed(1)} height={+lr.h.toFixed(1)} preserveAspectRatio="none" opacity={doc.logo.opacity < 1 ? doc.logo.opacity : undefined} /><rect x={lr.x} y={lr.y} width={lr.w} height={lr.h} fill="#FFFFFF" fillOpacity={0} /></g> : null;
 }
 function LegendNode() {
   const doc = useStore(s => s.doc!);
   const lp = legendPrims(doc);
-  return lp ? <g data-el="legend">{lp.rects.map((r, k) => <rect key={'r' + k} x={+r.x.toFixed(1)} y={+r.y.toFixed(1)} width={+r.w.toFixed(1)} height={+r.h.toFixed(1)} fill={r.fill} />)}{(lp.paths || []).map((q, k) => <path key={'p' + k} d={q.d} fill={q.fill} stroke={q.stroke} strokeWidth={q.width} />)}{lp.texts.map((t, k) => textEl(t, 't' + k))}<rect x={lp.box.x} y={lp.box.y} width={lp.box.w} height={lp.box.h} fill="#FFFFFF" fillOpacity={0} /></g> : null;
+  return lp ? <g data-el="legend" transform={rotT(lp.box, activeVariant(doc).L.legend.r)}>{lp.rects.map((r, k) => <rect key={'r' + k} x={+r.x.toFixed(1)} y={+r.y.toFixed(1)} width={+r.w.toFixed(1)} height={+r.h.toFixed(1)} fill={r.fill} />)}{(lp.paths || []).map((q, k) => <path key={'p' + k} d={q.d} fill={q.fill} stroke={q.stroke} strokeWidth={q.width} />)}{lp.texts.map((t, k) => textEl(t, 't' + k))}<rect x={lp.box.x} y={lp.box.y} width={lp.box.w} height={lp.box.h} fill="#FFFFFF" fillOpacity={0} /></g> : null;
+}
+/** Freies Textfeld (M11 · Etappe 2): eigener Text, Lage je Variante in `v.L.nodes` */
+function FreeTextNode({ n }: { n: GNode }) {
+  const doc = useStore(s => s.doc!);
+  const v = activeVariant(doc), p = nodeTextPrims(doc, n, v);
+  return p ? <g data-node={n.id} transform={rotT(p.box, v.L.nodes?.[n.id]?.r)}>{p.texts.map((t, k) => textEl(t, k))}<rect x={p.box.x} y={p.box.y} width={p.box.w} height={p.box.h} fill="#FFFFFF" fillOpacity={0} /></g> : null;
 }
 /** Alle Objekte der Grafik in der Reihenfolge des Elementbaums (hinten → vorn) */
 function NodeLayers() {
@@ -189,7 +205,7 @@ function NodeLayers() {
       case 'legend': return <LegendNode key="legend" />;
       case 'logo': return <LogoNode key="logo" />;
       case 'ann': return <Annotations key="ann" />;
-      default: return null;
+      default: return n.type === 'text' ? <FreeTextNode key={n.id} n={n} /> : null;
     }
   })}</>;
 }
@@ -208,13 +224,6 @@ function Annotations() {
       </g>}
     </g>))}</g>;
 }
-function elementBox(doc: Doc, id: string) {
-  const v = activeVariant(doc);
-  if (id === 'legend') return legendPrims(doc)?.box || null;
-  if (id === 'logo') return logoRect(doc, v);
-  if (id === 'main' || id === 'inset') { const F = v.L[id]; return { x: F.x, y: F.y, w: F.w, h: F.h }; }
-  return textPrims(doc, id as 'title')?.box || null;
-}
 /** Hilfslinien: nur eine Bearbeitungshilfe (wie Rand um die Karte), nie Teil von SVG- oder PNG-Export, die beide unabhängig vom DOM aus dem Dokument gebaut werden.
  *  Beim Ziehen (Textkasten, Kartenrahmen) rastet die Linie ein, an der gerade eingerastet ist, wird sie hervorgehoben (dick, durchgezogen statt gestrichelt). */
 function Guides() {
@@ -222,14 +231,20 @@ function Guides() {
   const z = useStore(s => s.ui.view.z);
   const snap = useSnapGuides();
   const v = activeVariant(doc), gd = v.guides;
-  if (!gd || !gd.visible || (!gd.x.length && !gd.y.length)) return null;
+  const gx = gd && gd.visible ? gd.x : [], gy = gd && gd.visible ? gd.y : [];
+  // Einrasten an Kanten/Mitten der Fläche und anderer Objekte (M11): Linie nur während des Ziehens
+  const ex = snap.x != null && !gx.some(x => Math.abs(x - snap.x!) < 0.01) ? snap.x : null;
+  const ey = snap.y != null && !gy.some(y => Math.abs(y - snap.y!) < 0.01) ? snap.y : null;
+  if (!gx.length && !gy.length && ex == null && ey == null) return null;
   const sw = 1 / z, dash = `${4 / z} ${3 / z}`;
   const hitX = (x: number) => snap.x != null && Math.abs(snap.x - x) < 0.01;
   const hitY = (y: number) => snap.y != null && Math.abs(snap.y - y) < 0.01;
   return (
     <svg id="guides" width={v.w} height={v.h} viewBox={`0 0 ${v.w} ${v.h}`} aria-hidden="true">
-      {gd.x.map((x, k) => <line key={'gx' + k} x1={x} y1={0} x2={x} y2={v.h} stroke={hitX(x) ? 'var(--accent)' : 'var(--guide)'} strokeWidth={hitX(x) ? 1.6 / z : sw} strokeDasharray={hitX(x) ? undefined : dash} />)}
-      {gd.y.map((y, k) => <line key={'gy' + k} x1={0} y1={y} x2={v.w} y2={y} stroke={hitY(y) ? 'var(--accent)' : 'var(--guide)'} strokeWidth={hitY(y) ? 1.6 / z : sw} strokeDasharray={hitY(y) ? undefined : dash} />)}
+      {gx.map((x, k) => <line key={'gx' + k} x1={x} y1={0} x2={x} y2={v.h} stroke={hitX(x) ? 'var(--accent)' : 'var(--guide)'} strokeWidth={hitX(x) ? 1.6 / z : sw} strokeDasharray={hitX(x) ? undefined : dash} />)}
+      {gy.map((y, k) => <line key={'gy' + k} x1={0} y1={y} x2={v.w} y2={y} stroke={hitY(y) ? 'var(--accent)' : 'var(--guide)'} strokeWidth={hitY(y) ? 1.6 / z : sw} strokeDasharray={hitY(y) ? undefined : dash} />)}
+      {ex != null && <line x1={ex} y1={0} x2={ex} y2={v.h} stroke="var(--accent)" strokeWidth={1 / z} />}
+      {ey != null && <line x1={0} y1={ey} x2={v.w} y2={ey} stroke="var(--accent)" strokeWidth={1 / z} />}
     </svg>
   );
 }
@@ -248,45 +263,56 @@ function snapDelta(edges: number[], guides: number[], z: number, delta: number):
   return best ? { d: delta + best.corr, hit: best.hit } : { d: delta, hit: null };
 }
 
-/** Zwei Griffe links/rechts, um die Breite eines Textblocks per Ziehen zu ändern (Höhe folgt dem Text und ist nicht frei wählbar). `kind` unterscheidet Textblock (Titel/Unterzeile/Quellenzeile) von Textkasten in den Handlern. */
-function widthHandles(b: { x: number; y: number; w: number; h: number }, z: number, a: string, kind: 'textw' | 'annw', id: string) {
+/** Zwei Griffe links/rechts, um die Breite eines Textkastens (Annotation) per Ziehen zu ändern (Höhe folgt dem Text). */
+function widthHandles(b: { x: number; y: number; w: number; h: number }, z: number, a: string, _kind: 'annw', id: string) {
   const hs = 10 / z, cy = b.y + b.h / 2;
   return (['w', 'e'] as const).map(dir => {
     const cx = dir === 'w' ? b.x : b.x + b.w;
-    const common = { x: cx - hs / 2, y: cy - hs / 2, width: hs, height: hs, fill: 'var(--panel)', stroke: a, strokeWidth: 1.5 / z, style: { pointerEvents: 'all' as const, cursor: 'ew-resize' } };
-    return kind === 'textw'
-      ? <rect key={'tw' + dir} data-textw-handle={id} data-dir={dir} {...common} />
-      : <rect key={'aw' + dir} data-annw-handle={id} data-dir={dir} {...common} />;
+    return <rect key={'aw' + dir} data-annw-handle={id} data-dir={dir} x={cx - hs / 2} y={cy - hs / 2} width={hs} height={hs} fill="var(--panel)" stroke={a} strokeWidth={1.5 / z} style={{ pointerEvents: 'all', cursor: 'ew-resize' }} />;
   });
 }
-const FRAME_HANDLES: { dir: string; cursor: string }[] = [
-  { dir: 'nw', cursor: 'nwse-resize' }, { dir: 'n', cursor: 'ns-resize' }, { dir: 'ne', cursor: 'nesw-resize' },
-  { dir: 'w', cursor: 'ew-resize' }, { dir: 'e', cursor: 'ew-resize' },
-  { dir: 'sw', cursor: 'nesw-resize' }, { dir: 's', cursor: 'ns-resize' }, { dir: 'se', cursor: 'nwse-resize' },
-];
-/** Acht Griffe rund um einen Rahmen (Karte): Ecken ändern beide Maße, Kanten nur eine. */
-function frameHandles(b: { x: number; y: number; w: number; h: number }, id: string, z: number, a: string) {
-  const hs = 10 / z;
-  return FRAME_HANDLES.map(({ dir, cursor }) => {
-    const cx = dir.includes('w') ? b.x : dir.includes('e') ? b.x + b.w : b.x + b.w / 2;
-    const cy = dir.includes('n') ? b.y : dir.includes('s') ? b.y + b.h : b.y + b.h / 2;
-    return <rect key={'fh' + dir} data-handle={id} data-dir={dir} x={cx - hs / 2} y={cy - hs / 2} width={hs} height={hs} fill="var(--panel)" stroke={a} strokeWidth={1.5 / z} style={{ pointerEvents: 'all', cursor }} />;
-  });
+const CURSORS = ['ew-resize', 'nwse-resize', 'ns-resize', 'nesw-resize'];
+const DIR_ANG: Record<Dir, number> = { e: 0, se: 45, s: 90, sw: 135, w: 180, nw: 225, n: 270, ne: 315 };
+const cursorFor = (dir: Dir, r: number) => CURSORS[Math.round(((((DIR_ANG[dir] + r) % 180) + 180) % 180) / 45) % 4];
+/** Auswahlrahmen mit Griffen (M11 · Etappe 2): je Objekt passende Griffe und Drehgriff; bei mehreren ein Rahmen um alle mit Eckgriffen */
+function selectionMarks(doc: Doc, v: Variant, ids: string[], z: number, a: string): React.ReactNode[] {
+  const out: React.ReactNode[] = [];
+  const hs = 10 / z, pad = 3 / z;
+  const handle = (dir: Dir, x: number, y: number, r: number) => <rect key={'h' + dir} data-tf={dir} x={x - hs / 2} y={y - hs / 2} width={hs} height={hs} fill="var(--panel)" stroke={a} strokeWidth={1.5 / z} style={{ pointerEvents: 'all', cursor: cursorFor(dir, r) }} />;
+  const at = (o: Rect, dir: Dir): [number, number] => [o.x + o.w * (HPOS[dir][0] + .5), o.y + o.h * (HPOS[dir][1] + .5)];
+  if (ids.length === 1) {
+    const id = ids[0], b = nodeBox(doc, id, v); if (!b) return out;
+    const o = { x: b.x - pad, y: b.y - pad, w: b.w + 2 * pad, h: b.h + 2 * pad }, cx = b.x + b.w / 2;
+    const frame = id === 'main' || id === 'inset';
+    out.push(<g key="sel" transform={rotT(b, b.r)}>
+      <rect x={o.x} y={o.y} width={o.w} height={o.h} fill="none" stroke={a} strokeWidth={1.5 / z} strokeDasharray={frame ? `${5 / z} ${4 / z}` : undefined} />
+      {canRotate(id) && <><line x1={cx} y1={o.y} x2={cx} y2={o.y - 22 / z} stroke={a} strokeWidth={1 / z} /><circle data-tf="rot" cx={cx} cy={o.y - 22 / z} r={5.5 / z} fill="var(--panel)" stroke={a} strokeWidth={1.5 / z} style={{ pointerEvents: 'all', cursor: 'grab' }}><title>Drehen (Umschalt: in 15°-Schritten)</title></circle></>}
+      {handleDirs(id).map(dir => { const [x, y] = at(o, dir); return handle(dir, x, y, b.r); })}
+    </g>);
+    return out;
+  }
+  for (const id of ids) { const b = nodeBox(doc, id, v); if (b) out.push(<rect key={'m' + id} x={b.x} y={b.y} width={b.w} height={b.h} fill="none" stroke={a} strokeWidth={1 / z} transform={rotT(b, b.r)} />); }
+  const u = unionBox(doc, ids, v); if (!u) return out;
+  const o = { x: u.x - pad, y: u.y - pad, w: u.w + 2 * pad, h: u.h + 2 * pad };
+  out.push(<rect key="mu" x={o.x} y={o.y} width={o.w} height={o.h} fill="none" stroke={a} strokeWidth={1.5 / z} />);
+  for (const dir of ['nw', 'ne', 'se', 'sw'] as Dir[]) { const [x, y] = at(o, dir); out.push(handle(dir, x, y, 0)); }
+  return out;
 }
-
 function Overlay() {
   const doc = useStore(s => s.doc!);
   const ui = useStore(s => s.ui);
+  const hoverId = useHoverNode(s => s.id);
+  const mq = useMarquee(s => s.r);
+  const info = useTfInfo();
   const v = activeVariant(doc), z = ui.view.z, a = 'var(--accent)';
   const out: React.ReactNode[] = [];
   const box = (b: { x: number; y: number; w: number; h: number }, key: string, dash: boolean, w = 1.5) => <rect key={key} x={b.x - 3 / z} y={b.y - 3 / z} width={b.w + 6 / z} height={b.h + 6 / z} fill="none" stroke={a} strokeWidth={w / z} strokeDasharray={dash ? `${5 / z} ${4 / z}` : undefined} />;
-  if (ui.sel.kind === 'el') {
-    const b = elementBox(doc, ui.sel.id); if (b) out.push(box(b, 'el', false));
-    // Logo: Griff oben rechts ändert die Größe, die Unterkante bleibt
-    if (b && ui.sel.id === 'logo') { const hs = 10 / z; out.push(<rect key="lh" data-logo-handle="1" x={b.x + b.w + 3 / z - hs / 2} y={b.y - 3 / z - hs / 2} width={hs} height={hs} fill="var(--panel)" stroke={a} strokeWidth={1.5 / z} style={{ pointerEvents: 'all', cursor: 'nesw-resize' }} />); }
-    // Titel/Unterzeile/Quellenzeile/Legende: seitliche Griffe ändern die Breite, die Höhe folgt dem Inhalt
-    if (b && (ui.sel.id === 'title' || ui.sel.id === 'subtitle' || ui.sel.id === 'source' || ui.sel.id === 'legend')) out.push(...widthHandles(b, z, a, 'textw', ui.sel.id));
-  }
+  const ids = ui.mapMode ? [] : selIds(ui.sel);
+  // Objekt unter dem Zeiger: dünner Rahmen (zeigt, was ein Klick auswählt)
+  if (hoverId && !ids.includes(hoverId) && !ui.mapMode && !ui.tool) { const b = nodeBox(doc, hoverId, v); if (b) out.push(<rect key="hov" x={b.x} y={b.y} width={b.w} height={b.h} fill="none" stroke={a} strokeWidth={1.2 / z} transform={rotT(b, b.r)} />); }
+  out.push(...selectionMarks(doc, v, ids, z, a));
+  if (mq) out.push(<rect key="mq" x={mq.x} y={mq.y} width={mq.w} height={mq.h} fill="var(--accent)" fillOpacity={0.07} stroke={a} strokeWidth={1 / z} />);
+  if (info.text) { const fs = 12 / z, w = (info.text.length * 7 + 12) / z; out.push(<g key="info"><rect x={info.x + 14 / z} y={info.y + 14 / z} width={w} height={20 / z} rx={4 / z} fill="var(--ink, #16181B)" fillOpacity={0.85} /><text x={info.x + 20 / z} y={info.y + 28 / z} fontSize={fs} fill="#FFFFFF" fontFamily="system-ui, sans-serif">{info.text}</text></g>); }
   const draft = useArrowDraft();
   if (draft.a && draft.b) out.push(<line key="draft" x1={draft.a[0]} y1={draft.a[1]} x2={draft.b[0]} y2={draft.b[1]} stroke={a} strokeWidth={2 / z} strokeDasharray={`${6 / z} ${4 / z}`} />);
   if (ui.sel.kind === 'ann') {
@@ -306,14 +332,7 @@ function Overlay() {
       if (it.el.type === 'text') out.push(...widthHandles(b, z, a, 'annw', sid));
     });
   }
-  if (ui.sel.kind === 'frame' || ui.mapMode) {
-    const id = ui.mapMode || (ui.sel.kind === 'frame' ? ui.sel.id : 'main');
-    const b = elementBox(doc, id);
-    if (b) {
-      out.push(box(b, 'fr', !ui.mapMode, ui.mapMode ? 3 : 1.5));
-      if (!ui.mapMode) out.push(...frameHandles(b, id, z, a));
-    }
-  }
+  if (ui.mapMode) { const b = nodeBox(doc, ui.mapMode, v); if (b) out.push(box(b, 'fr', false, 3)); }
   return <svg id="overlay" width={v.w} height={v.h} viewBox={`0 0 ${v.w} ${v.h}`}>{out}</svg>;
 }
 
@@ -400,6 +419,51 @@ function placeTool(d: Doc, tool: 'marker' | 'text' | 'arrow', a: number[]) {
   if (tool === 'marker') { if (!geo) { toast('Marker bitte in die Karte setzen'); return; } addMarker(geo); return; }
   if (geo && fid === 'main') addTextBox('map', geo); else addTextBox('board', [clamp(a[0] / v.w, 0, 1), clamp(a[1] / v.h, 0, 1)]);
 }
+/** Einrastziele beim Verschieben: Hilfslinien (wenn sichtbar), Ränder und Mitte der Fläche, Kanten und Mitten der übrigen Objekte */
+function snapTargets(d: Doc, v: Variant, skip: string[]) {
+  const gx = v.guides?.visible ? [...v.guides.x] : [], gy = v.guides?.visible ? [...v.guides.y] : [];
+  gx.push(0, v.w / 2, v.w); gy.push(0, v.h / 2, v.h);
+  for (const id of selectableIds(d)) {
+    if (skip.includes(id)) continue;
+    const b = nodeBox(d, id, v); if (!b) continue;
+    const q = aabb(b); gx.push(q.x, q.x + q.w / 2, q.x + q.w); gy.push(q.y, q.y + q.h / 2, q.y + q.h);
+  }
+  return { gx, gy };
+}
+/** Größe ändern an einem Griff (Q21): Ecke = proportional samt Inhalt (Schrift, Linien, Beschriftungen), Alt = von der Mitte aus.
+ *  Seite = nur der Rahmen: Karte passt den Ausschnitt an (außer gesperrt), Texte und Legende ändern die Breite, die Höhe folgt dem Inhalt.
+ *  Umschalt + Ecke bei Karte/Diagramm: Rahmen frei (wie Seiten). Gedrehte Objekte rechnen im eigenen Koordinatensystem. */
+function resizeStep(dg: Drag, dx: number, dy: number, alt: boolean, shift: boolean): string | null {
+  const ids = dg.ids as string[], dir = dg.dir as Dir, b0 = dg.b0 as NBox, L0 = dg.L0 as Record<string, Box | FrameBox>, boxes = dg.boxes as Record<string, NBox>;
+  const [hx, hy] = HPOS[dir], rr = b0.r * Math.PI / 180, c = Math.cos(rr), s = Math.sin(rr);
+  const lx = dx * c + dy * s, ly = -dx * s + dy * c;
+  const c0x = b0.x + b0.w / 2, c0y = b0.y + b0.h / 2;
+  const toCanvas = (x: number, y: number): [number, number] => [c0x + x * c - y * s, c0y + x * s + y * c];
+  const single = ids.length === 1 ? ids[0] : null, frame = single === 'main' || single === 'inset';
+  if (hx && hy && !(frame && shift)) {
+    const ax = alt ? 0 : -hx * b0.w, ay = alt ? 0 : -hy * b0.h, Vx = hx * b0.w - ax, Vy = hy * b0.h - ay;
+    const f = clamp(1 + (lx * Vx + ly * Vy) / (Vx * Vx + Vy * Vy), Math.max(0.02, 16 / Math.max(1, Math.min(b0.w, b0.h))), 20);
+    const [Ax, Ay] = toCanvas(ax, ay);
+    update(d => { const V = d.variants[d.active]; for (const id of ids) { const L = layoutOf(V, id), B = boxes[id]; if (L && B && L0[id]) { scaleAbout(L, L0[id], B, id, f, Ax, Ay); round(L); } } }, { history: false });
+    return Math.round(f * 100) + ' %';
+  }
+  if (!single || !L0[single]) return null;
+  const m = alt ? 2 : 1, auto = autoHeight(single);
+  const w = hx ? Math.max(frame ? 80 : 40, b0.w + m * Math.sign(hx) * lx) : b0.w;
+  const h = hy && !auto ? Math.max(80, b0.h + m * Math.sign(hy) * ly) : b0.h;
+  const F0 = L0[single], offX = b0.x - F0.x, offY = b0.y - F0.y;
+  update(d => {
+    const V = d.variants[d.active], L = layoutOf(V, single); if (!L) return;
+    L.w = Math.round(w * 10) / 10;
+    let h1 = h;
+    if ('view' in L && 'view' in F0) { L.h = Math.round(h * 10) / 10; if (!V.locked[single as FrameId]) L.view = { ...F0.view, k: F0.view.k * Math.min(w / b0.w, h / b0.h) }; }
+    else if (auto && b0.r) { const nb = nodeBox(current(d) as unknown as Doc, single); if (nb) h1 = nb.h; }   // gedreht: neue Höhe für die Lage der Mitte
+    const cxl = alt ? 0 : Math.sign(hx) * (w - b0.w) / 2, cyl = auto ? (h1 - b0.h) / 2 : alt ? 0 : Math.sign(hy) * (h - b0.h) / 2;
+    const [cx, cy] = toCanvas(cxl, cyl);
+    L.x = Math.round((cx - w / 2 - offX) * 10) / 10; L.y = Math.round((cy - h1 / 2 - offY) * 10) / 10;
+  }, { history: false });
+  return auto ? `${Math.round(w)} px breit` : `${Math.round(w)} × ${Math.round(h)}`;
+}
 const inFrameAt = (v: Variant, id: FrameId, [ax, ay]: number[]) => { const F = v.L[id]; return ax >= F.x && ay >= F.y && ax <= F.x + F.w && ay <= F.y + F.h; };
 export function Canvas() {
   const doc = useStore(s => s.doc!);
@@ -474,9 +538,21 @@ export function Canvas() {
     if (e.button !== 0) return;
     if (u.tool === 'arrow') { const from = snapEnd(d, e.clientX, e.clientY, a, null); useArrowDraft.setState({ a: [a[0], a[1]], b: [a[0], a[1]] }); drag.current = { ...base, type: 'arrowNew', from }; return; }
     if (u.tool) { placeTool(d, u.tool, a); return; }
-    if (t.closest('[data-logo-handle]')) { const b = activeVariant(d).L.logo; drag.current = { ...base, type: 'logoSize', ow: b.w, bottom: b.y + b.w * logoRatio(d.logo.asset), r: logoRatio(d.logo.asset) }; return; }
-    const twh = t.closest('[data-textw-handle]') as SVGElement | null;
-    if (twh) { const id = twh.dataset.textwHandle as 'title' | 'subtitle' | 'source' | 'legend', dir = twh.dataset.dir as 'w' | 'e', L = activeVariant(d).L[id]; drag.current = { ...base, type: 'textWidth', id, dir, ow: L.w, ox: L.x }; return; }
+    // Griffe der Auswahl (M11 · Etappe 2): Größe ändern bzw. drehen
+    const tfh = t.closest('[data-tf]') as SVGElement | null;
+    if (tfh) {
+      const v0 = activeVariant(d), dir = tfh.dataset.tf!;
+      const ids = selIds(u.sel).filter(id => nodeBox(d, id, v0)); if (!ids.length) return;
+      if (dir === 'rot') {
+        const b = nodeBox(d, ids[0], v0)!, c = [b.x + b.w / 2, b.y + b.h / 2];
+        drag.current = { ...base, type: 'tfRotate', id: ids[0], c, a0: Math.atan2(a[1] - c[1], a[0] - c[0]), r0: b.r };
+        return;
+      }
+      const boxes = Object.fromEntries(ids.map(id => [id, nodeBox(d, id, v0)!])) as Record<string, NBox>;
+      const b0: NBox = ids.length === 1 ? boxes[ids[0]] : { ...unionBox(d, ids, v0)!, r: 0 };
+      drag.current = { ...base, type: 'tfResize', ids, dir, b0, boxes, L0: snapLayouts(v0, ids) };
+      return;
+    }
     const awh = t.closest('[data-annw-handle]') as SVGElement | null;
     if (awh) {
       const id = awh.dataset.annwHandle!, dir = awh.dataset.dir as 'w' | 'e', el = d.els.find(x => x.id === id);
@@ -517,36 +593,47 @@ export function Canvas() {
     if (u.mapMode && inFrame(d, u.mapMode, a) && !t.closest('g.lbl')) {
       const fv = activeVariant(d).L[u.mapMode].view;
       drag.current = { ...base, type: 'map', id: u.mapMode, ocx: fv.cx, ocy: fv.cy, i: areaI };
-    } else if (u.mapMode && !inFrame(d, u.mapMode, a)) {
-      setUI({ mapMode: null }); return onPointerDown(e);
-    } else if (t.closest('[data-handle]')) {
-      const hEl = t.closest('[data-handle]') as SVGElement;
-      const id = hEl.dataset.handle as FrameId, dir = (hEl.dataset.dir || 'se') as string, F = activeVariant(d).L[id];
-      drag.current = { ...base, type: 'resize', id, dir, ow: F.w, oh: F.h, ox: F.x, oy: F.y };
-    } else if (t.closest('g.lbl')) {
-      const key = (t.closest('g.lbl') as SVGElement).dataset.lbl!, fid = key.split(':')[0] as FrameId;
-      const it = layoutLabels(d, fid).items.find(x => x.key === key);
+      return;
+    }
+    if (u.mapMode && !inFrame(d, u.mapMode, a)) { setUI({ mapMode: null }); return onPointerDown(e); }
+    // Verschachtelte Auswahl (Q16): Teile einer Karte (Gebiet, Beschriftung, Sitz-Texte) erst, wenn die Karte bzw. das Diagramm schon gewählt ist
+    const fid = ((t.closest('g.frame') as SVGElement | null)?.dataset.frame || null) as FrameId | null;
+    const inside = (id: FrameId) => !!u.mapMode || (u.sel.kind === 'frame' && u.sel.id === id) || (id === 'main' || !isChart(d)) && ['area', 'layer', 'hatch', 'overlay', 'bubbles'].includes(u.sel.kind);
+    if (t.closest('g.lbl') && fid && inside(fid)) {
+      const key = (t.closest('g.lbl') as SVGElement).dataset.lbl!, lf = key.split(':')[0] as FrameId;
+      const it = layoutLabels(d, lf).items.find(x => x.key === key);
       if (!it) return;
-      const F = activeVariant(d).L[fid], g = geoOf(d), [lx, ly] = g.areas[it.i].label;
+      const F = activeVariant(d).L[lf], g = geoOf(d), [lx, ly] = g.areas[it.i].label;
       const ax = (lx - F.view.cx) * F.view.k + F.w / 2, ay = (ly - F.view.cy) * F.view.k + F.h / 2;
       drag.current = { ...base, type: 'label', key, o: [it.cx - ax, it.cy - ay] };
       setUI({ sel: { kind: 'layer', id: 'labels' } });
-    } else if (t.closest('[data-el]')) {
-      const id = (t.closest('[data-el]') as SVGElement).dataset.el as 'title', L = activeVariant(d).L[id];
-      setUI({ sel: { kind: 'el', id } });
-      drag.current = { ...base, type: 'el', id, ox: L.x, oy: L.y };
-    } else if (t.closest('[data-seatpart]')) {
+      return;
+    }
+    if (t.closest('[data-seatpart]') && inside('main')) {
       // Text im Halbkreis der Sitzverteilung (Mehrheit, Zahl, Zeile darunter): einzeln verschieben
       const part = (t.closest('[data-seatpart]') as SVGElement).dataset.seatpart as 'majority' | 'total' | 'sub', tw = d.chart?.seatText?.[part];
-      setUI({ sel: { kind: 'frame', id: 'main' } });
       drag.current = { ...base, type: 'seatpart', part, ox: tw?.dx || 0, oy: tw?.dy || 0 };
-    } else if (areaI != null) {
-      drag.current = { ...base, type: 'area', i: areaI };
-    } else if (t.closest('g.frame')) {
-      const id = (t.closest('g.frame') as SVGElement).dataset.frame as FrameId, F = activeVariant(d).L[id];
-      setUI({ sel: { kind: 'frame', id } });
-      drag.current = { ...base, type: 'frame', id, ox: F.x, oy: F.y };
-    } else { setUI({ sel: { kind: 'graphic' } }); drag.current = { ...base, type: 'none' }; }
+      return;
+    }
+    if (areaI != null && fid && inside(fid)) { startMove(d, [fid], e, base, { areaClick: areaI }); return; }   // Klick: Gebiet wählen, Ziehen: Karte verschieben
+    const objEl = t.closest('[data-el],[data-node]') as SVGElement | null;
+    const oid = objEl ? (objEl.dataset.el || objEl.dataset.node!) : fid;
+    if (oid) { pickObject(d, u.sel, oid, e, base); return; }
+    // freie Fläche: Auswahlrahmen aufziehen (Umschalt: zur Auswahl hinzu)
+    if (!e.shiftKey) setUI({ sel: { kind: 'graphic' } });
+    drag.current = { ...base, type: 'marquee', a0: a, keep: e.shiftKey ? selIds(u.sel) : [] };
+  };
+  /** Objekt anklicken: wählen (Umschalt: hinzufügen/entfernen) und Verschieben vorbereiten; in einer Mehrfachauswahl bleibt sie erhalten */
+  const pickObject = (d: Doc, sel: Sel, id: string, e: React.PointerEvent, base: Pick<Drag, 'sx' | 'sy' | 'moved' | 'shift' | 'pid'>) => {
+    const cur = selIds(sel);
+    if (e.shiftKey) { setUI({ sel: selFor(cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id]), mapMode: null }); drag.current = { ...base, type: 'none' }; return; }
+    const multi = cur.length > 1 && cur.includes(id);
+    if (!multi && !(cur.length === 1 && cur[0] === id)) setUI({ sel: selFor([id]), mapMode: null });
+    startMove(d, multi ? cur : [id], e, base, multi ? { reduceTo: id } : {});
+  };
+  const startMove = (d: Doc, ids: string[], e: React.PointerEvent, base: Pick<Drag, 'sx' | 'sy' | 'moved' | 'shift' | 'pid'>, extra: Record<string, unknown>) => {
+    const v0 = activeVariant(d);
+    drag.current = { ...base, type: 'tfMove', ids, L0: snapLayouts(v0, ids), U0: unionBox(d, ids, v0), T: snapTargets(d, v0, ids), alt: e.altKey, ...extra };
   };
   const onPointerMove = (e: React.PointerEvent) => {
     const dg = drag.current;
@@ -556,11 +643,20 @@ export function Canvas() {
       const r = wrap.current!.getBoundingClientRect();
       let x = e.clientX - r.left + 14, y = e.clientY - r.top + 14; if (x + 250 > r.width) x -= 270; if (y + 110 > r.height) y -= 124;
       if (i !== useHover.getState().i || i != null) useHover.setState({ i, x, y });
+      const o = t.closest?.('[data-el],[data-node],g.frame') as SVGElement | null;
+      const hid = o && !getUI().mapMode ? (o.dataset.el || o.dataset.node || o.dataset.frame || null) : null;
+      if (hid !== useHoverNode.getState().id) useHoverNode.setState({ id: hid });
       return;
     }
     const dxs = e.clientX - dg.sx, dys = e.clientY - dg.sy;
     if (!dg.moved && Math.hypot(dxs, dys) < 3) return;
-    if (!dg.moved) { try { wrap.current!.setPointerCapture(dg.pid); } catch { /* egal */ } if (dg.type !== 'view' && dg.type !== 'area' && dg.type !== 'none' && dg.type !== 'arrowNew') beginGesture(); useHover.setState({ i: null }); }
+    if (!dg.moved) {
+      try { wrap.current!.setPointerCapture(dg.pid); } catch { /* egal */ }
+      if (dg.type !== 'view' && dg.type !== 'area' && dg.type !== 'none' && dg.type !== 'arrowNew' && dg.type !== 'marquee') beginGesture();
+      useHover.setState({ i: null }); useHoverNode.setState({ id: null });
+      // Alt + Ziehen: Kopie ziehen, Original bleibt (Textfelder; Karte, Legende und Logo folgen später)
+      if (dg.type === 'tfMove' && dg.alt && dg.areaClick == null) { const nids = duplicateNodes(dg.ids as string[], 0, true); if (nids) { dg.ids = nids; dg.L0 = snapLayouts(activeVariant(getDoc()), nids); } }
+    }
     dg.moved = true;
     const z = getUI().view.z, dx = dxs / z, dy = dys / z;
     switch (dg.type) {
@@ -571,39 +667,40 @@ export function Canvas() {
         update(dd => { if (!dd.chart) return; const st = (dd.chart.seatText ||= {}); const p = (st[part] ||= {}); p.dx = Math.round((dg.ox as number) + dx / ts); p.dy = Math.round((dg.oy as number) + dy / ts); }, { history: false });
         break;
       }
-      case 'el': update(dd => { const L = dd.variants[dd.active].L[dg.id as 'title']; L.x = Math.round((dg.ox as number) + dx); L.y = Math.round((dg.oy as number) + dy); }, { history: false }); break;
-      case 'frame': {
-        // An den Hilfslinien einrasten: linke/rechte Kante und Mitte gegen senkrechte, obere/untere Kante und Mitte gegen waagerechte Linien.
-        const ox = dg.ox as number, oy = dg.oy as number, vv = activeVariant(getDoc()), F0 = vv.L[dg.id as FrameId];
-        const gx = vv.guides.visible ? vv.guides.x : [], gy = vv.guides.visible ? vv.guides.y : [];
-        const sx = snapDelta([ox, ox + F0.w, ox + F0.w / 2], gx, z, dx), sy = snapDelta([oy, oy + F0.h, oy + F0.h / 2], gy, z, dy);
-        useSnapGuides.setState({ x: sx.hit, y: sy.hit });
-        update(dd => { const F = dd.variants[dd.active].L[dg.id as FrameId]; F.x = Math.round(ox + sx.d); F.y = Math.round(oy + sy.d); }, { history: false });
+      case 'tfMove': {
+        // Umschalt: nur waagerecht oder senkrecht; Einrasten an Hilfslinien, Fläche und anderen Objekten (Strg: frei)
+        let ddx = dx, ddy = dy;
+        const lockY = e.shiftKey && Math.abs(dx) >= Math.abs(dy), lockX = e.shiftKey && !lockY;
+        if (lockY) ddy = 0; if (lockX) ddx = 0;
+        const U0 = dg.U0 as Rect | null, T = dg.T as { gx: number[]; gy: number[] };
+        let hx: number | null = null, hy: number | null = null;
+        if (U0 && !(e.ctrlKey || e.metaKey)) {
+          if (!lockX) { const r = snapDelta([U0.x, U0.x + U0.w, U0.x + U0.w / 2], T.gx, z, ddx); ddx = r.d; hx = r.hit; }
+          if (!lockY) { const r = snapDelta([U0.y, U0.y + U0.h, U0.y + U0.h / 2], T.gy, z, ddy); ddy = r.d; hy = r.hit; }
+        }
+        useSnapGuides.setState({ x: hx, y: hy });
+        const ids = dg.ids as string[], L0 = dg.L0 as Record<string, Box>;
+        update(dd => { const V = dd.variants[dd.active]; for (const id of ids) { const L = layoutOf(V, id), o = L0[id]; if (L && o) { L.x = Math.round(o.x + ddx); L.y = Math.round(o.y + ddy); } } }, { history: false });
         break;
       }
-      case 'logoSize': {
-        // entlang der Diagonale (rechts oben = größer); linke Kante und Unterkante bleiben
-        const r = dg.r as number, w = clamp((dg.ow as number) + (dx - dy * r) / (1 + r * r), 16, activeVariant(getDoc()).w);
-        update(dd => { const b = dd.variants[dd.active].L.logo; b.w = Math.round(w); b.y = Math.round((dg.bottom as number) - b.w * r); }, { history: false }); break;
-      }
-      case 'resize': {
-        // Acht Griffe: Ecken ändern beide Maße, Kanten eine; die jeweils gegenüberliegende Kante bleibt fest (auch wenn die Mindestgröße greift).
-        const dir = dg.dir as string, ow = dg.ow as number, oh = dg.oh as number, ox = dg.ox as number, oy = dg.oy as number;
-        let w = ow, h = oh, x = ox, y = oy;
-        if (dir.includes('e')) w = Math.max(80, ow + dx);
-        if (dir.includes('w')) { w = Math.max(80, ow - dx); x = ox + (ow - w); }
-        if (dir.includes('s')) h = Math.max(80, oh + dy);
-        if (dir.includes('n')) { h = Math.max(80, oh - dy); y = oy + (oh - h); }
-        update(dd => { const F = dd.variants[dd.active].L[dg.id as FrameId]; F.w = Math.round(w); F.h = Math.round(h); F.x = Math.round(x); F.y = Math.round(y); }, { history: false });
+      case 'tfResize': { const txt = resizeStep(dg, dx, dy, e.altKey, e.shiftKey); const p = toArt(e); useTfInfo.setState({ text: txt, x: p[0], y: p[1] }); break; }
+      case 'tfRotate': {
+        // Drehen um die Mitte; Umschalt: 15°-Schritte, sonst rastet es nahe 0/90/180/270° ein
+        const p = toArt(e), C = dg.c as number[];
+        let r = (dg.r0 as number) + (Math.atan2(p[1] - C[1], p[0] - C[0]) - (dg.a0 as number)) * 180 / Math.PI;
+        if (e.shiftKey) r = Math.round(r / 15) * 15; else { const n = Math.round(r / 90) * 90; if (Math.abs(r - n) < 3) r = n; }
+        update(dd => { const L = layoutOf(dd.variants[dd.active], dg.id as string) as Box | null; if (L) setR(L, r); }, { history: false });
+        useTfInfo.setState({ text: `${Math.round((((r % 360) + 540) % 360) - 180)}°`, x: p[0], y: p[1] });
         break;
       }
-      case 'textWidth': {
-        // Nur die Breite folgt dem Griff, die Höhe ergibt sich weiter aus dem Textumbruch.
-        const dir = dg.dir as 'w' | 'e', cw = activeVariant(getDoc()).w, ow = dg.ow as number, ox = dg.ox as number;
-        let w = ow, x = ox;
-        if (dir === 'e') w = clamp(ow + dx, 100, cw);
-        else { w = clamp(ow - dx, 100, cw); x = ox + (ow - w); }
-        update(dd => { const L = dd.variants[dd.active].L[dg.id as 'title']; L.w = Math.round(w); L.x = Math.round(x); }, { history: false });
+      case 'marquee': {
+        const p = toArt(e), a0 = dg.a0 as number[];
+        const R = { x: Math.min(a0[0], p[0]), y: Math.min(a0[1], p[1]), w: Math.abs(p[0] - a0[0]), h: Math.abs(p[1] - a0[1]) };
+        useMarquee.setState({ r: R });
+        const d = getDoc(), vv = activeVariant(d);
+        const hit = selectableIds(d).filter(id => { const b = nodeBox(d, id, vv); if (!b) return false; const q = aabb(b); return q.x < R.x + R.w && q.x + q.w > R.x && q.y < R.y + R.h && q.y + q.h > R.y; });
+        const sel = selFor([...(dg.keep as string[]), ...hit]);
+        if (JSON.stringify(sel) !== JSON.stringify(getUI().sel)) setUI({ sel });
         break;
       }
       case 'annWidth': {
@@ -647,7 +744,7 @@ export function Canvas() {
   const onPointerUp = (e?: React.PointerEvent) => {
     const dg = drag.current; drag.current = null;
     wrap.current?.classList.remove('dragging');
-    useSnapGuides.setState({ x: null, y: null });
+    useSnapGuides.setState({ x: null, y: null }); useTfInfo.setState({ text: null }); useMarquee.setState({ r: null });
     if (dg?.type === 'arrowNew') {
       useArrowDraft.setState({ a: null, b: null });
       const d = getDoc(), v = activeVariant(d);
@@ -658,7 +755,8 @@ export function Canvas() {
       void v; addArrow(from, to); return;
     }
     if (!dg || dg.moved) return;
-    const i = dg.type === 'area' ? dg.i as number : dg.type === 'map' ? dg.i as number | null : null;
+    if (dg.type === 'tfMove' && dg.reduceTo) { setUI({ sel: selFor([dg.reduceTo as string]) }); return; }   // Klick in eine Mehrfachauswahl: nur dieses Objekt
+    const i = dg.type === 'area' ? dg.i as number : dg.type === 'map' ? dg.i as number | null : dg.type === 'tfMove' && dg.areaClick != null ? dg.areaClick as number : null;
     if (i != null) {
       const d = getDoc(), g = geoOf(d), id = g.areas[i].id, u = getUI();
       if (dg.shift && u.sel.kind === 'area') { const s = new Set(u.sel.ids); s.has(id) ? s.delete(id) : s.add(id); setUI({ sel: s.size ? { kind: 'area', ids: [...s] } : { kind: 'graphic' } }); }
@@ -682,20 +780,21 @@ export function Canvas() {
     }
     // Doppelklick auf Titel, Unterzeile oder Quellenzeile: Text in den Eigenschaften bearbeiten
     const tel = (t.closest('[data-el]') as SVGElement | null)?.dataset.el;
-    if (tel === 'title' || tel === 'subtitle' || tel === 'source') {
-      setUI({ sel: { kind: 'el', id: tel } });
+    const nid = (t.closest('[data-node]') as SVGElement | null)?.dataset.node;
+    if (tel === 'title' || tel === 'subtitle' || tel === 'source' || nid) {
+      setUI({ sel: nid ? { kind: 'node', id: nid } : { kind: 'el', id: tel as 'title' } });
       setTimeout(() => { const ta = document.getElementById('p-text') as HTMLTextAreaElement | null; if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }, 30);
       return;
     }
     if (isChart(d)) return;
-    for (const id of ['inset', 'main'] as FrameId[]) if (inFrame(d, id, a) && !t.closest('[data-el]')) { setUI({ mapMode: id, sel: { kind: 'frame', id } }); toast('Kartenmodus – Esc beendet'); return; }
+    for (const id of ['inset', 'main'] as FrameId[]) if (inFrame(d, id, a) && !t.closest('[data-el],[data-node]')) { setUI({ mapMode: id, sel: { kind: 'frame', id } }); toast('Kartenmodus – Esc beendet'); return; }
   };
 
   return (
     <section className={'canvaswrap' + (mapMode ? ' mapmode' : '') + (tool ? ' placing' : '')} id="canvas" ref={wrap} aria-label="Arbeitsfläche"
       onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={() => onPointerUp()}
       onPointerEnter={() => { overCanvas.current = true; }}
-      onPointerLeave={() => { overCanvas.current = false; if (!drag.current) useHover.setState({ i: null }); }} onDoubleClick={onDoubleClick}>
+      onPointerLeave={() => { overCanvas.current = false; if (!drag.current) { useHover.setState({ i: null }); useHoverNode.setState({ id: null }); } }} onDoubleClick={onDoubleClick}>
       <div className="stage" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.z})` }}>
         <div className={'artboard-shadow' + (doc.background === 'transparent' ? ' checker' : '')} style={{ width: v.w, height: v.h }} />
         <svg id="artboard" width={v.w} height={v.h} viewBox={`0 0 ${v.w} ${v.h}`} xmlns="http://www.w3.org/2000/svg">

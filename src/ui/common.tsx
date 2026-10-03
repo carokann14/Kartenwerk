@@ -54,6 +54,17 @@ export const Icon = {
   file: S(<><path d="M14 3.5H7a1.5 1.5 0 0 0-1.5 1.5v14A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V8z" /><path d="M14 3.5V8h4.5" /></>),
   folder: S(<path d="M3.5 7a1.5 1.5 0 0 1 1.5-1.5h4l2 2h8a1.5 1.5 0 0 1 1.5 1.5v8.5A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5z" />),
   trash: S(<path d="M5 7h14M10 7V5h4v2M7 7l1 12.5h8L17 7" />),
+  // Ausrichten und Anordnen (M11 · Etappe 2)
+  alignL: S(<><path d="M4 3v18" /><rect x="8" y="6" width="12" height="4" rx="1" /><rect x="8" y="14" width="7" height="4" rx="1" /></>),
+  alignC: S(<><path d="M12 3v18" /><rect x="5" y="6" width="14" height="4" rx="1" /><rect x="8" y="14" width="8" height="4" rx="1" /></>),
+  alignR: S(<><path d="M20 3v18" /><rect x="4" y="6" width="12" height="4" rx="1" /><rect x="9" y="14" width="7" height="4" rx="1" /></>),
+  alignT: S(<><path d="M3 4h18" /><rect x="6" y="8" width="4" height="12" rx="1" /><rect x="14" y="8" width="4" height="7" rx="1" /></>),
+  alignM: S(<><path d="M3 12h18" /><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="8" width="4" height="8" rx="1" /></>),
+  alignB: S(<><path d="M3 20h18" /><rect x="6" y="4" width="4" height="12" rx="1" /><rect x="14" y="9" width="4" height="7" rx="1" /></>),
+  fwd: S(<path d="M12 19V6M6.5 11.5 12 6l5.5 5.5" />),
+  front: S(<path d="M12 20V9M6.5 14.5 12 9l5.5 5.5M5 4h14" />),
+  bwd: S(<path d="M12 5v13M6.5 12.5 12 18l5.5-5.5" />),
+  back: S(<path d="M12 4v11M6.5 9.5 12 15l5.5-5.5M5 20h14" />),
   refresh: S(<><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" /><path d="M19.5 4.5v4h-4" /></>),
   pipette: S(<><path d="m14 6 4 4-8.5 8.5H5.5V14z" /><path d="m12.5 7.5 4 4" /><path d="m16.5 4 3.5 3.5-1.8 1.8-3.5-3.5z" /></>),
 };

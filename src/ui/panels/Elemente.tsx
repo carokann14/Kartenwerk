@@ -8,6 +8,9 @@ import { HatchList } from '../annotationsUI';
 import { ElementsSection } from '../elementsUI';
 import { LogoRow } from '../LogoUI';
 import { isChart } from '../../model/graphicKeys';
+import { freeNodes } from '../../model/nodes';
+import { addTextNode } from '../../model/transform';
+import { setNodeText, textLabel } from '../RightPanel';
 
 type ElId = 'title' | 'subtitle' | 'source' | 'legend';
 
@@ -30,6 +33,16 @@ export function PanelElemente() {
         {(!chart || doc.chart?.type === 'sitze') && row('legend', 'Legende', doc.legend.visible, v => update(d => { d.legend.visible = v; }))}
         <LogoRow doc={doc} />
         {!t.source.visible && <Note kind="warn">Ohne Quellenzeile fehlt der lizenzrechtlich nötige Quellenvermerk. Kopiere ihn dann im Schritt „Export“ in die Bildunterschrift.</Note>}
+      </Section>
+      <Section title="Textfelder" aside={freeNodes(doc.nodes).length ? String(freeNodes(doc.nodes).length) : undefined}>
+        {freeNodes(doc.nodes).map(n => (
+          <div className="lrow flat" key={n.id}>
+            <input type="checkbox" checked={!!n.text?.visible} onChange={e => { const on = e.target.checked; setNodeText(n.id, x => { x.visible = on; }); }} aria-label={textLabel(n) + ' anzeigen'} />
+            <span className="ln">{textLabel(n)}</span>
+            <button className="btn ghost small" onClick={() => setUI({ sel: { kind: 'node', id: n.id } })}>bearbeiten</button>
+          </div>))}
+        <button className="btn small" onClick={addTextNode}><Icon.plus /> Textfeld hinzufügen <span className="kbd">T</span></button>
+        <p className="hint">Freie Textfelder liegen auf der Fläche wie Titel und Unterzeile: ziehen, an den Ecken skalieren, am runden Griff drehen. Strg+D dupliziert, auch Titel oder Quelle (als Textfeld).</p>
       </Section>
       {!chart && <>
       <Section title="Detail-Lupe (Inset)">

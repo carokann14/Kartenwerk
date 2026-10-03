@@ -8,10 +8,11 @@ import { colorModel } from '../render/colorModel';
 import { areaFill, hatchMap, hatchPathD } from '../render/hatch';
 import { annItems, elName } from '../render/annotations';
 import { bubbleSet } from '../render/bubbles';
-import { activeVariant, labelPrims, layoutLabels, legendPrims, Prims, TextPrim, textPrims } from '../render/elements';
+import { activeVariant, chartVariant, nodeTextPrims, labelPrims, layoutLabels, legendPrims, Prims, TextPrim, textPrims } from '../render/elements';
 import { logoExportSvg } from '../model/logo';
 import { isChart } from '../model/graphicKeys';
-import { flatNodes } from '../model/nodes';
+import { flatNodes, isBuiltin } from '../model/nodes';
+import { logoRect } from '../model/logo';
 import { chartPrims } from '../render/chart';
 import { FrameId, activeOverlays, frameMeshes, frameSets, insetIdx, insetLabel, krLinesLabel, laenderCtx, overlayParts } from '../render/scene';
 
@@ -127,6 +128,7 @@ const primsToPaths = (p: Prims) => p.rects.map(r => `<rect x="${r.x.toFixed(1)}"
 export interface ExportOpts { merge: boolean; scale: number }   // merge: gleiche Farben als eine Fläche; scale: Ausgabe-Pixel je Grafik-Pixel
 function exportFrame(doc: Doc, id: FrameId, o: ExportOpts) {
   const v = activeVariant(doc), F = v.L[id], vw = F.view, st = doc.style, g = GEO[doc.geoSet];
+  const fs = F.k ?? 1;   // Skalierung des Rahmens über die Eckgriffe (M11): Linien, Beschriftungen, Blasen wachsen mit
   const cm = colorModel(doc);
   const R: BBox = [F.x, F.y, F.x + F.w, F.y + F.h];
   const toA = ([gx, gy]: Pt) => [F.x + (gx - vw.cx) * vw.k + F.w / 2, F.y + (gy - vw.cy) * vw.k + F.h / 2];
@@ -155,14 +157,14 @@ function exportFrame(doc: Doc, id: FrameId, o: ExportOpts) {
   const krOn = doc.layers.krLines && me.kr.length > 0;
   let s = `<g id="${id === 'main' ? 'Hauptkarte' : 'Inset-' + svgId(insetLabel(doc))}">`;
   if (id === 'inset') s += `<rect x="${F.x}" y="${F.y}" width="${F.w}" height="${F.h}" fill="#FFFFFF"/>`;
-  if (doc.layers.neighbors) { s += `<g id="${id}-Nachbarstaaten">`; for (const c of CONTEXT.countries) { const d = polyOut(c.polys, c.bbox); if (d) s += `<path id="${id}-${c.code}" d="${d}" fill="${st.neighbor}" fill-rule="evenodd" stroke="${st.neighborLine}" stroke-width="0.7" stroke-linejoin="round"/>`; } s += `</g>`; }
+  if (doc.layers.neighbors) { s += `<g id="${id}-Nachbarstaaten">`; for (const c of CONTEXT.countries) { const d = polyOut(c.polys, c.bbox); if (d) s += `<path id="${id}-${c.code}" d="${d}" fill="${st.neighbor}" fill-rule="evenodd" stroke="${st.neighborLine}" stroke-width="${0.7 * fs}" stroke-linejoin="round"/>`; } s += `</g>`; }
   const lc = laenderCtx(doc);
   if (lc) {
     // Flächen ohne Kontur (sonst entstünde am Rahmenrand eine Linie), die Grenzen als eigene, am Rahmen geschnittene Linien
     const lg = lc.g, llt = lodTol(lg, vw.k * 2 * Math.max(1, o.scale));
     s += `<g id="${id}-Nachbarlaender">`;
     for (const i of lc.idx) { const a = lg.areas[i]; const d = polyOut(polysAt(lg, i, llt), a.bbox); if (d) s += `<path id="${id}-${svgId(a.name)}" d="${d}" fill="${st.laender}" fill-rule="evenodd"/>`; }
-    if (st.laenderLineW > 0) { const d = lineOut(lc.idx.flatMap(i => polysAt(lg, i, llt).flat())); if (d) s += `<path id="${id}-Nachbarlaender-Grenzen" d="${d}" fill="none" stroke="${st.laenderLine}" stroke-width="${st.laenderLineW}" stroke-linejoin="round" stroke-linecap="round"/>`; }
+    if (st.laenderLineW > 0) { const d = lineOut(lc.idx.flatMap(i => polysAt(lg, i, llt).flat())); if (d) s += `<path id="${id}-Nachbarlaender-Grenzen" d="${d}" fill="none" stroke="${st.laenderLine}" stroke-width="${st.laenderLineW * fs}" stroke-linejoin="round" stroke-linecap="round"/>`; }
     s += `</g>`;
   }
   if (doc.layers.lakes) { s += `<g id="${id}-Gewaesser">`; for (const c of CONTEXT.lakes) { const d = polyOut(c.polys, c.bbox); if (d) s += `<path d="${d}" fill="${st.water}" fill-rule="evenodd"/>`; } s += `</g>`; }
@@ -197,14 +199,14 @@ function exportFrame(doc: Doc, id: FrameId, o: ExportOpts) {
   if (hatchRings.size) {
     s += `<g id="${id}-Schraffuren">`;
     for (const [h, rings] of hatchRings) {
-      const hs = hm.styles.get(h)!; const d = hatchPathD(hs, rings); if (!d) continue;
+      const hs0 = hm.styles.get(h)!, hs = fs === 1 ? hs0 : { ...hs0, width: hs0.width * fs, spacing: hs0.spacing * fs }; const d = hatchPathD(hs, rings); if (!d) continue;
       s += hs.pattern === 'punkte' ? `<path id="${id}-Schraffur-${svgId(hs.name)}" d="${d}" fill="${hs.color}"/>`
         : `<path id="${id}-Schraffur-${svgId(hs.name)}" d="${d}" fill="none" stroke="${hs.color}" stroke-width="${hs.width}" stroke-linecap="butt"/>`;
     }
     s += `</g>`;
   }
   s += `<g id="${id}-Grenzen">`;
-  const ln = (lines: Pt[][], color: string, w: number, name: string, dash = false) => { const d = lineOut(lines); return d ? `<path id="${id}-${name}" d="${d}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="${dash ? 'butt' : 'round'}"${dash ? ` stroke-dasharray="${(w * 3.2).toFixed(1)} ${(w * 2.4).toFixed(1)}"` : ''}/>` : ''; };
+  const ln = (lines: Pt[][], color: string, w0: number, name: string, dash = false) => { const w = w0 * fs, d = lineOut(lines); return d ? `<path id="${id}-${name}" d="${d}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="${dash ? 'butt' : 'round'}"${dash ? ` stroke-dasharray="${(w * 3.2).toFixed(1)} ${(w * 2.4).toFixed(1)}"` : ''}/>` : ''; };
   if (doc.layers.wkLines) s += ln(arcsL(krOn ? me.wk : [...me.wk, ...me.kr]), st.wkLine, st.wkLineW, 'Gebietsgrenzen');
   if (krOn) s += ln(arcsL(me.kr), st.krLine, st.krLineW, svgId(krLinesLabel(g)));
   if (me.linesMode) { s += ln(arcsL(me.wkU), '#C8C2B6', 0.6, 'Umfeldgrenzen'); s += ln(arcsL(me.outline), '#B9B2A5', 0.8, 'Umfeldumriss'); }
@@ -214,7 +216,7 @@ function exportFrame(doc: Doc, id: FrameId, o: ExportOpts) {
   if (id === 'main' && doc.inset.visible && doc.fokus.kind === 'de') {
     const bb = bboxOfIds(g, insetIdx(doc)), p = 800;
     const a = toA([bb[0] - p, bb[1] - p]), b = toA([bb[2] + p, bb[3] + p]);
-    s += `<rect id="Lupe" x="${a[0].toFixed(1)}" y="${a[1].toFixed(1)}" width="${(b[0] - a[0]).toFixed(1)}" height="${(b[1] - a[1]).toFixed(1)}" fill="none" stroke="${st.frameLine}" stroke-width="1.2"/>`;
+    s += `<rect id="Lupe" x="${a[0].toFixed(1)}" y="${a[1].toFixed(1)}" width="${(b[0] - a[0]).toFixed(1)}" height="${(b[1] - a[1]).toFixed(1)}" fill="none" stroke="${st.frameLine}" stroke-width="${1.2 * fs}"/>`;
   }
   s += `</g>`;
   const bub = bubbleSet(doc, id, v);
@@ -234,9 +236,9 @@ function exportFrame(doc: Doc, id: FrameId, o: ExportOpts) {
     s += `</g>`;
   }
   if (id === 'inset') {
-    s += `<rect x="${F.x}" y="${F.y}" width="${F.w}" height="${F.h}" fill="none" stroke="${st.frameLine}" stroke-width="1.5"/>`;
-    const cap = insetLabel(doc), size = Math.round(17 * v.ts), w = measureW(cap, 'bold', size) + 14;
-    s += `<rect x="${F.x}" y="${F.y}" width="${w.toFixed(1)}" height="${size + 10}" fill="${st.frameLine}"/>` + textToPath({ x: F.x + 7, y: F.y + 5 + size * 0.8, text: cap, cut: 'bold', size, color: '#FFFFFF', anchor: 'start' });
+    s += `<rect x="${F.x}" y="${F.y}" width="${F.w}" height="${F.h}" fill="none" stroke="${st.frameLine}" stroke-width="${1.5 * fs}"/>`;
+    const cap = insetLabel(doc), size = Math.round(17 * v.ts * fs), w = measureW(cap, 'bold', size) + 14 * fs;
+    s += `<rect x="${F.x}" y="${F.y}" width="${w.toFixed(1)}" height="${size + 10 * fs}" fill="${st.frameLine}"/>` + textToPath({ x: F.x + 7 * fs, y: F.y + 5 * fs + size * 0.8, text: cap, cut: 'bold', size, color: '#FFFFFF', anchor: 'start' });
   }
   return s + `</g>`;
 }
@@ -248,13 +250,17 @@ export function buildExportSvg(doc: Doc, opts: Partial<ExportOpts> = {}, transpa
   // Objekte in der Reihenfolge des Elementbaums (hinten → vorn)
   const chart = isChart(doc);
   const TEXT_NAMES = { title: 'Titel', subtitle: 'Unterzeile', source: 'Quelle' } as const;
+  // Drehung um die Mitte des Objekts (M11); ungedrehte Objekte bleiben ohne transform (Export wie bisher)
+  const rot = (b: { x: number; y: number; w: number; h: number }, r?: number) => r ? ` transform="rotate(${+r.toFixed(2)} ${(b.x + b.w / 2).toFixed(1)} ${(b.y + b.h / 2).toFixed(1)})"` : '';
+  const used = new Set<string>();
+  const uniq = (name: string) => { let x = name, k = 2; while (used.has(x)) x = `${name}-${k++}`; used.add(x); return x; };
   for (const n of flatNodes(doc.nodes)) {
     switch (n.id) {
-      case 'main': s += chart ? `<g id="Diagramm">${primsToPaths(chartPrims(doc, v))}</g>` : exportFrame(doc, 'main', o); break;
+      case 'main': s += chart ? `<g id="Diagramm">${primsToPaths(chartPrims(doc, chartVariant(v)))}</g>` : exportFrame(doc, 'main', o); break;
       case 'inset': if (!chart && doc.inset.visible) s += exportFrame(doc, 'inset', o); break;
-      case 'legend': { const lp = legendPrims(doc); if (lp) s += `<g id="Legende">${primsToPaths(lp)}</g>`; break; }
-      case 'title': case 'subtitle': case 'source': { const p = textPrims(doc, n.id); if (p) s += `<g id="${TEXT_NAMES[n.id]}">${primsToPaths(p)}</g>`; break; }
-      case 'logo': s += logoExportSvg(doc, v); break;   // SVG-Logo als Vektor, Rasterlogo als Bild
+      case 'legend': { const lp = legendPrims(doc); if (lp) s += `<g id="Legende"${rot(lp.box, v.L.legend.r)}>${primsToPaths(lp)}</g>`; break; }
+      case 'title': case 'subtitle': case 'source': { const p = textPrims(doc, n.id); if (p) s += `<g id="${TEXT_NAMES[n.id]}"${rot(p.box, v.L[n.id].r)}>${primsToPaths(p)}</g>`; break; }
+      case 'logo': { const lg = logoExportSvg(doc, v), lr = logoRect(doc, v); s += lg && lr && v.L.logo.r ? `<g${rot(lr, v.L.logo.r)}>${lg}</g>` : lg; break; }   // SVG-Logo als Vektor, Rasterlogo als Bild
       case 'ann': {
         const items = annItems(doc, v);
         if (!items.length) break;
@@ -263,6 +269,11 @@ export function buildExportSvg(doc: Doc, opts: Partial<ExportOpts> = {}, transpa
         for (const it of items) s += `<g id="${it.el.type === 'arrow' ? 'Pfeil-' + (++nArrow) : svgId((it.el.type === 'marker' ? 'Marker-' : 'Text-') + elName(it.el)) || it.id}">${primsToPaths({ texts: it.texts, rects: it.rects, paths: it.paths, box: { x: 0, y: 0, w: 0, h: 0 } })}</g>`;
         s += `</g>`;
         break;
+      }
+      default: {   // freies Textfeld (M11 · Etappe 2)
+        if (isBuiltin(n.id) || n.type !== 'text') break;
+        const p = nodeTextPrims(doc, n, v); if (!p) break;
+        s += `<g id="${uniq('Textfeld-' + (svgId((n.text?.text || '').split(/\s+/).slice(0, 4).join(' ')) || n.id))}"${rot(p.box, v.L.nodes?.[n.id]?.r)}>${primsToPaths(p)}</g>`;
       }
     }
   }

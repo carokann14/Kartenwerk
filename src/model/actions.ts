@@ -325,7 +325,14 @@ export function removeVariant(k: number) {
   toast('Variante ' + name + ' entfernt');
 }
 export function resizeVariant(w: number, h: number) {
-  update(d => { const plain = current(d) as Doc; const copy: Variant = JSON.parse(JSON.stringify(plain.variants[plain.active])); copy.w = w; copy.h = h; relayout(plain, copy); d.variants[d.active] = copy as Draft<Variant>; });
+  update(d => {
+    const plain = current(d) as Doc; const copy: Variant = JSON.parse(JSON.stringify(plain.variants[plain.active]));
+    const sx = w / copy.w, sy = h / copy.h;
+    copy.w = w; copy.h = h; relayout(plain, copy);
+    // freie Textfelder wandern mit der Fläche mit (Schriftgröße bleibt wie bei Titel und Unterzeile)
+    for (const b of Object.values(copy.L.nodes || {})) { b.x = Math.round(b.x * sx); b.y = Math.round(b.y * sy); b.w = Math.max(40, Math.round(b.w * Math.min(sx, sy))); }
+    d.variants[d.active] = copy as Draft<Variant>;
+  });
 }
 
 // ---------- Hilfslinien (nur im Editor, nicht im Export) ----------

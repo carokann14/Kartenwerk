@@ -78,7 +78,7 @@ export function HatchProps({ doc, id }: { doc: Doc; id: string }) {
         {rules.map(r => <RuleEditor key={r.id} doc={doc} r={r} />)}
         {ds0 ? <button className="btn small" onClick={() => { const c = ds0.columns.find(x => x.role === 'category') || ds0.columns.find(x => x.role === 'value'); if (c) addColumnRule(h.id, ds0.id, c.id); }}><Icon.plus /> Aus Daten zuweisen</button>
           : <p className="hint">Für „Aus Daten“ braucht das Projekt einen Datensatz zu diesem Gebietsstand.</p>}
-        <p className="hint">Von Hand: Gebiete auf der Karte auswählen (Umschalt + Klick für mehrere), dann rechts unter „Schraffur“ wählen. {manual > 0 && <>Gerade <b>{manual}</b> von Hand.</>}</p>
+        <p className="hint">Von Hand: Karte anklicken, dann Gebiete auswählen (Umschalt + Klick für mehrere), dann rechts unter „Schraffur“ wählen. {manual > 0 && <>Gerade <b>{manual}</b> von Hand.</>}</p>
         {manual > 0 && <button className="btn small" onClick={() => clearAssignments(h.id)}>Zuweisungen von Hand entfernen</button>}
       </Section>
       <div className="row-btns"><button className="btn small ghost danger" onClick={() => removeHatch(h.id)}><Icon.trash /> Schraffur löschen</button></div>

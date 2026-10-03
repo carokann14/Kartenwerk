@@ -64,7 +64,7 @@ export function LogoProps({ doc }: { doc: Doc }) {
         <Field label="Deckkraft"><div className="row-btns nowrap"><input type="range" min={10} max={100} value={Math.round(lg.opacity * 100)} onChange={e => setOpacity(+e.target.value / 100)} aria-label="Deckkraft des Logos" /><span className="num">{Math.round(lg.opacity * 100)} %</span></div></Field>
         <dl className="kv"><dt>Position</dt><dd>{Math.round(b.x)}, {Math.round(b.y)}</dd><dt>Größe</dt><dd>{Math.round(b.w)} × {Math.round(b.w * logoRatio(a))}</dd></dl>
         <button className="btn small" onClick={resetLogoPlace}>Zurücksetzen: unten links in der Karte</button>
-        <p className="hint">Ziehen verschiebt das Logo in dieser Variante, der Griff oben rechts ändert die Größe (die Unterkante bleibt). Pfeiltasten verschieben um 1 px, mit Umschalt um 10 px. Entf blendet es aus.</p>
+        <p className="hint">Ziehen verschiebt das Logo in dieser Variante, die Eckgriffe ändern die Größe, der runde Griff dreht es. Pfeiltasten verschieben um 1 px, mit Umschalt um 10 px. Entf blendet es aus.</p>
       </Section>
       <button className="btn small ghost danger" onClick={removeLogo}><Icon.trash /> Aus dieser Grafik entfernen</button>
     </>}

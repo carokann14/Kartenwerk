@@ -30,7 +30,7 @@ export function bubbleSet(doc: Doc, id: FrameId, v: Variant): BubbleSet | null {
   }
   if (!vals.length) return null;
   const ref = b.ref && b.ref > 0 ? b.ref : Math.max(...vals.map(x => x.v));
-  const unitR = b.maxR * v.ts;
+  const unitR = b.maxR * v.ts * (v.L[id].k ?? 1);   // wächst mit dem Kartenrahmen (Eckgriffe, M11)
   const items = vals.map(({ i, v: val }) => {
     const [gx, gy] = g.areas[i].label;
     const f = b.color === 'regel' ? (cm.cls[i] >= 0 || doc.overrides[doc.geoSet + ':' + g.areas[i].id] ? fillOf(doc, cm, i) : NODATA_FILL) : b.color;

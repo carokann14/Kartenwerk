@@ -36,14 +36,17 @@ export interface Bubbles {
 }
 
 export interface View { cx: number; cy: number; k: number }
-export interface Box { x: number; y: number; w: number }
-export interface FrameBox { x: number; y: number; w: number; h: number; view: View }
+/** Lage eines Objekts in einer Variante. r: Drehung in Grad um die Mitte (nur Texte, Legende, Logo); k: Skalierung des Inhalts
+ *  (Schrift, Linien, Beschriftungen) über die Eckgriffe, 1 = wie bisher. Beide fehlen bei älteren Projekten (= 0 bzw. 1). */
+export interface Box { x: number; y: number; w: number; r?: number; k?: number }
+export interface FrameBox { x: number; y: number; w: number; h: number; view: View; k?: number }
 export interface Margin { left: number; top: number; right: number; bottom: number }   // Rand für die Standardplatzierung, je Seite einzeln (z. B. ungleiche Safe Zone bei Reels)
 export interface Layout {
   m: Margin; reserve: number;
   title: Box; subtitle: Box; source: Box; legend: Box;   // legend.w: 0 = automatisch (passt sich der Kartenbreite an), sonst vom Nutzer per Ziehgriff/Feld gesetzt
   main: FrameBox; inset: FrameBox;
   logo: Box;                                 // x, y = linke obere Ecke, w = Breite in px; die Höhe folgt dem Seitenverhältnis des Logos
+  nodes?: Record<string, Box>;               // freie Objekte des Elementbaums (M11 · Etappe 2: Textfelder), je Kennung
 }
 export interface Guides { x: number[]; y: number[]; visible: boolean }   // Hilfslinien in Pixeln der Grafik, nicht exportiert; visible: Umschalt+R
 export interface Variant {
@@ -52,7 +55,7 @@ export interface Variant {
   ann: Record<string, [number, number]>;   // Versatz je Element: Marker → Beschriftung, Textkasten → Kasten
   guides: Guides;
 }
-export interface TextEl { text: string; visible: boolean; size: number; cut: Cut; color: 'ink' | 'inkSoft'; align: 'start' | 'middle' | 'end'; marks?: TextMark[] }
+export interface TextEl { text: string; visible: boolean; size: number; cut: Cut; color: 'ink' | 'inkSoft' | string; align: 'start' | 'middle' | 'end'; marks?: TextMark[] }
 /** Quellenzeile: automatisch aus Daten und Geometrien; `text` gesetzt = von Hand bearbeitet (wird dann nicht mehr angepasst) */
 export interface SourceEl {
   visible: boolean; size: number; cut: Cut; color: 'ink' | 'inkSoft'; align: 'start' | 'middle' | 'end';
@@ -118,7 +121,11 @@ export interface GraphicMeta { id: string; name: string; kind: GraphicKind }
  *  den bisherigen Feldern (Texte, Legende, Logo, Diagramm, `Variant.L`), der Baum bestimmt Reihenfolge und Zusammensetzung.
  *  Feste Kennungen: main (Karte bzw. Diagramm), inset (Lupe), legend, title, subtitle, source, logo, ann (Marker, Textkästen, Pfeile). */
 export type NodeType = 'map' | 'chart' | 'text' | 'legend' | 'logo' | 'annotations' | 'group';
-export interface GNode { id: string; type: NodeType; name?: string; children?: GNode[] }
+export interface GNode {
+  id: string; type: NodeType; name?: string; children?: GNode[];
+  /** freies Textfeld (M11 · Etappe 2): eigener Text; role bestimmt den Zeilenabstand (wie Titel, Unterzeile, Quelle oder Fließtext) */
+  text?: TextEl; role?: 'title' | 'subtitle' | 'source' | 'text';
+}
 export interface Doc {
   app: 'kartenwerk'; version: 1 | 2 | 3;
   graphics: GraphicMeta[];                  // Grafiken der Mappe in Reihenfolge
@@ -246,4 +253,6 @@ export type Sel =
   | { kind: 'hatch'; id: string }
   | { kind: 'ann'; id: string }
   | { kind: 'overlay'; id: string }
-  | { kind: 'bubbles' };
+  | { kind: 'bubbles' }
+  | { kind: 'node'; id: string }               // freies Objekt des Elementbaums (Textfeld)
+  | { kind: 'multi'; ids: string[] };          // mehrere Objekte (Kennungen des Elementbaums)

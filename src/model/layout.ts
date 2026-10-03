@@ -9,6 +9,7 @@ import { fokusBBox, insetBBox } from '../render/scene';
 import { PRESET_GUIDES, PRESETS } from './defaults';
 import { PRESET_LOGO_BOX, defaultLogoBox, logoRatio } from './logo';
 import { isChart } from './graphicKeys';
+import { carryNodeLayouts } from './nodes';
 import type { Doc, FrameBox, Guides, Layout, Margin, Variant, View } from './types';
 
 export const defaultTS = (W: number, H: number) => Math.round(clamp(Math.sqrt(W * H) / 1207, 0.7, 1.25) * 100) / 100;
@@ -146,6 +147,7 @@ export function makeVariant(doc: Doc, preset: string, w?: number, h?: number, gu
   const g: Guides = guides || (pg ? { x: [...pg.x], y: [...pg.y], visible: true } : { x: [], y: [], visible: true });
   const v: Variant = { id: uid('v'), preset, w: W, h: H, ts, L: makeLayout(doc, W, H, ts, g), labelOffsets: {}, locked: { main: false, inset: false }, ann: {}, guides: g };
   fitMain(doc, v); fitInset(doc, v);
+  carryNodeLayouts(doc, v);   // freie Textfelder: Lage aus einer anderen Variante ableiten
   return v;
 }
 /** Sitzverteilung: die Beschriftung der Parteien wird zur Legende (eigenes Element), sobald die Sitze bekannt sind – einmal je Grafik.
@@ -165,7 +167,12 @@ export function ensureSeatLegend(d: Draft<Doc>): void {
   const probe = { ...cur, chart: { ...cur.chart! }, legend: { ...cur.legend }, variants: JSON.parse(JSON.stringify(cur.variants)) } as Doc;
   if (initSeatLegend(probe, true)) { d.chart = probe.chart as never; d.legend = probe.legend as never; d.variants = probe.variants as never; }
 }
-export function relayout(doc: Doc, v: Variant) { v.L = makeLayout(doc, v.w, v.h, v.ts, v.guides); fitMain(doc, v); fitInset(doc, v); }
+/** Standard-Layout neu berechnen; freie Objekte (Textfelder) behalten ihre Lage */
+export function relayout(doc: Doc, v: Variant) {
+  const nodes = v.L.nodes;
+  v.L = makeLayout(doc, v.w, v.h, v.ts, v.guides); fitMain(doc, v); fitInset(doc, v);
+  if (nodes && Object.keys(nodes).length) v.L.nodes = nodes;
+}
 
 // ---------- Automatisch nachrücken ----------
 // Ändert sich etwas, das die Höhe von Titel, Unterzeile oder Quelle bestimmt (Text, Größe, Sichtbarkeit, Schrift, Logo),

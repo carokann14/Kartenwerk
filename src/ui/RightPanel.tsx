@@ -23,6 +23,9 @@ import { LogoProps } from './LogoUI';
 import { MapZoom } from './MapZoom';
 import { setLogoVisible } from '../model/logo';
 import { ErrorBoundary } from './ErrorBoundary';
+import type { Box, GNode, TextEl } from '../model/types';
+import { findNode, freeNodes, isBuiltin, nodeName } from '../model/nodes';
+import { align, canRotate, copyNodes, deleteNodes, duplicateNodes, layoutOf, reorder, resetScale, selFor, selIds, setRotation } from '../model/transform';
 
 // ---------- Ebenen ----------
 const CHART_LABEL = { saeulen: 'Säulen', gewinne: 'Gewinne und Verluste', balken: 'Balken', linie: 'Linie', sitze: 'Sitzverteilung' } as const;
@@ -30,8 +33,14 @@ function Layers() {
   const doc = useStore(s => s.doc!);
   const sel = useStore(s => s.ui.sel);
   const v = activeVariant(doc), L = doc.layers, T = doc.texts, g = geoOf(doc), chart = isChart(doc);
-  const is = (s: Sel) => JSON.stringify(s) === JSON.stringify(sel) || (s.kind === 'layer' && s.id === 'wk' && sel.kind === 'layer' && sel.id === 'labels');
-  const pick = (s: Sel) => () => setUI({ sel: s, mapMode: null });
+  const multi = selIds(sel);
+  const is = (s: Sel) => JSON.stringify(s) === JSON.stringify(sel) || (s.kind === 'layer' && s.id === 'wk' && sel.kind === 'layer' && sel.id === 'labels') || (sel.kind === 'multi' && selIds(s).some(id => multi.includes(id)));
+  // Umschalt + Klick auf ein Objekt (Titel, Karte, Textfeld …): zur Auswahl hinzufügen oder entfernen
+  const pick = (s: Sel) => (e?: React.MouseEvent | React.KeyboardEvent) => {
+    const id = selIds(s)[0];
+    if (e?.shiftKey && id) { setUI({ sel: selFor(multi.includes(id) ? multi.filter(x => x !== id) : [...multi, id]), mapMode: null }); return; }
+    setUI({ sel: s, mapMode: null });
+  };
   const eye = (on: boolean, set: (v: boolean) => void, label: string) => (
     <button className="eye" onClick={e => { e.stopPropagation(); set(!on); }} aria-label={label + (on ? ' ausblenden' : ' einblenden')} aria-pressed={on}>{on ? <Icon.eye /> : <Icon.eyeOff />}</button>
   );
@@ -41,7 +50,7 @@ function Layers() {
   // Als Funktion aufgerufen, nicht als <Row/>: eine innerhalb von Layers definierte Komponente wäre bei jedem Neuzeichnen ein
   // neuer Typ – React baute dann alle Zeilen neu auf (Tastaturfokus auf einer Zeile ging bei jeder Änderung verloren).
   const Row = ({ s, icon, name, extra, lvl = 0, hidden = false }: { s: Sel; icon: React.ReactNode; name: React.ReactNode; extra?: React.ReactNode; lvl?: number; hidden?: boolean }, key?: React.Key) => (
-    <div key={key} className={`lrow${lvl ? ' l' + lvl : ''}${is(s) ? ' sel' : ''}${hidden ? ' hidden' : ''}`} onClick={pick(s)} role="button" tabIndex={0} aria-pressed={is(s)} onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); pick(s)(); } }}>
+    <div key={key} className={`lrow${lvl ? ' l' + lvl : ''}${is(s) ? ' sel' : ''}${hidden ? ' hidden' : ''}`} onClick={pick(s)} role="button" tabIndex={0} aria-pressed={is(s)} onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); pick(s)(e); } }}>
       <span className="li" /><span className="li">{icon}</span><span className="ln">{name}</span><span className="lx">{extra}</span>
     </div>
   );
@@ -67,9 +76,17 @@ function Layers() {
       </>}
       {(!chart || doc.chart?.type === 'sitze') && Row({ lvl: 1, s: { kind: 'el', id: 'legend' }, icon: <Icon.legend />, name: "Legende", hidden: !doc.legend.visible, extra: eye(doc.legend.visible, on => update(d => { d.legend.visible = on; }), 'Legende') })}
       {Row({ lvl: 1, s: { kind: 'el', id: 'logo' }, icon: <Icon.image />, name: <>Logo{!doc.logo.asset && <small>keines geladen</small>}</>, hidden: !doc.logo.visible || !doc.logo.asset, extra: doc.logo.asset ? eye(doc.logo.visible, setLogoVisible, 'Logo') : null })}
+      {freeNodes(doc.nodes).map(n => Row({ lvl: 1, s: { kind: 'node', id: n.id }, icon: <Icon.text />, name: <>{textLabel(n)} <small>Textfeld</small></>, hidden: !n.text?.visible, extra: eye(!!n.text?.visible, on => setNodeText(n.id, t => { t.visible = on; }), 'Textfeld') }, n.id))}
       {doc.els.map(el => Row({ lvl: 1, s: { kind: 'ann', id: el.id }, icon: el.type === 'marker' ? <MarkerIcon m={el} s={14} /> : el.type === 'arrow' ? <ArrowIcon /> : <Icon.text />, name: elName(el), hidden: !!el.hidden, extra: eye(!el.hidden, on => update(d => { const x = d.els.find(q => q.id === el.id); if (x) x.hidden = !on; }), elName(el)) }, el.id))}
     </div>
   );
+}
+
+/** Name eines Textfelds in Listen: Anfang des Texts */
+export const textLabel = (n: GNode) => { const t = (n.text?.text || '').replace(/\s+/g, ' ').trim(); return t ? (t.length > 28 ? t.slice(0, 27) + '…' : t) : nodeName(n); };
+/** Text eines freien Textfelds ändern */
+export function setNodeText(id: string, fn: (t: TextEl) => void, key?: string) {
+  update(d => { const n = findNode(d.nodes as unknown as GNode[], id); if (n?.text) fn(n.text); }, key ? { key } : {});
 }
 
 // ---------- Eigenschaften ----------
@@ -147,7 +164,7 @@ function TextProps({ doc, id }: { doc: Doc; id: 'title' | 'subtitle' }) {
     <Field label="Ausrichtung"><Seg items={[['start', 'Links'], ['middle', 'Mitte'], ['end', 'Rechts']]} value={t.align} onChange={a => update(d => { d.texts[id].align = a; })} /></Field>
     <Field label="Breite (px)"><NumInput min={100} max={v.w} value={Math.round(v.L[id].w)} onChange={n => update(d => { d.variants[d.active].L[id].w = n; }, { key: 'w-' + id })} ariaLabel="Breite des Textblocks" /></Field>
     <Field label="Position (px)"><span className="mono">{Math.round(v.L[id].x)}, {Math.round(v.L[id].y)}</span></Field>
-    <p className="hint">Doppelklick auf den Text in der Grafik springt hierher. Ziehen auf der Arbeitsfläche verschiebt den Block, an den seitlichen Griffen ändert sich die Breite. Pfeiltasten verschieben um 1 px, mit Umschalt um 10 px.</p>
+    <p className="hint">Doppelklick auf den Text in der Grafik springt hierher. Ziehen auf der Arbeitsfläche verschiebt den Block, an den seitlichen Griffen ändert sich die Breite, die Eckgriffe skalieren ihn samt Schrift. Pfeiltasten verschieben um 1 px, mit Umschalt um 10 px.</p>
   </>;
 }
 
@@ -168,7 +185,7 @@ function SourceProps({ doc }: { doc: Doc }) {
     <Field label="Ausrichtung"><Seg items={[['start', 'Links'], ['middle', 'Mitte'], ['end', 'Rechts']]} value={t.align} onChange={a => update(d => { d.texts.source.align = a; })} /></Field>
     <Field label="Breite (px)"><NumInput min={100} max={v.w} value={Math.round(v.L.source.w)} onChange={n => update(d => { d.variants[d.active].L.source.w = n; }, { key: 'w-source' })} ariaLabel="Breite der Quellenzeile" /></Field>
     <Field label="Position (px)"><span className="mono">{Math.round(v.L.source.x)}, {Math.round(v.L.source.y)}</span></Field>
-    <p className="hint">Doppelklick auf die Quellenzeile in der Grafik springt hierher. Ziehen verschiebt sie, an den seitlichen Griffen ändert sich die Breite. Pfeiltasten um 1 px, mit Umschalt um 10 px.</p>
+    <p className="hint">Doppelklick auf die Quellenzeile in der Grafik springt hierher. Ziehen verschiebt sie, an den seitlichen Griffen ändert sich die Breite, die Eckgriffe skalieren sie samt Schrift. Pfeiltasten um 1 px, mit Umschalt um 10 px.</p>
   </>;
 }
 
@@ -186,7 +203,7 @@ function FrameProps({ doc, id }: { doc: Doc; id: 'main' | 'inset' }) {
     <Check checked={v.locked[id]} onChange={on => update(d => { d.variants[d.active].locked[id] = on; })}>Ausschnitt sperren</Check>
     <dl className="kv"><dt>Position</dt><dd>{Math.round(F.x)}, {Math.round(F.y)}</dd><dt>Größe</dt><dd>{Math.round(F.w)} × {Math.round(F.h)}</dd><dt>1 px entspricht</dt><dd>{mpp >= 1000 ? fmt1(mpp / 1000) + ' km' : Math.round(mpp) + ' m'}</dd><dt>Projektion</dt><dd>ETRS89 / UTM 32</dd></dl>
     {id === 'inset' && <Field label="Gebiet"><select value={doc.inset.preset} onChange={e => { const p = e.target.value; update(d => { d.inset.preset = p; }); refitAfterInset(); }} aria-label="Gebiet der Detail-Lupe">{Object.entries(INSET_DEFS).map(([k, x]) => <option key={k} value={k} disabled={!x.pick(g).length}>{x.label}</option>)}</select></Field>}
-    <p className="hint">Zoom: 100 % entspricht „Einpassen“; die Mitte des Rahmens bleibt beim Zoomen stehen. Rahmen ziehen verschiebt ihn, die Griffe ändern die Größe. Ein gesperrter Ausschnitt bleibt beim Wechsel des Fokus stehen.</p>
+    <p className="hint">Zoom: 100 % entspricht „Einpassen“; die Mitte des Rahmens bleibt beim Zoomen stehen. Rahmen ziehen verschiebt ihn. Eckgriffe vergrößern die Karte samt Linien und Beschriftungen (Umschalt: nur den Rahmen), Seitengriffe ändern den Rahmen, der Ausschnitt passt sich an (außer gesperrt). Klick in die gewählte Karte wählt ein Gebiet. Ein gesperrter Ausschnitt bleibt beim Wechsel des Fokus stehen.</p>
   </>;
 }
 
@@ -309,7 +326,7 @@ function GraphicProps({ doc }: { doc: Doc }) {
       {(v.guides.x.length + v.guides.y.length) > 0 && <button className="btn small ghost danger" onClick={clearGuides}><Icon.trash /> Alle Hilfslinien entfernen</button>}
     </Section>
     <Section title="Bedienung">
-      <p className="hint">Klick auf ein Gebiet wählt es aus, <span className="kbd">Umschalt</span> + Klick ergänzt. <b>Doppelklick auf die Karte</b> startet den Kartenmodus. Titel, Legende und Rahmen lassen sich ziehen. <span className="kbd">Strg</span>+<span className="kbd">Z</span> macht rückgängig, <span className="kbd">Leertaste</span> + Ziehen verschiebt die Ansicht, <span className="kbd">Strg</span>+<span className="kbd">0</span> passt sie ein, <span className="kbd">Umschalt</span>+<span className="kbd">R</span> blendet die Hilfslinien ein oder aus.</p>
+      <p className="hint">Klick wählt ein Objekt (Titel, Karte, Legende …), <span className="kbd">Umschalt</span> + Klick ergänzt, Ziehen auf freier Fläche zieht einen Auswahlrahmen auf. Ein weiterer Klick in die gewählte Karte wählt ein Gebiet (<span className="kbd">Umschalt</span> + Klick ergänzt, <span className="kbd">Esc</span> zurück zur Karte). <b>Doppelklick auf die Karte</b> startet den Kartenmodus. Eckgriffe skalieren, der runde Griff dreht, <span className="kbd">Strg</span>+<span className="kbd">D</span> dupliziert, <span className="kbd">T</span> fügt ein Textfeld ein. <span className="kbd">Strg</span>+<span className="kbd">Z</span> macht rückgängig, <span className="kbd">Leertaste</span> + Ziehen verschiebt die Ansicht, <span className="kbd">Strg</span>+<span className="kbd">0</span> passt sie ein, <span className="kbd">Umschalt</span>+<span className="kbd">R</span> blendet die Hilfslinien ein oder aus.</p>
     </Section>
   </>;
 }
@@ -369,6 +386,51 @@ function ChartFrameProps({ doc }: { doc: Doc }) {
   </>;
 }
 
+/** Freies Textfeld (M11 · Etappe 2) */
+function FreeTextProps({ doc, id }: { doc: Doc; id: string }) {
+  const n = findNode(doc.nodes, id), v = activeVariant(doc), L = v.L.nodes?.[id];
+  if (!n?.text || !L) return <Head t="Textfeld nicht gefunden" />;
+  const t = n.text;
+  return <>
+    <Head t="Textfeld" sub="Zeilenumbruch mit Eingabetaste" />
+    <Field stack label="Text" htmlFor="p-text"><RichTextArea id="p-text" rows={3} value={t.text} marks={t.marks} baseBold={t.cut === 'bold'} onChange={(val, mk) => setNodeText(id, x => { x.text = val; x.marks = mk; }, 'txt-' + id)} /></Field>
+    <Field label="Größe (px)"><NumInput min={6} max={300} value={t.size} onChange={k => setNodeText(id, x => { x.size = k; }, 'size-' + id)} ariaLabel="Schriftgröße" /></Field>
+    <Field label="Schnitt"><select value={t.cut} onChange={e => { const c = e.target.value as Cut; setNodeText(id, x => { x.cut = c; }); }} aria-label="Schriftschnitt">{(['display', 'bold', 'text'] as Cut[]).map(c => <option key={c} value={c}>Merriweather · {CUTS[c].label}</option>)}</select></Field>
+    <Field label="Farbe"><Seg items={[['ink', 'Dunkel'], ['inkSoft', 'Grau']]} value={t.color === 'inkSoft' ? 'inkSoft' : 'ink'} onChange={c => setNodeText(id, x => { x.color = c; })} /></Field>
+    <Field label="Ausrichtung"><Seg items={[['start', 'Links'], ['middle', 'Mitte'], ['end', 'Rechts']]} value={t.align || 'start'} onChange={a => setNodeText(id, x => { x.align = a; })} /></Field>
+    <Field label="Breite (px)"><NumInput min={40} max={v.w * 2} value={Math.round(L.w)} onChange={w => update(d => { const b = d.variants[d.active].L.nodes?.[id]; if (b) b.w = w; }, { key: 'w-' + id })} ariaLabel="Breite des Textfelds" /></Field>
+    <Field label="Position (px)"><span className="mono">{Math.round(L.x)}, {Math.round(L.y)}</span></Field>
+    <p className="hint">Doppelklick auf das Textfeld springt hierher. Text und Schrift gelten in allen Formaten, Lage, Breite, Drehung und Skalierung je Format.</p>
+  </>;
+}
+/** Mehrere Objekte ausgewählt */
+function MultiProps({ doc, ids }: { doc: Doc; ids: string[] }) {
+  const kind = doc.graphics[doc.page]?.kind || 'map';
+  const names = ids.map(id => { const n = findNode(doc.nodes, id); return n ? (n.type === 'text' && n.text ? textLabel(n) : nodeName(n, kind)) : id; });
+  return <>
+    <Head t={`${ids.length} Objekte ausgewählt`} sub={names.join(', ')} />
+    <ArrangeSection doc={doc} ids={ids} />
+    <p className="hint">Umschalt + Klick fügt hinzu oder entfernt. Ziehen verschiebt alle, die Eckgriffe skalieren alle gemeinsam (Alt: von der Mitte aus).</p>
+  </>;
+}
+/** Anordnen: Drehung, Skalierung, Ebene, Ausrichten, Duplizieren/Kopieren/Löschen (für ein oder mehrere Objekte) */
+function ArrangeSection({ doc, ids }: { doc: Doc; ids: string[] }) {
+  const v = activeVariant(doc), one = ids.length === 1 ? ids[0] : null, L = one ? layoutOf(v, one) as Box | null : null;
+  const k = L?.k ?? 1;
+  const b = (title: string, icon: React.ReactNode, on: () => void) => <button className="btn icon small" title={title} aria-label={title} onClick={on}>{icon}</button>;
+  return <Section title="Anordnen" aside={ids.length > 1 ? 'zueinander' : undefined}>
+    {one && canRotate(one) && L && <Field label="Drehung (°)"><NumInput min={-180} max={180} value={Math.round(L.r ?? 0)} onChange={n => setRotation(one, n)} ariaLabel="Drehung in Grad" /></Field>}
+    {one && L && Math.abs(k - 1) > 0.001 && <Field label="Skalierung"><span className="mono">{Math.round(k * 100)} %</span><button className="btn small ghost" onClick={() => resetScale(one)} title="Größe aus den Eckgriffen zurücknehmen">100 %</button></Field>}
+    <Field label="Ebene"><div className="row-btns tight">{b('Ganz nach hinten (Strg+Umschalt+[)', <Icon.back />, () => reorder(ids, 'bottom'))}{b('Eine Ebene nach hinten (Strg+[)', <Icon.bwd />, () => reorder(ids, 'down'))}{b('Eine Ebene nach vorn (Strg+])', <Icon.fwd />, () => reorder(ids, 'up'))}{b('Ganz nach vorn (Strg+Umschalt+])', <Icon.front />, () => reorder(ids, 'top'))}</div></Field>
+    <Field label={ids.length > 1 ? 'Ausrichten' : 'An der Fläche'}><div className="row-btns tight">{b('Links', <Icon.alignL />, () => align(ids, 'l'))}{b('Mittig (waagerecht)', <Icon.alignC />, () => align(ids, 'c'))}{b('Rechts', <Icon.alignR />, () => align(ids, 'r'))}{b('Oben', <Icon.alignT />, () => align(ids, 't'))}{b('Mittig (senkrecht)', <Icon.alignM />, () => align(ids, 'm'))}{b('Unten', <Icon.alignB />, () => align(ids, 'b'))}</div></Field>
+    <div className="row-btns">
+      <button className="btn small" onClick={() => duplicateNodes(ids)} title="Strg+D"><Icon.copy /> Duplizieren</button>
+      <button className="btn small" onClick={() => copyNodes(ids)} title="Strg+C, einfügen mit Strg+V">Kopieren</button>
+      {one !== 'main' && <button className="btn small" onClick={() => deleteNodes(ids)} title="Entf: Textfelder werden gelöscht, Titel, Legende, Logo usw. ausgeblendet"><Icon.trash /> {ids.every(isBuiltin) ? 'Ausblenden' : 'Löschen'}</button>}
+    </div>
+  </Section>;
+}
+
 function Props() {
   const doc = useStore(s => s.doc!);
   const s = useStore(s => s.ui.sel);
@@ -379,6 +441,8 @@ function Props() {
   else if (s.kind === 'el' && s.id === 'source') body = <SourceProps doc={doc} />;
   else if (s.kind === 'el' && s.id === 'legend') body = <LegendProps doc={doc} />;
   else if (s.kind === 'el' && s.id === 'logo') body = <LogoProps doc={doc} />;
+  else if (s.kind === 'node') body = <FreeTextProps doc={doc} id={s.id} />;
+  else if (s.kind === 'multi') body = <MultiProps doc={doc} ids={s.ids} />;
   else if (s.kind === 'hatch') body = <HatchProps doc={doc} id={s.id} />;
   else if (s.kind === 'ann') body = <AnnProps doc={doc} id={s.id} />;
   else if (s.kind === 'frame' && isChart(doc)) body = <ChartFrameProps doc={doc} />;
@@ -388,8 +452,9 @@ function Props() {
   else if (s.kind === 'bubbles') body = <><Head t="Blasen" sub="Kreisfläche ∝ Wert" /><BubbleSection inPanel /></>;
   else body = <GraphicProps doc={doc} />;
   // Neuer Gegenstand = Eigenschaften von oben zeigen
-  const selKey = s.kind === 'area' ? 'area:' + (s.ids.length > 1 ? 'multi' : s.ids[0]) : s.kind + ':' + ('id' in s ? s.id : '');
-  return <div className="props" key={selKey}><ErrorBoundary area="Eigenschaften" resetKey={doc}>{body}</ErrorBoundary></div>;
+  const selKey = s.kind === 'area' ? 'area:' + (s.ids.length > 1 ? 'multi' : s.ids[0]) : s.kind === 'multi' ? 'multi' : s.kind + ':' + ('id' in s ? s.id : '');
+  const one = s.kind === 'el' || s.kind === 'frame' || s.kind === 'node' ? s.id : null;
+  return <div className="props" key={selKey}><ErrorBoundary area="Eigenschaften" resetKey={doc}>{body}{one && <ArrangeSection doc={doc} ids={[one]} />}</ErrorBoundary></div>;
 }
 
 /** Ziehgriff am linken Rand: Panel breiter/schmaler ziehen (z. B. damit ein Farbwähler nicht am Fensterrand abgeschnitten wird). */

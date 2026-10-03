@@ -4,7 +4,7 @@ import { loadFonts } from './lib/fonts';
 import { scheduleAutosave, setOverride, toggleGuidesVisible } from './model/actions';
 import { Step, getDoc, getUI, redo, setUI, toast, undo, update, useStore } from './model/store';
 import { clamp } from './lib/util';
-import { setLogoVisible } from './model/logo';
+import { addTextNode, sanitizeSel, copyNodes, deleteNodes, duplicateNodes, hasClip, nudge, pasteNodes, reorder, selIds, selectAll } from './model/transform';
 import { Canvas, fitViewToCanvas } from './ui/Canvas';
 import { Icon } from './ui/common';
 import { ErrorBoundary } from './ui/ErrorBoundary';
@@ -114,14 +114,27 @@ function useShortcuts() {
         if (u.tool) { setUI({ tool: null }); return; }
         if (u.menu) { setUI({ menu: null }); return; }
         if (u.mapMode) { setUI({ mapMode: null }); return; }
+        if (u.sel.kind === 'area') { setUI({ sel: { kind: 'frame', id: 'main' } }); return; }   // eine Ebene zurück: Gebiet → Karte (Q16)
         setUI({ sel: { kind: 'graphic' } }); return;
       }
-      if (e.key.startsWith('Arrow') && (u.sel.kind === 'el' || u.sel.kind === 'frame') && !u.mapMode) {
-        e.preventDefault();
-        const st = e.shiftKey ? 10 : 1, id = u.sel.id;
-        const dx = e.key === 'ArrowLeft' ? -st : e.key === 'ArrowRight' ? st : 0, dy = e.key === 'ArrowUp' ? -st : e.key === 'ArrowDown' ? st : 0;
-        update(d => { const L = d.variants[d.active].L[id]; L.x += dx; L.y += dy; }, { key: 'nudge-' + id });
-        return;
+      // Objekte (M11 · Etappe 2): Titel, Karte, Legende, Textfelder … – auch mehrere
+      const ids = u.mapMode ? [] : selIds(u.sel);
+      if (mod && key === 'a') { e.preventDefault(); selectAll(); return; }
+      if (!mod && !e.shiftKey && !e.altKey && key === 't') { e.preventDefault(); addTextNode(); return; }
+      if (mod && key === 'v' && hasClip()) { e.preventDefault(); pasteNodes(); return; }
+      if (ids.length) {
+        const fwd = e.key === ']' || e.key === '}' || e.key === 'ArrowUp', back = e.key === '[' || e.key === '{' || e.key === 'ArrowDown';
+        if (mod && (fwd || back)) { e.preventDefault(); reorder(ids, e.shiftKey ? (fwd ? 'top' : 'bottom') : (fwd ? 'up' : 'down')); return; }
+        if (e.key.startsWith('Arrow') && !mod) {
+          e.preventDefault();
+          const st = e.shiftKey ? 10 : 1;
+          nudge(ids, e.key === 'ArrowLeft' ? -st : e.key === 'ArrowRight' ? st : 0, e.key === 'ArrowUp' ? -st : e.key === 'ArrowDown' ? st : 0);
+          return;
+        }
+        if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); deleteNodes(ids); return; }
+        if (mod && key === 'd') { e.preventDefault(); duplicateNodes(ids); return; }
+        // Strg+C/X: markierter Text auf der Seite (etwa ein Hinweis) geht vor
+        if (mod && (key === 'c' || key === 'x') && !window.getSelection()?.toString()) { e.preventDefault(); if (copyNodes(ids) && key === 'x') deleteNodes(ids); return; }
       }
       if (e.key.startsWith('Arrow') && u.sel.kind === 'ann' && !u.mapMode) {
         e.preventDefault();
@@ -130,7 +143,6 @@ function useShortcuts() {
         update(d => { const V = d.variants[d.active]; const o = V.ann[id] || [0, 0]; V.ann[id] = [o[0] + dx, o[1] + dy]; }, { key: 'nudge-' + id });
         return;
       }
-      if ((e.key === 'Delete' || e.key === 'Backspace') && u.sel.kind === 'el' && u.sel.id === 'logo') { e.preventDefault(); if (getDoc().logo.visible) { setLogoVisible(false); toast('Logo ausgeblendet · einblenden unter Ebenen oder „Elemente“'); } return; }
       if ((e.key === 'Delete' || e.key === 'Backspace') && u.sel.kind === 'ann') { e.preventDefault(); removeEl(u.sel.id); return; }
       if ((e.key === 'Delete' || e.key === 'Backspace') && u.sel.kind === 'overlay') { e.preventDefault(); removeOverlay(u.sel.id); return; }
       if (mod && key === 'd' && u.sel.kind === 'ann') { e.preventDefault(); duplicateEl(u.sel.id); return; }
@@ -144,7 +156,7 @@ function useShortcuts() {
   }, []);
 }
 function useAutosave() {
-  useEffect(() => useStore.subscribe((s, prev) => { if (s.doc && s.doc !== prev.doc && !s.ui.start) scheduleAutosave(); }), []);
+  useEffect(() => useStore.subscribe((s, prev) => { if (s.doc && s.doc !== prev.doc) { sanitizeSel(); if (!s.ui.start) scheduleAutosave(); } }), []);
 }
 
 export function App() {

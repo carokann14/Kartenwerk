@@ -3,7 +3,7 @@ import type { Doc, HatchStyle, LegendSettings } from './types';
 import { uid } from '../lib/util';
 import { defaultLogo, defaultLogoBox, logoRatio } from './logo';
 import { GRAPHIC_KEYS } from './graphicKeys';
-import { defaultNodes, ensureNodes } from './nodes';
+import { carryNodeLayouts, defaultNodes, ensureNodes, freeNodes } from './nodes';
 
 export const PRESETS: Record<string, { w: number; h: number; label: string }> = {
   '4:5': { w: 1080, h: 1350, label: 'Instagram 4:5' },
@@ -123,6 +123,13 @@ export function normalizeDoc(d: Doc): Doc {
     v.L.logo ||= defaultLogoBox(v.L, v.w, v.h, logoRatio(x.logo.asset));
     v.L.legend.w ??= 0;   // altes Projekt ohne Breitenfeld: 0 = automatisch, wie es bislang immer war
     if (typeof v.L.m === 'number') { const mm = v.L.m as number; v.L.m = { left: mm, top: mm, right: mm, bottom: mm }; }   // altes Projekt: ein Rand für alle vier Seiten
+  }
+  // freie Textfelder (seit M11 · Etappe 2): Lage in jeder Variante, keine Lage ohne Objekt
+  const free = new Set(freeNodes(x.nodes).map(n => n.id));
+  for (const v of x.variants) {
+    if (v.L.nodes) for (const id of Object.keys(v.L.nodes)) if (!free.has(id)) delete v.L.nodes[id];
+    if (v.L.nodes && !Object.keys(v.L.nodes).length) delete v.L.nodes;
+    if (free.size) carryNodeLayouts(x, v);
   }
   return x;
 }

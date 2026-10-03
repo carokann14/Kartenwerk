@@ -471,6 +471,7 @@ table.dtable { width: 100%; border-collapse: collapse; font-size: 12px; }
 .warn-text svg { flex: none; margin-top: 2px; }
 .row-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .row-btns.nowrap { flex-wrap: nowrap; }
+.row-btns.tight { gap: 2px; flex-wrap: nowrap; }
 .row-btns.nowrap input[type="number"] { width: 84px; flex: none; }
 .stack-8 { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .stack-12 { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -513,7 +514,7 @@ ul.plain { margin: 0; padding: 0; list-style: none; display: flex; flex-directio
 
 /* Arbeitsfläche */
 .canvaswrap.mapmode { cursor: move; }
-#artboard [data-el], #artboard g.lbl { cursor: move; }
+#artboard [data-el], #artboard [data-node], #artboard g.lbl { cursor: move; }
 #artboard g.frame { cursor: default; }
 .canvaswrap.mapmode #artboard g.frame { cursor: move; }
 .canvas-banner {

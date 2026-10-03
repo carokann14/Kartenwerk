@@ -9,7 +9,8 @@ import { isChart } from '../model/graphicKeys';
 import { chartModel } from './chart';
 import { GEO, LAENDER } from '../geo/geo';
 import { LH } from '../model/defaults';
-import type { Doc, Variant } from '../model/types';
+import type { Box, Doc, GNode, TextEl, Variant } from '../model/types';
+import type { TextMark } from '../lib/richtext';
 import { ColorModel, colorModel, partyColor } from './colorModel';
 import { hatchPathD, rectRing } from './hatch';
 import { markerD } from './annotations';
@@ -24,6 +25,8 @@ export interface PathPrim { d: string; fill: string; stroke?: string; width?: nu
 export interface Prims { texts: TextPrim[]; rects: RectPrim[]; paths?: PathPrim[]; box: { x: number; y: number; w: number; h: number } }
 
 export const activeVariant = (doc: Doc): Variant => doc.variants[doc.active];
+/** Variante für das Zeichnen des Diagramms: Schriften und Linien wachsen mit der Skalierung des Rahmens (Eckgriffe, M11) */
+export const chartVariant = (v: Variant): Variant => { const k = v.L.main.k ?? 1; return k === 1 ? v : { ...v, ts: v.ts * k }; };
 const styleColor = (doc: Doc, c: string) => (c in doc.style ? String((doc.style as unknown as Record<string, string>)[c]) : c);
 
 // ---------- Quellenvermerk ----------
@@ -77,9 +80,17 @@ export const textOf = (doc: Doc, kind: 'title' | 'subtitle' | 'source') => kind 
 /** Marken gelten nur gegen die Fassung, die sie tragen: bei der Quellenzeile nur, solange sie von Hand steht
  *  (sonst würden Bereiche beim automatischen Nachziehen des Texts nicht mehr passen). */
 const marksOf = (doc: Doc, kind: 'title' | 'subtitle' | 'source') => (kind === 'source' && !sourceIsManual(doc) ? [] : doc.texts[kind].marks || []);
+/** Rolle eines Textes: bestimmt den Zeilenabstand (Titel eng, Fließtext weiter) */
+export type TextRole = 'title' | 'subtitle' | 'source' | 'text';
+type TextStyle = Pick<TextEl, 'size' | 'cut' | 'color' | 'align'>;
+const lhOf = (role: TextRole) => (role === 'text' ? LH.subtitle : LH[role]);
 export function textBlock(doc: Doc, kind: 'title' | 'subtitle' | 'source', w: number, ts: number) {
-  const t = doc.texts[kind], size = +(t.size * ts).toFixed(2), full = textOf(doc, kind), marks = marksOf(doc, kind);
-  const lh = size * LH[kind];
+  return textBlockOf(doc.texts[kind], textOf(doc, kind), marksOf(doc, kind), kind, w, ts);
+}
+/** Umbruch eines beliebigen Textes (Titel, Unterzeile, Quelle oder freies Textfeld) */
+export function textBlockOf(t: TextStyle, full: string, marks: TextMark[], role: TextRole, w: number, ts: number) {
+  const size = +(t.size * ts).toFixed(2);
+  const lh = size * lhOf(role);
   if (marks.length) {
     const ranges = wrapRich(full, marks, t.cut, size, w), lines = ranges.map(r => full.slice(r.from, r.to));
     return { lines, ranges, text: full, marks, lh, height: lines.length * lh, size, cut: t.cut };
@@ -88,9 +99,19 @@ export function textBlock(doc: Doc, kind: 'title' | 'subtitle' | 'source', w: nu
   return { lines, ranges: null as { from: number; to: number }[] | null, text: full, marks, lh, height: lines.length * lh, size, cut: t.cut };
 }
 export function textPrims(doc: Doc, kind: 'title' | 'subtitle' | 'source', v: Variant = activeVariant(doc)): Prims | null {
-  const t = doc.texts[kind], L = v.L[kind];
+  const t = doc.texts[kind];
   if (!t.visible) return null;
-  const b = textBlock(doc, kind, L.w, v.ts);
+  return textPrimsOf(doc, t, textOf(doc, kind), marksOf(doc, kind), kind, v.L[kind], v.ts);
+}
+/** Freies Textfeld des Elementbaums (M11 · Etappe 2); null, wenn ausgeblendet oder ohne Lage in dieser Variante */
+export function nodeTextPrims(doc: Doc, n: GNode, v: Variant = activeVariant(doc)): Prims | null {
+  const L = v.L.nodes?.[n.id];
+  if (!n.text || !n.text.visible || !L) return null;
+  return textPrimsOf(doc, n.text, n.text.text, n.text.marks || [], n.role || 'text', L, v.ts);
+}
+/** Zeilen eines Textes an der Stelle L; die Schriftgröße folgt der Variante (ts) und der Skalierung des Objekts (L.k) */
+function textPrimsOf(doc: Doc, t: TextStyle, full: string, marks: TextMark[], role: TextRole, L: Box, ts: number): Prims {
+  const b = textBlockOf(t, full, marks, role, L.w, ts * (L.k ?? 1));
   const asc = ascentRatio(t.cut);
   const align = t.align || 'start';
   const ax = align === 'middle' ? L.x + L.w / 2 : align === 'end' ? L.x + L.w : L.x;
@@ -104,7 +125,8 @@ export function textPrims(doc: Doc, kind: 'title' | 'subtitle' | 'source', v: Va
 }
 
 // ---------- Legende ----------
-export function legendPrims(doc: Doc, P: { x: number; y: number; w?: number } = activeVariant(doc).L.legend, mainW = activeVariant(doc).L.main.w, ts = activeVariant(doc).ts): Prims | null {
+export function legendPrims(doc: Doc, P: { x: number; y: number; w?: number; k?: number } = activeVariant(doc).L.legend, mainW = activeVariant(doc).L.main.w, ts = activeVariant(doc).ts): Prims | null {
+  ts = ts * (P.k ?? 1);   // Skalierung über die Eckgriffe (M11)
   if (!doc.legend.visible || (isChart(doc) && doc.chart?.type !== 'sitze')) return null;   // andere Diagramme: Zeichenerklärung im Diagramm selbst
   const M = legendModel(doc); if (!M) return null;
   const cm = colorModel(doc), c = doc.color;
@@ -305,7 +327,7 @@ export const toFrame = (F: { w: number; h: number; view: { cx: number; cy: numbe
 export function layoutLabels(doc: Doc, id: FrameId, v: Variant = activeVariant(doc)): { items: LabelItem[]; hidden: number } {
   const res = { items: [] as LabelItem[], hidden: 0 };
   if (!doc.layers.wkLabels || (id === 'inset' && !doc.inset.visible)) return res;
-  const F = v.L[id], size = +(doc.labels.size * v.ts).toFixed(2), lh = size * 1.14, g = geoOf(doc), cm = colorModel(doc);
+  const F = v.L[id], size = +(doc.labels.size * v.ts * (F.k ?? 1)).toFixed(2), lh = size * 1.14, g = geoOf(doc), cm = colorModel(doc);
   const { list } = frameSets(doc, id);
   const obstacles: number[][] = [];
   if (id === 'main') {
